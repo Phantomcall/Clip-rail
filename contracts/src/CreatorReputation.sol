@@ -9,6 +9,7 @@ import {ICreatorReputation} from "./interfaces/ICreatorReputation.sol";
 contract CreatorReputation is ICreatorReputation, Ownable {
     address public override vault;
 
+    // slither-disable-next-line uninitialized-state (written by recordPaid/recordRejection in I-2.4)
     mapping(address clipper => Stats) internal _stats;
     mapping(address clipper => mapping(address brand => bool)) public paidBy;
 

@@ -233,6 +233,8 @@ interface ICampaignVault {
     function activeClips(uint256 offset, uint256 limit) external view returns (ActiveClip[] memory);
     function releasableClips(uint256 offset, uint256 limit) external view returns (uint256[] memory);
     function expiredFlags(uint256 offset, uint256 limit) external view returns (uint256[] memory);
+    /// @notice Pending clips past pendingTimeout, for the keeper to pass to expirePending.
+    function expiredPending(uint256 offset, uint256 limit) external view returns (uint256[] memory);
     function lastRound() external view returns (uint64);
     function claimCode(uint256 campaignId, address clipper) external pure returns (string memory);
     /// @notice One counter shared by RegisterClip and SetPayout signatures.

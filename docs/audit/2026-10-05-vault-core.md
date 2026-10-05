@@ -150,3 +150,54 @@ and the two Info items.
 ### Still open
 - R-1 to R-6 (section 4) apply to tomorrow's release, flag and close code.
 - Pin `evm_version` after confirming which fork Monad supports.
+
+## 7. Second review of the fixes (different angle)
+
+The first pass asked "can this code be attacked?". This pass asked two different questions: **do the fixes themselves
+open new attacks or break honest use**, and **does any random sequence of actions break the accounting**.
+
+### 7.1 Stateful invariant fuzzing (`contracts/test/invariant/VaultInvariants.t.sol`)
+A handler drives the vault with random register, report, warp, expirePending, topUp and pause actions:
+- 4 clippers and 2 campaigns, one of them small enough that its budget runs out
+- 12 shared video IDs, so squatting and duplicate paths happen constantly
+- reports that include unknown clips, falling views, every flag combination and videos published before the start
+
+After every call it checks these invariants:
+
+| Invariant | Meaning |
+|---|---|
+| `campaignAccounting` | reserved + paid ≤ budget; Σ clip.accrued = reserved + paid |
+| `solvent` | the vault's token balance ≥ Σ (budget − paid) |
+| `clipCaps` | accrued ≤ maxPerClip; tranches sum to accrued; Pending clips have earned nothing |
+| `videoOwnership` | each video has at most one owning clip, which has activated; non-owners earned nothing |
+| `pendingCounts` | the pending counter equals the real number of Pending clips; the cap is never exceeded |
+| `watchList` | every Pending clip is watched; every watched clip is Pending/Active and below its cap |
+| `round` | lastRound equals the highest round the oracle sent |
+
+**Result:**
+- **100,000 calls (1,000 runs × 100) with fail-on-revert on: 0 reverts and 0 violations.** CI runs 500 × 100.
+- A coverage probe confirmed the fuzzer reaches the hard states: duplicate-video rejections, clips ended by
+  3 strikes, clips at maxPerClip, pause on and off.
+- The probe also caught a bug **in the test**: a mis-ordered `vm.prank` meant pausing was never exercised. After
+  the fix, the pause paths are covered.
+
+### 7.2 Adversarial review of each fix
+| Fix | Question | Finding |
+|---|---|---|
+| C-1 `tx.origin` pin | Can the pin be abused? | Only by making the oracle wallet call a malicious contract. **Operational rule:** that key only ever broadcasts the CRE simulation; it never signs anything else or sets an EIP-7702 delegation. If the key leaks, the **guardian pauses**, which stops every forged accrual at once (entries are skipped while paused), and the owner then rotates the transmitter. |
+| H-2 reserve on activation | Can someone grief an owner's pending clip? | No. Only the owner's own claim code activates their clip. A clipper posting one video to two campaigns gets the first activation and `DuplicateVideo` on the second, as intended. |
+| H-3 64-bit code | Multi-target grinding? | With N codes visible in a campaign, the cost is 2^64 / N. Even N = 10,000 is about 1.8e15 hashes per hit, for at most one clip's capped payout. Not economic. |
+| M-2 timelock | Does one key still control it? | **It did:** the deployer was proposer, executor and canceller. **Fixed:** anyone can now execute after the delay, and `PROPOSER` (meant to be a team multisig) replaces the deployer as proposer. Verified on a local 143 chain: the multisig is proposer, the deployer isn't, anyone can execute, delay 86,400. |
+| M-3 strikes | Can strikes hide a real removal? | A removed video stops earning at once (no accrual on UNAVAILABLE) and ends on the third report. Nothing extra is paid. |
+| M-4 pending cap | Does it hurt honest clippers? | A 4th Short in the same campaign waits until one of the first three activates (one report cycle). Acceptable. Sybil spam via the relayer is limited by its rate limits. |
+| L-1 `expirePending` | Who calls it? | **Gap:** nothing told the keeper which clips had expired. **Fixed:** a new `expiredPending(offset, limit)` view, matching `releasableClips` / `expiredFlags`. The keeper (I-3.4) should call it every run. |
+| Reputation ownership renounced | Side effects? | **Decision needed:** if the vault ever has to be redeployed (I-5.2), clippers' reputation can't follow the new vault. The alternative is to keep ownership behind the same timelock. |
+
+### 7.3 CI added for contracts
+`.github/workflows/ci.yml` now enforces the following on every PR:
+- **contracts job:** `forge fmt --check`, `forge build --sizes`, `forge test` with the ci profile (10k fuzz runs plus the invariants), and an ABI-drift check (regenerates `packages/abi` and fails if it differs)
+- **slither job:** `--fail-medium`
+- Foundry is pinned to v1.8.3 and Slither to 0.11.6.
+
+Intentional findings are suppressed only at their exact line, each with a reason: `tx-origin` (C-1),
+`divide-before-multiply` (paid views) and `uninitialized-state` (the Reputation stub until I-2.4).

@@ -13,6 +13,8 @@ import {MockUSDC} from "../src/mocks/MockUSDC.sol";
 /// Env: ORACLE_ADDRESS (required): the cliprail-oracle wallet that broadcasts `cre workflow simulate --broadcast`.
 ///      GUARDIAN (optional, default: deployer): may pause, never unpause.
 ///      TIMELOCK_DELAY (optional, default: 86400 on mainnet, 0 = no timelock on testnet).
+///      PROPOSER (optional, default: deployer): who may schedule and cancel owner actions. Use a team multisig on
+///      mainnet. Anyone may execute a scheduled action once its delay has passed.
 ///
 /// Testnet:  ORACLE_ADDRESS=0x… forge script script/Deploy.s.sol --rpc-url monadTestnet --account cliprail-deployer --broadcast
 /// Mainnet rehearsal (I-3.6): anvil --fork-url https://rpc.monad.xyz, then --rpc-url http://localhost:8545
@@ -59,9 +61,10 @@ contract Deploy is Script {
         vault.setGuardian(guardian);
 
         if (delay > 0) {
-            address[] memory roles = new address[](1);
-            roles[0] = deployer;
-            TimelockController timelock = new TimelockController(delay, roles, roles, address(0));
+            address[] memory proposers = new address[](1);
+            proposers[0] = vm.envOr("PROPOSER", deployer);
+            address[] memory executors = new address[](1); // address(0) = anyone can execute after the delay
+            TimelockController timelock = new TimelockController(delay, proposers, executors, address(0));
             vault.transferOwnership(address(timelock));
             console.log("timelock  ", address(timelock));
         }

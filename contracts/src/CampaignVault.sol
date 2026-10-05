@@ -183,6 +183,7 @@ contract CampaignVault is ICampaignVault, ReceiverTemplate, EIP712, ReentrancyGu
         if (transmitter != address(0)) {
             // The mock forwarder is permissionless; the broadcasting oracle wallet is the only trustworthy signal.
             // solhint-disable-next-line avoid-tx-origin
+            // slither-disable-next-line tx-origin
             if (tx.origin != transmitter) revert UnauthorizedTransmitter(tx.origin, transmitter);
         } else if (this.getExpectedWorkflowId() == bytes32(0) || this.getExpectedAuthor() == address(0)) {
             revert ReportsNotAuthorized();
@@ -293,6 +294,26 @@ contract CampaignVault is ICampaignVault, ReceiverTemplate, EIP712, ReentrancyGu
     /// @dev TODO I-2.2
     function expiredFlags(uint256, uint256) external pure override returns (uint256[] memory) {
         revert NotImplemented();
+    }
+
+    /// @notice Pending clips past pendingTimeout (pages over the watch list, like activeClips).
+    function expiredPending(uint256 offset, uint256 limit) external view override returns (uint256[] memory ids) {
+        uint256 len = _watchList.length;
+        uint256 end = offset + limit > len ? len : offset + limit;
+        if (offset >= end) return ids;
+
+        ids = new uint256[](end - offset);
+        uint256 n;
+        for (uint256 i = offset; i < end; ++i) {
+            uint256 clipId = _watchList[i];
+            Clip storage clip = _clips[clipId];
+            if (clip.status == ClipStatus.Pending && block.timestamp >= clip.registeredAt + pendingTimeout) {
+                ids[n++] = clipId;
+            }
+        }
+        assembly {
+            mstore(ids, n)
+        }
     }
 
     function payoutAddressOf(address clipper) external view override returns (address) {
@@ -482,6 +503,8 @@ contract CampaignVault is ICampaignVault, ReceiverTemplate, EIP712, ReentrancyGu
         uint256 free = _free(c);
         if (amount > free) amount = free;
         if (amount == 0) return;
+        // Views actually paid when the amount was capped; rounding down never over-credits reputation.
+        // slither-disable-next-line divide-before-multiply
         uint64 paidViews = amount == full ? delta : uint64(amount * 1000 / c.params.cpm);
 
         // Rule 7: reserve and add a tranche.

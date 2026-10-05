@@ -241,7 +241,8 @@ contract AuditRegressionsTest is Test {
         address deployer = address(this);
         address[] memory roles = new address[](1);
         roles[0] = deployer;
-        TimelockController timelock = new TimelockController(1 days, roles, roles, address(0));
+        address[] memory anyone = new address[](1); // address(0): open executor, as in Deploy.s.sol
+        TimelockController timelock = new TimelockController(1 days, roles, anyone, address(0));
         vault.setGuardian(deployer);
         vault.transferOwnership(address(timelock));
 
@@ -255,6 +256,7 @@ contract AuditRegressionsTest is Test {
         vm.expectRevert();
         timelock.execute(address(vault), 0, call, bytes32(0), bytes32(0));
         vm.warp(block.timestamp + 1 days);
+        vm.prank(makeAddr("anyExecutor")); // execution doesn't depend on the proposer key
         timelock.execute(address(vault), 0, call, bytes32(0), bytes32(0));
         assertEq(vault.getForwarderAddress(), makeAddr("keystone"));
 
@@ -335,6 +337,20 @@ contract AuditRegressionsTest is Test {
         vm.warp(T0 + 1800);
         vm.expectRevert(ICampaignVault.NotPending.selector);
         vault.expirePending(clip);
+    }
+
+    function test_L1_ExpiredPendingViewFeedsKeeper() public {
+        uint256 id = _campaign(150e6, 20e6);
+        uint256 a = _reg(victim, id, "aaaaaaaaaaa");
+        uint256 b = _reg(victim, id, "bbbbbbbbbbb");
+        _oracleReport(_one(_upd(b, 100, 10, 1))); // b activates
+        assertEq(vault.expiredPending(0, 10).length, 0);
+        vm.warp(T0 + 1800);
+        uint256[] memory ids = vault.expiredPending(0, 10);
+        assertEq(ids.length, 1);
+        assertEq(ids[0], a);
+        vault.expirePending(ids[0]);
+        assertEq(vault.expiredPending(0, 10).length, 0);
     }
 
     function test_L3_ConstructorValidates() public {

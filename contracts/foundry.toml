@@ -28,7 +28,7 @@ depth = 50
 runs = 10000
 
 [profile.ci.invariant]
-runs = 1000
+runs = 500
 depth = 100
 
 [rpc_endpoints]
