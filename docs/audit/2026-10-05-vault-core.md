@@ -191,7 +191,7 @@ After every call it checks these invariants:
 | M-3 strikes | Can strikes hide a real removal? | A removed video stops earning at once (no accrual on UNAVAILABLE) and ends on the third report. Nothing extra is paid. |
 | M-4 pending cap | Does it hurt honest clippers? | A 4th Short in the same campaign waits until one of the first three activates (one report cycle). Acceptable. Sybil spam via the relayer is limited by its rate limits. |
 | L-1 `expirePending` | Who calls it? | **Gap:** nothing told the keeper which clips had expired. **Fixed:** a new `expiredPending(offset, limit)` view, matching `releasableClips` / `expiredFlags`. The keeper (I-3.4) should call it every run. |
-| Reputation ownership renounced | Side effects? | **Decision needed:** if the vault ever has to be redeployed (I-5.2), clippers' reputation can't follow the new vault. The alternative is to keep ownership behind the same timelock. |
+| Reputation ownership renounced | Side effects? | If the vault were ever redeployed (I-5.2), clippers' reputation couldn't follow the new vault. **The team chose B (7.4).** |
 
 ### 7.3 CI added for contracts
 `.github/workflows/ci.yml` now enforces the following on every PR:
@@ -201,3 +201,18 @@ After every call it checks these invariants:
 
 Intentional findings are suppressed only at their exact line, each with a reason: `tx-origin` (C-1),
 `divide-before-multiply` (paid views) and `uninitialized-state` (the Reputation stub until I-2.4).
+
+### 7.4 Decision B: Reputation survives a vault redeploy
+- Reputation is no longer renounced. Its owner is the same 24 h `TimelockController` on mainnet, and the deployer on testnet.
+- **The owner's only powers are `addVault` and `removeVault`. Nobody can edit stats.** `recordPaid` and
+  `recordRejection` stay vault-only, and a test checks that the owner can't call them.
+- **It's add/remove, not a hard switch.** A hard switch would make the old vault's remaining `release()` calls
+  revert (they record reputation) and strand clippers' money. The old vault keeps write access until it has released
+  everything, and only then is removed.
+- `addVault` only accepts a contract whose `reputation()` returns this contract. Tests reject the zero address, a
+  plain wallet, USDC, a vault built for another Reputation, and a duplicate.
+- **Tests:** 5 new regressions, including a switch run through the timelock (blocked before 24 h, executable by
+  anyone after). The deploy script was checked on chains 10143 and 143: on 143 the timelock owns both contracts,
+  and `isVault(vault)` is true.
+- **ABI:** in `CreatorReputation`, `setVault` / `vault()` / `VaultSet` are replaced by `addVault` / `removeVault` /
+  `isVault` / `VaultAdded` / `VaultRemoved`. No other package uses them yet.

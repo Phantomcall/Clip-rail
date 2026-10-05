@@ -118,7 +118,7 @@ contract VaultInvariantsTest is Test {
         vm.warp(1_000_000);
         CreatorReputation reputation = new CreatorReputation();
         vault = new VaultHarness(FORWARDER, reputation);
-        reputation.setVault(address(vault));
+        reputation.addVault(address(vault));
         usdc = new MockUSDC();
         vault.setTokenAllowed(address(usdc), true);
         vault.setReportTransmitter(ORACLE);

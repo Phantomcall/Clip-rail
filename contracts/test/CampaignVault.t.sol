@@ -17,21 +17,21 @@ contract CampaignVaultTest is Test {
     function setUp() public {
         reputation = new CreatorReputation();
         vault = new CampaignVault(FORWARDER, reputation, 1800, 1800);
-        reputation.setVault(address(vault));
+        reputation.addVault(address(vault));
         usdc = new MockUSDC();
         vault.setTokenAllowed(address(usdc), true);
     }
 
     function test_Wiring() public view {
         assertEq(vault.getForwarderAddress(), FORWARDER);
-        assertEq(reputation.vault(), address(vault));
+        assertTrue(reputation.isVault(address(vault)));
         assertTrue(vault.tokenAllowed(address(usdc)));
         assertEq(vault.pendingTimeout(), 1800);
     }
 
-    function test_SetVaultOnlyOnce() public {
-        vm.expectRevert(ICreatorReputation.VaultAlreadySet.selector);
-        reputation.setVault(address(1));
+    function test_AddVaultTwiceReverts() public {
+        vm.expectRevert(ICreatorReputation.InvalidVault.selector);
+        reputation.addVault(address(vault));
     }
 
     /// Vector = keccak256(encodePacked(uint256 1, address 0x…dEaD))[:8]; pinned identically in packages/shared tests.

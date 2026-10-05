@@ -41,7 +41,7 @@ contract AuditRegressionsTest is Test {
         mockForwarder = new PermissionlessForwarder();
         reputation = new CreatorReputation();
         vault = new CampaignVault(address(mockForwarder), reputation, 1800, 1800);
-        reputation.setVault(address(vault));
+        reputation.addVault(address(vault));
         usdc = new MockUSDC();
         vault.setTokenAllowed(address(usdc), true);
         vault.setReportTransmitter(oracle);
@@ -376,5 +376,86 @@ contract AuditRegressionsTest is Test {
         s.payout = address(usdc);
         vm.expectRevert(ICampaignVault.InvalidPayout.selector);
         vault.setPayoutAddressWithSig(s, "");
+    }
+
+    // ─────────────── Decision B: Reputation survives a vault redeploy ───────────────
+
+    function _newVault() internal returns (CampaignVault) {
+        return new CampaignVault(address(mockForwarder), reputation, 1800, 1800);
+    }
+
+    function test_Rep_AddVaultRequiresBackLink() public {
+        vm.expectRevert(ICreatorReputation.InvalidVault.selector);
+        reputation.addVault(address(0)); // no code
+        vm.expectRevert(ICreatorReputation.InvalidVault.selector);
+        reputation.addVault(attacker); // EOA
+        vm.expectRevert(ICreatorReputation.InvalidVault.selector);
+        reputation.addVault(address(usdc)); // a contract without reputation()
+        CampaignVault foreign = new CampaignVault(address(mockForwarder), new CreatorReputation(), 1800, 1800);
+        vm.expectRevert(ICreatorReputation.InvalidVault.selector);
+        reputation.addVault(address(foreign)); // built for another Reputation
+        vm.expectRevert(ICreatorReputation.InvalidVault.selector);
+        reputation.addVault(address(vault)); // already added
+    }
+
+    function test_Rep_OnlyOwnerAddsOrRemoves() public {
+        CampaignVault v2 = _newVault();
+        vm.startPrank(attacker);
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, attacker));
+        reputation.addVault(address(v2));
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, attacker));
+        reputation.removeVault(address(vault));
+        vm.stopPrank();
+        vm.expectRevert(ICreatorReputation.InvalidVault.selector);
+        reputation.removeVault(address(v2)); // never added
+    }
+
+    function test_Rep_OwnerCannotWriteStats() public {
+        vm.expectRevert(ICreatorReputation.NotVault.selector);
+        reputation.recordPaid(victim, brand, 1000, 1e6);
+        vm.expectRevert(ICreatorReputation.NotVault.selector);
+        reputation.recordRejection(victim);
+    }
+
+    function test_Rep_OldVaultKeepsWritingUntilRemoved() public {
+        CampaignVault v2 = _newVault();
+        reputation.addVault(address(v2));
+        assertTrue(reputation.isVault(address(vault)));
+        assertTrue(reputation.isVault(address(v2)));
+
+        // Both pass the vault check (recordPaid itself is still the I-2.4 stub, so it reverts after the check).
+        vm.prank(address(vault));
+        vm.expectRevert(bytes("TODO I-2.4"));
+        reputation.recordPaid(victim, brand, 1000, 1e6);
+
+        // After the old vault has released everything, it is removed and can no longer write.
+        reputation.removeVault(address(vault));
+        vm.prank(address(vault));
+        vm.expectRevert(ICreatorReputation.NotVault.selector);
+        reputation.recordPaid(victim, brand, 1000, 1e6);
+        vm.prank(address(v2));
+        vm.expectRevert(bytes("TODO I-2.4"));
+        reputation.recordPaid(victim, brand, 1000, 1e6);
+    }
+
+    function test_Rep_SwitchGoesThroughTimelock() public {
+        address[] memory proposers = new address[](1);
+        proposers[0] = address(this);
+        address[] memory anyone = new address[](1);
+        TimelockController timelock = new TimelockController(1 days, proposers, anyone, address(0));
+        reputation.transferOwnership(address(timelock));
+        CampaignVault v2 = _newVault();
+
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
+        reputation.addVault(address(v2));
+
+        bytes memory call = abi.encodeCall(ICreatorReputation.addVault, (address(v2)));
+        timelock.schedule(address(reputation), 0, call, bytes32(0), bytes32(0), 1 days);
+        vm.expectRevert();
+        timelock.execute(address(reputation), 0, call, bytes32(0), bytes32(0));
+        vm.warp(block.timestamp + 1 days);
+        vm.prank(makeAddr("anyExecutor"));
+        timelock.execute(address(reputation), 0, call, bytes32(0), bytes32(0));
+        assertTrue(reputation.isVault(address(v2)));
     }
 }

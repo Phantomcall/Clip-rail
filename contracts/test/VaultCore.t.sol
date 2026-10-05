@@ -30,7 +30,7 @@ contract VaultCoreTest is Test {
         clipper = vm.addr(clipperPk);
         reputation = new CreatorReputation();
         vault = new CampaignVault(FORWARDER, reputation, TIMEOUT, TIMEOUT);
-        reputation.setVault(address(vault));
+        reputation.addVault(address(vault));
         usdc = new MockUSDC();
         vault.setTokenAllowed(address(usdc), true);
         vault.setReportTransmitter(ORACLE);

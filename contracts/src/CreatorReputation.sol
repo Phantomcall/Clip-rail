@@ -4,28 +4,45 @@ pragma solidity ^0.8.28;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ICreatorReputation} from "./interfaces/ICreatorReputation.sol";
 
+/// @notice The one thing CreatorReputation asks of a vault: that it was built for this reputation contract.
+interface IReputationLinked {
+    function reputation() external view returns (address);
+}
+
 /// @title CreatorReputation
-/// @notice Append-only clipper stats written only by the CampaignVault on release or rejection.
+/// @notice Append-only clipper stats written only by authorised CampaignVaults on release or rejection.
+/// @dev The owner (a 24 h TimelockController on mainnet) can only add or remove vaults, so reputation survives a
+///      vault redeploy (I-5.2). Nobody can edit stats directly. An old vault keeps write access until it is removed,
+///      so its outstanding releases can still record payouts.
 contract CreatorReputation is ICreatorReputation, Ownable {
-    address public override vault;
+    mapping(address vault => bool) public override isVault;
 
     // slither-disable-next-line uninitialized-state (written by recordPaid/recordRejection in I-2.4)
     mapping(address clipper => Stats) internal _stats;
     mapping(address clipper => mapping(address brand => bool)) public paidBy;
 
     modifier onlyVault() {
-        if (msg.sender != vault) revert NotVault();
+        if (!isVault[msg.sender]) revert NotVault();
         _;
     }
 
     constructor() Ownable(msg.sender) {}
 
-    /// @notice One-time link to the vault (deploy script: Reputation → Vault → setVault).
-    function setVault(address vault_) external override onlyOwner {
-        if (vault != address(0)) revert VaultAlreadySet();
-        if (vault_ == address(0)) revert ZeroAddress();
-        vault = vault_;
-        emit VaultSet(vault_);
+    function addVault(address vault_) external override onlyOwner {
+        if (isVault[vault_] || vault_.code.length == 0) revert InvalidVault();
+        try IReputationLinked(vault_).reputation() returns (address linked) {
+            if (linked != address(this)) revert InvalidVault();
+        } catch {
+            revert InvalidVault();
+        }
+        isVault[vault_] = true;
+        emit VaultAdded(vault_);
+    }
+
+    function removeVault(address vault_) external override onlyOwner {
+        if (!isVault[vault_]) revert InvalidVault();
+        isVault[vault_] = false;
+        emit VaultRemoved(vault_);
     }
 
     /// @dev TODO I-2.4

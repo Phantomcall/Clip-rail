@@ -2278,6 +2278,38 @@ export const creatorReputationAbi = [
   },
   {
     "type": "function",
+    "name": "addVault",
+    "inputs": [
+      {
+        "name": "vault_",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "isVault",
+    "inputs": [
+      {
+        "name": "vault",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "owner",
     "inputs": [],
     "outputs": [
@@ -2356,14 +2388,7 @@ export const creatorReputationAbi = [
   },
   {
     "type": "function",
-    "name": "renounceOwnership",
-    "inputs": [],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "setVault",
+    "name": "removeVault",
     "inputs": [
       {
         "name": "vault_",
@@ -2371,6 +2396,13 @@ export const creatorReputationAbi = [
         "internalType": "address"
       }
     ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "renounceOwnership",
+    "inputs": [],
     "outputs": [],
     "stateMutability": "nonpayable"
   },
@@ -2458,19 +2490,6 @@ export const creatorReputationAbi = [
     "stateMutability": "nonpayable"
   },
   {
-    "type": "function",
-    "name": "vault",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
     "type": "event",
     "name": "OwnershipTransferred",
     "inputs": [
@@ -2528,7 +2547,7 @@ export const creatorReputationAbi = [
   },
   {
     "type": "event",
-    "name": "VaultSet",
+    "name": "VaultAdded",
     "inputs": [
       {
         "name": "vault",
@@ -2538,6 +2557,24 @@ export const creatorReputationAbi = [
       }
     ],
     "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "VaultRemoved",
+    "inputs": [
+      {
+        "name": "vault",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "InvalidVault",
+    "inputs": []
   },
   {
     "type": "error",
@@ -2565,16 +2602,6 @@ export const creatorReputationAbi = [
         "internalType": "address"
       }
     ]
-  },
-  {
-    "type": "error",
-    "name": "VaultAlreadySet",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "ZeroAddress",
-    "inputs": []
   }
 ] as const;
 

@@ -7,8 +7,9 @@ import {CampaignVault} from "../src/CampaignVault.sol";
 import {CreatorReputation} from "../src/CreatorReputation.sol";
 import {MockUSDC} from "../src/mocks/MockUSDC.sol";
 
-/// @notice Reputation → Vault → setVault → renounce Reputation ownership → allow tokens → pin the oracle wallet →
-///         guardian → (mainnet) hand the vault to a 24 h TimelockController (I-2.6, I-4.1, audit M-2).
+/// @notice Reputation → Vault → addVault → allow tokens → pin the oracle wallet → guardian → (mainnet) hand the
+///         vault AND Reputation to a 24 h TimelockController (I-2.6, I-4.1, audit M-2). Reputation's owner can
+///         only add or remove vaults, so reputation survives a vault redeploy; nobody can edit stats.
 ///
 /// Env: ORACLE_ADDRESS (required): the cliprail-oracle wallet that broadcasts `cre workflow simulate --broadcast`.
 ///      GUARDIAN (optional, default: deployer): may pause, never unpause.
@@ -42,8 +43,7 @@ contract Deploy is Script {
 
         CreatorReputation reputation = new CreatorReputation();
         CampaignVault vault = new CampaignVault(forwarder, reputation, timeout, timeout);
-        reputation.setVault(address(vault));
-        reputation.renounceOwnership(); // nothing left to administer: the vault is its only writer
+        reputation.addVault(address(vault));
 
         if (mainnet) {
             vault.setTokenAllowed(MAINNET_USDC, true);
@@ -66,6 +66,7 @@ contract Deploy is Script {
             address[] memory executors = new address[](1); // address(0) = anyone can execute after the delay
             TimelockController timelock = new TimelockController(delay, proposers, executors, address(0));
             vault.transferOwnership(address(timelock));
+            reputation.transferOwnership(address(timelock));
             console.log("timelock  ", address(timelock));
         }
 
