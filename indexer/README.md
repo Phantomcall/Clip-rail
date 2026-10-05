@@ -31,7 +31,7 @@ pnpm --filter @cliprail/indexer dev         # local indexer + GraphQL on :8080 (
 | `ENVIO_START_BLOCK_10143` | The vault's deploy block |
 | `ENVIO_RPC_URL_10143` | Optional RPC for the campaign-rules read (defaults to the public Monad RPC) |
 
-Until the deploy, `scripts/with-env.sh` fills in placeholders so codegen, typecheck and tests run.
+`scripts/with-env.sh` defaults to testnet v0 (vault `0xf9B2…Af45`, reputation `0x530E…Ac8d`, start block `68486852`).
 
 ## Notes
 

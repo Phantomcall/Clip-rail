@@ -6,7 +6,9 @@ const BRAND = "0x00000000000000000000000000000000000000b1";
 const CLIPPER = "0x00000000000000000000000000000000000000C1";
 const USDC = "0x534b2f3A21130d7a60830c2Df862319e593943A3";
 const tx = (n: number) => ({ hash: `0x${n.toString(16).padStart(64, "0")}` });
-const at = (n: number) => ({ number: n, timestamp: 1_760_000_000 + n * 60 });
+// Blocks sit just after the configured start block (testnet v0 deploy), or Envio skips them.
+const START = Number(process.env.ENVIO_START_BLOCK_10143 ?? 0);
+const at = (n: number) => ({ number: START + n, timestamp: 1_760_000_000 + n * 60 });
 
 /** Campaign 1: $150 budget, $1.00 per 1,000 views ($1,000 per 1M), $20 per clip. */
 const created = {
