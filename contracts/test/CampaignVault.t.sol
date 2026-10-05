@@ -34,14 +34,14 @@ contract CampaignVaultTest is Test {
         reputation.setVault(address(1));
     }
 
-    /// Vector = keccak256(encodePacked(uint256 1, address 0x…dEaD)), same as packages/shared claimCode().
+    /// Vector = keccak256(encodePacked(uint256 1, address 0x…dEaD))[:8]; pinned identically in packages/shared tests.
     function test_ClaimCodeMatchesShared() public view {
-        assertEq(vault.claimCode(1, 0x000000000000000000000000000000000000dEaD), "CR-09DAD212");
+        assertEq(vault.claimCode(1, 0x000000000000000000000000000000000000dEaD), "CR-09DAD21282658239");
     }
 
     function test_ClaimCodeShape(uint256 campaignId, address clipper) public view {
         bytes memory code = bytes(vault.claimCode(campaignId, clipper));
-        assertEq(code.length, 11);
+        assertEq(code.length, 19);
         assertEq(code[2], bytes1("-"));
     }
 

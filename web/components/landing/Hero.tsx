@@ -53,7 +53,7 @@ export function Hero({ totals }: { totals: Totals }) {
           <ShortThumb caption="bots earn nothing" views={12330} hue={195} />
         </div>
         <Chip className="-top-4 right-24">
-          <ShortsIcon /> Claim code <code className="font-mono text-accent">CR-3FA9B21C</code> found
+          <ShortsIcon /> Claim code <code className="font-mono text-accent">CR-3FA9B21C7D02E4A1</code> found
         </Chip>
         <Chip className="-top-4 left-28">
           <CheckCircle /> 2,310 views verified · <span className="text-money">+$2.31</span>

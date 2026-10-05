@@ -25,12 +25,16 @@ test("parseVideoId rejects junk", () => {
 
 test("claimCode format and determinism", () => {
   const a = claimCode(1n, "0x4f1e2d3c4b5a69788796a5b4c3d2e1f0a9b8c7d6");
-  assert.match(a, /^CR-[0-9A-F]{8}$/);
+  assert.match(a, /^CR-[0-9A-F]{16}$/);
   assert.equal(a, claimCode(1, "0x4f1e2d3c4b5a69788796a5b4c3d2e1f0a9b8c7d6"));
   assert.notEqual(a, claimCode(2n, "0x4f1e2d3c4b5a69788796a5b4c3d2e1f0a9b8c7d6"));
 });
 
+test("claimCode matches CampaignVault.claimCode() (vector pinned in contracts/test/CampaignVault.t.sol)", () => {
+  assert.equal(claimCode(1n, "0x000000000000000000000000000000000000dEaD"), "CR-09DAD21282658239");
+});
+
 test("descriptionHasCode is case-insensitive", () => {
-  assert.ok(descriptionHasCode("great clip! cr-3fa9b21c #shorts", "CR-3FA9B21C"));
-  assert.ok(!descriptionHasCode("no code here", "CR-3FA9B21C"));
+  assert.ok(descriptionHasCode("great clip! cr-3fa9b21c7d02e4a1 #shorts", "CR-3FA9B21C7D02E4A1"));
+  assert.ok(!descriptionHasCode("no code here", "CR-3FA9B21C7D02E4A1"));
 });

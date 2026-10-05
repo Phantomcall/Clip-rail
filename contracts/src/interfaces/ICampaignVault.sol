@@ -24,7 +24,8 @@ interface ICampaignVault {
     /// @dev ClipRejected reasons
     enum RejectReason {
         NoOwnership, // pendingTimeout passed without OWNERSHIP_OK + publishedAt ≥ startsAt
-        BrandRejected // resolve(clipId, true)
+        BrandRejected, // resolve(clipId, true)
+        DuplicateVideo // another clip already proved ownership of this video
     }
 
     /// @dev ReportEntrySkipped reasons
@@ -32,7 +33,9 @@ interface ICampaignVault {
         UnknownClip,
         CampaignClosed,
         Paused,
-        NotReportable // Rejected / Ended / Flagged
+        NotReportable, // Rejected / Ended / Flagged
+        DuplicateEntry, // clip already updated in this report
+        Unavailable // unavailable strike; the clip ends after UNAVAILABLE_STRIKES in a row
     }
 
     struct CampaignParams {
@@ -156,6 +159,8 @@ interface ICampaignVault {
 
     event PayoutAddressSet(address indexed clipper, address indexed payout);
     event TokenAllowed(address indexed token, bool allowed);
+    event ReportTransmitterSet(address indexed transmitter);
+    event GuardianSet(address indexed guardian);
 
     // ─────────────────────────── Errors ───────────────────────────
 
@@ -176,6 +181,14 @@ interface ICampaignVault {
     error NotFlaggable();
     error NotFlagged();
     error FlagNotExpired();
+    error ReportsNotAuthorized();
+    error UnauthorizedTransmitter(address origin, address expected);
+    error RoundGapTooLarge(uint64 round, uint64 lastRound);
+    error TooManyPending();
+    error NotPending();
+    error PendingNotExpired();
+    error InvalidPayout();
+    error NotGuardian();
 
     // ─────────────────────────── Brand ───────────────────────────
 
@@ -199,11 +212,18 @@ interface ICampaignVault {
 
     function release(uint256[] calldata clipIds) external;
     function autoResolve(uint256 clipId) external;
+    /// @notice Rejects a Pending clip whose pendingTimeout has passed without proven ownership.
+    function expirePending(uint256 clipId) external;
 
     // ─────────────────────────── Owner ───────────────────────────
 
     function setTokenAllowed(address token, bool allowed) external;
+    /// @notice Owner or guardian can pause; only the owner can unpause.
     function setPaused(bool paused) external;
+    /// @notice While non-zero, reports are accepted only when tx.origin is this address (the oracle wallet that
+    ///         broadcasts through the permissionless mock forwarder). Set to zero only with workflow identity set.
+    function setReportTransmitter(address transmitter) external;
+    function setGuardian(address guardian) external;
 
     // ─────────────────────────── Views ───────────────────────────
 
@@ -221,4 +241,6 @@ interface ICampaignVault {
     function tokenAllowed(address token) external view returns (bool);
     function pendingTimeout() external view returns (uint64);
     function resolveWindow() external view returns (uint64);
+    function reportTransmitter() external view returns (address);
+    function guardian() external view returns (address);
 }

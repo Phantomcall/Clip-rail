@@ -68,6 +68,32 @@ export const campaignVaultAbi = [
   },
   {
     "type": "function",
+    "name": "MAX_PENDING_PER_CLIPPER",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "MAX_ROUND_GAP",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "REGISTER_CLIP_TYPEHASH",
     "inputs": [],
     "outputs": [
@@ -88,6 +114,19 @@ export const campaignVaultAbi = [
         "name": "",
         "type": "bytes32",
         "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "UNAVAILABLE_STRIKES",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
       }
     ],
     "stateMutability": "view"
@@ -478,6 +517,19 @@ export const campaignVaultAbi = [
   },
   {
     "type": "function",
+    "name": "expirePending",
+    "inputs": [
+      {
+        "name": "clipId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "expiredFlags",
     "inputs": [
       {
@@ -787,6 +839,19 @@ export const campaignVaultAbi = [
   },
   {
     "type": "function",
+    "name": "guardian",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "lastRound",
     "inputs": [],
     "outputs": [
@@ -1014,6 +1079,19 @@ export const campaignVaultAbi = [
   },
   {
     "type": "function",
+    "name": "reportTransmitter",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "reputation",
     "inputs": [],
     "outputs": [
@@ -1110,6 +1188,19 @@ export const campaignVaultAbi = [
   },
   {
     "type": "function",
+    "name": "setGuardian",
+    "inputs": [
+      {
+        "name": "guardian_",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "setPaused",
     "inputs": [
       {
@@ -1156,6 +1247,19 @@ export const campaignVaultAbi = [
         "name": "sig",
         "type": "bytes",
         "internalType": "bytes"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setReportTransmitter",
+    "inputs": [
+      {
+        "name": "transmitter",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "outputs": [],
@@ -1563,6 +1667,19 @@ export const campaignVaultAbi = [
   },
   {
     "type": "event",
+    "name": "GuardianSet",
+    "inputs": [
+      {
+        "name": "guardian",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "OwnershipTransferred",
     "inputs": [
       {
@@ -1652,6 +1769,19 @@ export const campaignVaultAbi = [
         "type": "uint8",
         "indexed": false,
         "internalType": "uint8"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ReportTransmitterSet",
+    "inputs": [
+      {
+        "name": "transmitter",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
       }
     ],
     "anonymous": false
@@ -1881,6 +2011,11 @@ export const campaignVaultAbi = [
   },
   {
     "type": "error",
+    "name": "InvalidPayout",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "InvalidSender",
     "inputs": [
       {
@@ -1959,7 +2094,17 @@ export const campaignVaultAbi = [
   },
   {
     "type": "error",
+    "name": "NotGuardian",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "NotImplemented",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotPending",
     "inputs": []
   },
   {
@@ -1986,8 +2131,34 @@ export const campaignVaultAbi = [
   },
   {
     "type": "error",
+    "name": "PendingNotExpired",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "ReentrancyGuardReentrantCall",
     "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ReportsNotAuthorized",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "RoundGapTooLarge",
+    "inputs": [
+      {
+        "name": "round",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "lastRound",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ]
   },
   {
     "type": "error",
@@ -2036,6 +2207,27 @@ export const campaignVaultAbi = [
     "type": "error",
     "name": "TokenNotAllowed",
     "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "TooManyPending",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "UnauthorizedTransmitter",
+    "inputs": [
+      {
+        "name": "origin",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "expected",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
   },
   {
     "type": "error",

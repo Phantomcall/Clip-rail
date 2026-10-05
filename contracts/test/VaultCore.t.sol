@@ -11,6 +11,7 @@ import {ReceiverTemplate} from "../src/cre/ReceiverTemplate.sol";
 
 contract VaultCoreTest is Test {
     address constant FORWARDER = address(0xF0);
+    address constant ORACLE = address(0x0AC1E);
     uint64 constant TIMEOUT = 1800;
     uint64 constant T0 = 1_000_000;
 
@@ -32,6 +33,7 @@ contract VaultCoreTest is Test {
         reputation.setVault(address(vault));
         usdc = new MockUSDC();
         vault.setTokenAllowed(address(usdc), true);
+        vault.setReportTransmitter(ORACLE);
     }
 
     // ─────────────────────────── helpers ───────────────────────────
@@ -112,7 +114,7 @@ contract VaultCoreTest is Test {
     }
 
     function _report(ICampaignVault.ClipUpdate[] memory us) internal {
-        vm.prank(FORWARDER);
+        vm.prank(FORWARDER, ORACLE);
         vault.onReport("", abi.encode(++round, us));
     }
 
@@ -255,7 +257,7 @@ contract VaultCoreTest is Test {
         assertEq(c.clipper, clipper);
         assertEq(uint8(c.status), uint8(ICampaignVault.ClipStatus.Pending));
         assertEq(c.registeredAt, T0);
-        assertEq(vault.clipIdByVideo(keccak256("dQw4w9WgXcQ")), clipId);
+        assertEq(vault.clipIdByVideo(keccak256("dQw4w9WgXcQ")), 0); // reserved only once ownership is proven
         assertEq(vault.watchListLength(), 1);
     }
 
@@ -309,10 +311,21 @@ contract VaultCoreTest is Test {
         vault.registerClipWithSig(_req(b, "aaaaaaaaaaa", 0, deadline), sig);
     }
 
-    function test_Register_DuplicateVideoAcrossCampaigns() public {
+    function test_Register_VideoReservedOnlyOnActivation() public {
         uint256 a = _create(_params());
         uint256 b = _create(_params());
-        _register(a, "dQw4w9WgXcQ");
+        uint256 first = _register(a, "dQw4w9WgXcQ");
+        uint256 second = _register(b, "dQw4w9WgXcQ"); // allowed while nobody has proven ownership
+        assertEq(vault.clipIdByVideo(keccak256("dQw4w9WgXcQ")), 0);
+
+        ICampaignVault.ClipUpdate[] memory us = new ICampaignVault.ClipUpdate[](2);
+        us[0] = _upd(first, 100, 10, 1);
+        us[1] = _upd(second, 100, 10, 1);
+        vm.expectEmit(address(vault));
+        emit ICampaignVault.ClipRejected(second, uint8(ICampaignVault.RejectReason.DuplicateVideo));
+        _report(us);
+        assertEq(vault.clipIdByVideo(keccak256("dQw4w9WgXcQ")), first);
+
         vm.prank(clipper);
         vm.expectRevert(ICampaignVault.VideoAlreadyRegistered.selector);
         vault.registerClip(b, "dQw4w9WgXcQ");
@@ -383,7 +396,7 @@ contract VaultCoreTest is Test {
 
     function test_Report_StaleOrEqualRoundReverts() public {
         _report(new ICampaignVault.ClipUpdate[](0)); // round 1
-        vm.startPrank(FORWARDER);
+        vm.startPrank(FORWARDER, ORACLE);
         vm.expectRevert(abi.encodeWithSelector(ICampaignVault.StaleRound.selector, 1, 1));
         vault.onReport("", abi.encode(uint64(1), new ICampaignVault.ClipUpdate[](0)));
         vm.expectRevert(abi.encodeWithSelector(ICampaignVault.StaleRound.selector, 0, 1));
@@ -451,13 +464,16 @@ contract VaultCoreTest is Test {
         assertEq(vault.watchListLength(), 0);
     }
 
-    function test_Unavailable_EndsPendingAndActive() public {
+    function test_Unavailable_EndsPendingAndActiveAfterStrikes() public {
         uint256 id = _create(_params());
         uint256 a = _register(id, "aaaaaaaaaaa");
         uint256 b = _activeClip(id, "bbbbbbbbbbb");
         ICampaignVault.ClipUpdate[] memory us = new ICampaignVault.ClipUpdate[](2);
         us[0] = _upd(a, 0, 0, 2);
         us[1] = _upd(b, 9000, 900, 3);
+        _report(us);
+        _report(us);
+        assertEq(uint8(vault.getClip(b).status), uint8(ICampaignVault.ClipStatus.Active)); // 2 strikes: still alive
         _report(us);
         assertEq(uint8(vault.getClip(a).status), uint8(ICampaignVault.ClipStatus.Ended));
         assertEq(uint8(vault.getClip(b).status), uint8(ICampaignVault.ClipStatus.Ended));
@@ -619,7 +635,9 @@ contract VaultCoreTest is Test {
         uint256 id = _create(_params());
         uint256 a = _activeClip(id, "aaaaaaaaaaa");
         _activeClip(id, "bbbbbbbbbbb");
-        _report1(_upd(a, 0, 0, 2)); // a ends
+        _report1(_upd(a, 0, 0, 2));
+        _report1(_upd(a, 0, 0, 2));
+        _report1(_upd(a, 0, 0, 2)); // a ends after 3 strikes
         assertEq(vault.activeClips(0, 10).length, 1);
         vm.warp(T0 + 30 days + 1);
         assertEq(vault.activeClips(0, 10).length, 0);

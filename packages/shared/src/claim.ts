@@ -6,12 +6,13 @@ import { encodePacked, keccak256 } from "viem";
 
 /**
  * Claim code a clipper puts in the Short's description to prove ownership.
- * "CR-" + first 8 hex chars (upper case) of keccak256(abi.encodePacked(uint256 campaignId, address clipper)).
+ * "CR-" + first 16 hex chars (upper case) of keccak256(abi.encodePacked(uint256 campaignId, address clipper)).
+ * 64 bits, so nobody can grind an address whose code matches another clipper's (8 chars took ~20 min on a laptop).
  * Must stay identical to CampaignVault.claimCode() and the CRE workflow.
  */
 export function claimCode(campaignId: bigint | number | string, clipper: `0x${string}`): string {
   const hash = keccak256(encodePacked(["uint256", "address"], [BigInt(campaignId), clipper]));
-  return `CR-${hash.slice(2, 10).toUpperCase()}`;
+  return `CR-${hash.slice(2, 18).toUpperCase()}`;
 }
 
 /** Case-insensitive check that a description contains the claim code. */
