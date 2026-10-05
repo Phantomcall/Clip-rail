@@ -67,7 +67,15 @@ Envio HyperIndex ◀── events (receipts, payouts, flags) ── Next.js app 
 
 ## Contracts
 
-_Addresses on testnet (10143) and mainnet (143), verified links, function table and invariants: added by Isaac (I-8.3)._
+**Monad testnet (10143), v0.** Verified on MonadVision. Source of truth: `packages/abi/addresses.json`.
+
+| Contract | Address |
+|---|---|
+| CampaignVault | [`0xf9B2B301B94Aa534a872f0e54fAAAA319061Af45`](https://testnet.monadvision.com/address/0xf9B2B301B94Aa534a872f0e54fAAAA319061Af45) |
+| CreatorReputation | [`0x530E1171f7b49E20A567376671f3Fb72f8dcAc8d`](https://testnet.monadvision.com/address/0x530E1171f7b49E20A567376671f3Fb72f8dcAc8d) |
+| MockUSDC | [`0x9a60703A756c7936180BC4BdfA2323355cBd984f`](https://testnet.monadvision.com/address/0x9a60703A756c7936180BC4BdfA2323355cBd984f) |
+
+_Mainnet (143) addresses, function table and invariants: added by Isaac (I-8.3)._
 
 ## Oracle (Chainlink CRE)
 
@@ -79,9 +87,17 @@ _Mera account layer, relayer design, supported browsers: added by David (D-8.3).
 
 ## Indexer (Envio)
 
-`indexer/schema.graphql` defines Campaign, Clip, Clipper, Receipt (one per `ViewsVerified` event), Payout, Flag, Totals and
-DailyStat. It powers every read-only screen: campaign feed and pages, clipper dashboard, brand console, profiles,
-leaderboard and landing-page totals.
+Envio HyperIndex 3 mirrors `CampaignVault` and `CreatorReputation` into the entities in `indexer/schema.graphql`: Campaign,
+Clip, Clipper, Receipt (one per `ViewsVerified` event), Payout, Flag, Totals and DailyStat. It powers every read-only
+screen: the campaign feed and pages, clipper dashboard, brand console, profiles, leaderboard and landing-page totals.
+
+- **Handlers** (`indexer/src/handlers/`) keep the same books as the vault. Paid views use the vault's tranche formula, so
+  a capped payout never credits more views than it paid for; only a brand reject counts against a clipper's reputation.
+- **Live screens:** with `NEXT_PUBLIC_ENVIO_GRAPHQL_URL` set, dashboards poll every 4 s and server pages re-render every
+  5 s while open. Clip titles come from YouTube's public oEmbed; money and view counts only ever come from the chain.
+- **Tests** (`indexer/test/`) replay simulated event sequences through Envio's test indexer: the capped-payout worked
+  example and a flag → reject → release → payout lifecycle.
+- **Testnet v0** defaults: start block `68486852` (the Reputation deploy; the vault followed 4 blocks later).
 
 ## Fraud model and limits
 
@@ -96,9 +112,10 @@ _Clippers, verified views, USDC paid, payout transaction links: added Oct 11._
 ```bash
 # This machine needs IPv4-first networking for npm:
 export NODE_OPTIONS="--dns-result-order=ipv4first --network-family-autoselection-attempt-timeout=5000"
-pnpm install
-pnpm --filter @cliprail/shared test
+pnpm install                             # CI uses pnpm 11
+pnpm test                                # shared, oracle and indexer tests
 pnpm --filter @cliprail/web dev          # http://localhost:3000
+(cd contracts && forge test)             # contracts
 # Mock signed-in session (no contracts needed):
 NEXT_PUBLIC_MOCK_AUTH=clipper pnpm --filter @cliprail/web dev
 ```
