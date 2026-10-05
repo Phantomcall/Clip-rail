@@ -43,7 +43,8 @@ contract Deploy is Script {
         uint256 delay = vm.envOr("TIMELOCK_DELAY", mainnet ? uint256(1 days) : uint256(0));
 
         vm.startBroadcast();
-        address deployer = msg.sender;
+        // The broadcasting wallet. Forge rejects msg.sender inside a broadcast when deploying with --account.
+        (, address deployer,) = vm.readCallers();
         address guardian = vm.envOr("GUARDIAN", deployer);
 
         CreatorReputation reputation = new CreatorReputation();
