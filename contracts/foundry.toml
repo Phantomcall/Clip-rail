@@ -11,6 +11,8 @@ via_ir = true # ViewsVerified has 9 fields; legacy codegen runs out of stack
 # Sourcify / Monadscan verification (PRD §6)
 bytecode_hash = "none"
 use_literal_content = true
+# Deploy.s.sol writes deployed addresses here
+fs_permissions = [{ access = "read-write", path = "../packages/abi/addresses.json" }]
 remappings = [
   "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
   "forge-std/=lib/forge-std/src/",

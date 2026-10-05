@@ -1,8 +1,8 @@
 {
   "10143": {
-    "vault": null,
-    "reputation": null,
-    "mockUsdc": null,
+    "vault": "0xf9B2B301B94Aa534a872f0e54fAAAA319061Af45",
+    "reputation": "0x530E1171f7b49E20A567376671f3Fb72f8dcAc8d",
+    "mockUsdc": "0x9a60703A756c7936180BC4BdfA2323355cBd984f",
     "usdc": "0x534b2f3A21130d7a60830c2Df862319e593943A3",
     "ausd": "0xa9012a055bd4e0eDfF8Ce09f960291C09D5322dC",
     "creForwarderMock": "0xB9F79d863261869B234c481D1f9A7af84AeAd192",
