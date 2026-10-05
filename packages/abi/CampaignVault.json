@@ -95,19 +95,19 @@
     "name": "activeClips",
     "inputs": [
       {
-        "name": "",
+        "name": "offset",
         "type": "uint256",
         "internalType": "uint256"
       },
       {
-        "name": "",
+        "name": "limit",
         "type": "uint256",
         "internalType": "uint256"
       }
     ],
     "outputs": [
       {
-        "name": "",
+        "name": "rows",
         "type": "tuple[]",
         "internalType": "struct ICampaignVault.ActiveClip[]",
         "components": [
@@ -149,7 +149,7 @@
         ]
       }
     ],
-    "stateMutability": "pure"
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -162,7 +162,7 @@
       }
     ],
     "outputs": [],
-    "stateMutability": "nonpayable"
+    "stateMutability": "pure"
   },
   {
     "type": "function",
@@ -244,14 +244,14 @@
       }
     ],
     "outputs": [],
-    "stateMutability": "nonpayable"
+    "stateMutability": "pure"
   },
   {
     "type": "function",
     "name": "createCampaign",
     "inputs": [
       {
-        "name": "",
+        "name": "p",
         "type": "tuple",
         "internalType": "struct ICampaignVault.CampaignParams",
         "components": [
@@ -327,7 +327,7 @@
     "name": "createCampaignWithPermit",
     "inputs": [
       {
-        "name": "",
+        "name": "p",
         "type": "tuple",
         "internalType": "struct ICampaignVault.CampaignParams",
         "components": [
@@ -389,22 +389,22 @@
         ]
       },
       {
-        "name": "",
+        "name": "deadline",
         "type": "uint256",
         "internalType": "uint256"
       },
       {
-        "name": "",
+        "name": "v",
         "type": "uint8",
         "internalType": "uint8"
       },
       {
-        "name": "",
+        "name": "r",
         "type": "bytes32",
         "internalType": "bytes32"
       },
       {
-        "name": "",
+        "name": "s",
         "type": "bytes32",
         "internalType": "bytes32"
       }
@@ -514,7 +514,7 @@
       }
     ],
     "outputs": [],
-    "stateMutability": "nonpayable"
+    "stateMutability": "pure"
   },
   {
     "type": "function",
@@ -896,12 +896,12 @@
     "name": "registerClip",
     "inputs": [
       {
-        "name": "",
+        "name": "campaignId",
         "type": "uint256",
         "internalType": "uint256"
       },
       {
-        "name": "",
+        "name": "videoId",
         "type": "string",
         "internalType": "string"
       }
@@ -920,7 +920,7 @@
     "name": "registerClipWithSig",
     "inputs": [
       {
-        "name": "",
+        "name": "r",
         "type": "tuple",
         "internalType": "struct ICampaignVault.RegisterClip",
         "components": [
@@ -952,7 +952,7 @@
         ]
       },
       {
-        "name": "",
+        "name": "sig",
         "type": "bytes",
         "internalType": "bytes"
       }
@@ -1001,7 +1001,7 @@
       }
     ],
     "outputs": [],
-    "stateMutability": "nonpayable"
+    "stateMutability": "pure"
   },
   {
     "type": "function",
@@ -1039,7 +1039,7 @@
       }
     ],
     "outputs": [],
-    "stateMutability": "nonpayable"
+    "stateMutability": "pure"
   },
   {
     "type": "function",
@@ -1124,7 +1124,7 @@
     "name": "setPayoutAddressWithSig",
     "inputs": [
       {
-        "name": "",
+        "name": "s",
         "type": "tuple",
         "internalType": "struct ICampaignVault.SetPayout",
         "components": [
@@ -1151,7 +1151,7 @@
         ]
       },
       {
-        "name": "",
+        "name": "sig",
         "type": "bytes",
         "internalType": "bytes"
       }
@@ -1220,12 +1220,12 @@
     "name": "topUp",
     "inputs": [
       {
-        "name": "",
+        "name": "campaignId",
         "type": "uint256",
         "internalType": "uint256"
       },
       {
-        "name": "",
+        "name": "amount",
         "type": "uint128",
         "internalType": "uint128"
       }
@@ -1245,6 +1245,19 @@
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "watchListLength",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "event",
@@ -1973,6 +1986,17 @@
     "type": "error",
     "name": "ReentrancyGuardReentrantCall",
     "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SafeERC20FailedOperation",
+    "inputs": [
+      {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
   },
   {
     "type": "error",
