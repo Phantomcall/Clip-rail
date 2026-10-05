@@ -81,7 +81,7 @@ export default function Styleguide() {
       </Section>
 
       <Section title="Claim code">
-        <ClaimCodeBox code="CR-3FA9B21C" />
+        <ClaimCodeBox code="CR-3FA9B21C7D02E4A1" />
       </Section>
 
       <Section title="Stepper">

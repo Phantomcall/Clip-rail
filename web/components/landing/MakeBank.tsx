@@ -36,7 +36,7 @@ function RegisterMini() {
     <div className="w-full max-w-[16rem] force-light rounded-2xl bg-white p-4 shadow-xl">
       <div className="text-[10px] font-medium tracking-wider text-muted uppercase">Your claim code</div>
       <div className="mt-1 flex items-center justify-between">
-        <code className="font-mono text-lg font-bold">CR-3FA9B21C</code>
+        <code className="font-mono text-lg font-bold">CR-3FA9B21C7D02E4A1</code>
         <span className="rounded-md bg-surface-2 px-2 py-1 text-[10px] font-semibold">Copy</span>
       </div>
       <div className="mt-3 rounded-lg border border-line px-2.5 py-2 text-[11px] text-muted">youtube.com/shorts/Ab3dEf6hIj9</div>

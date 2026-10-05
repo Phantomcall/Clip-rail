@@ -68,6 +68,32 @@ export const campaignVaultAbi = [
   },
   {
     "type": "function",
+    "name": "MAX_PENDING_PER_CLIPPER",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "MAX_ROUND_GAP",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "REGISTER_CLIP_TYPEHASH",
     "inputs": [],
     "outputs": [
@@ -94,22 +120,35 @@ export const campaignVaultAbi = [
   },
   {
     "type": "function",
+    "name": "UNAVAILABLE_STRIKES",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "activeClips",
     "inputs": [
       {
-        "name": "",
+        "name": "offset",
         "type": "uint256",
         "internalType": "uint256"
       },
       {
-        "name": "",
+        "name": "limit",
         "type": "uint256",
         "internalType": "uint256"
       }
     ],
     "outputs": [
       {
-        "name": "",
+        "name": "rows",
         "type": "tuple[]",
         "internalType": "struct ICampaignVault.ActiveClip[]",
         "components": [
@@ -151,7 +190,7 @@ export const campaignVaultAbi = [
         ]
       }
     ],
-    "stateMutability": "pure"
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -164,7 +203,7 @@ export const campaignVaultAbi = [
       }
     ],
     "outputs": [],
-    "stateMutability": "nonpayable"
+    "stateMutability": "pure"
   },
   {
     "type": "function",
@@ -246,14 +285,14 @@ export const campaignVaultAbi = [
       }
     ],
     "outputs": [],
-    "stateMutability": "nonpayable"
+    "stateMutability": "pure"
   },
   {
     "type": "function",
     "name": "createCampaign",
     "inputs": [
       {
-        "name": "",
+        "name": "p",
         "type": "tuple",
         "internalType": "struct ICampaignVault.CampaignParams",
         "components": [
@@ -329,7 +368,7 @@ export const campaignVaultAbi = [
     "name": "createCampaignWithPermit",
     "inputs": [
       {
-        "name": "",
+        "name": "p",
         "type": "tuple",
         "internalType": "struct ICampaignVault.CampaignParams",
         "components": [
@@ -391,22 +430,22 @@ export const campaignVaultAbi = [
         ]
       },
       {
-        "name": "",
+        "name": "deadline",
         "type": "uint256",
         "internalType": "uint256"
       },
       {
-        "name": "",
+        "name": "v",
         "type": "uint8",
         "internalType": "uint8"
       },
       {
-        "name": "",
+        "name": "r",
         "type": "bytes32",
         "internalType": "bytes32"
       },
       {
-        "name": "",
+        "name": "s",
         "type": "bytes32",
         "internalType": "bytes32"
       }
@@ -478,6 +517,19 @@ export const campaignVaultAbi = [
   },
   {
     "type": "function",
+    "name": "expirePending",
+    "inputs": [
+      {
+        "name": "clipId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "expiredFlags",
     "inputs": [
       {
@@ -502,6 +554,30 @@ export const campaignVaultAbi = [
   },
   {
     "type": "function",
+    "name": "expiredPending",
+    "inputs": [
+      {
+        "name": "offset",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "limit",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "ids",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "flag",
     "inputs": [
       {
@@ -516,7 +592,7 @@ export const campaignVaultAbi = [
       }
     ],
     "outputs": [],
-    "stateMutability": "nonpayable"
+    "stateMutability": "pure"
   },
   {
     "type": "function",
@@ -787,6 +863,19 @@ export const campaignVaultAbi = [
   },
   {
     "type": "function",
+    "name": "guardian",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "lastRound",
     "inputs": [],
     "outputs": [
@@ -898,12 +987,12 @@ export const campaignVaultAbi = [
     "name": "registerClip",
     "inputs": [
       {
-        "name": "",
+        "name": "campaignId",
         "type": "uint256",
         "internalType": "uint256"
       },
       {
-        "name": "",
+        "name": "videoId",
         "type": "string",
         "internalType": "string"
       }
@@ -922,7 +1011,7 @@ export const campaignVaultAbi = [
     "name": "registerClipWithSig",
     "inputs": [
       {
-        "name": "",
+        "name": "r",
         "type": "tuple",
         "internalType": "struct ICampaignVault.RegisterClip",
         "components": [
@@ -954,7 +1043,7 @@ export const campaignVaultAbi = [
         ]
       },
       {
-        "name": "",
+        "name": "sig",
         "type": "bytes",
         "internalType": "bytes"
       }
@@ -1003,7 +1092,7 @@ export const campaignVaultAbi = [
       }
     ],
     "outputs": [],
-    "stateMutability": "nonpayable"
+    "stateMutability": "pure"
   },
   {
     "type": "function",
@@ -1011,6 +1100,19 @@ export const campaignVaultAbi = [
     "inputs": [],
     "outputs": [],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "reportTransmitter",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -1041,7 +1143,7 @@ export const campaignVaultAbi = [
       }
     ],
     "outputs": [],
-    "stateMutability": "nonpayable"
+    "stateMutability": "pure"
   },
   {
     "type": "function",
@@ -1110,6 +1212,19 @@ export const campaignVaultAbi = [
   },
   {
     "type": "function",
+    "name": "setGuardian",
+    "inputs": [
+      {
+        "name": "guardian_",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "setPaused",
     "inputs": [
       {
@@ -1126,7 +1241,7 @@ export const campaignVaultAbi = [
     "name": "setPayoutAddressWithSig",
     "inputs": [
       {
-        "name": "",
+        "name": "s",
         "type": "tuple",
         "internalType": "struct ICampaignVault.SetPayout",
         "components": [
@@ -1153,9 +1268,22 @@ export const campaignVaultAbi = [
         ]
       },
       {
-        "name": "",
+        "name": "sig",
         "type": "bytes",
         "internalType": "bytes"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setReportTransmitter",
+    "inputs": [
+      {
+        "name": "transmitter",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "outputs": [],
@@ -1222,12 +1350,12 @@ export const campaignVaultAbi = [
     "name": "topUp",
     "inputs": [
       {
-        "name": "",
+        "name": "campaignId",
         "type": "uint256",
         "internalType": "uint256"
       },
       {
-        "name": "",
+        "name": "amount",
         "type": "uint128",
         "internalType": "uint128"
       }
@@ -1247,6 +1375,19 @@ export const campaignVaultAbi = [
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "watchListLength",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "event",
@@ -1550,6 +1691,19 @@ export const campaignVaultAbi = [
   },
   {
     "type": "event",
+    "name": "GuardianSet",
+    "inputs": [
+      {
+        "name": "guardian",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "OwnershipTransferred",
     "inputs": [
       {
@@ -1639,6 +1793,19 @@ export const campaignVaultAbi = [
         "type": "uint8",
         "indexed": false,
         "internalType": "uint8"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ReportTransmitterSet",
+    "inputs": [
+      {
+        "name": "transmitter",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
       }
     ],
     "anonymous": false
@@ -1868,6 +2035,11 @@ export const campaignVaultAbi = [
   },
   {
     "type": "error",
+    "name": "InvalidPayout",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "InvalidSender",
     "inputs": [
       {
@@ -1946,7 +2118,17 @@ export const campaignVaultAbi = [
   },
   {
     "type": "error",
+    "name": "NotGuardian",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "NotImplemented",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotPending",
     "inputs": []
   },
   {
@@ -1973,8 +2155,45 @@ export const campaignVaultAbi = [
   },
   {
     "type": "error",
+    "name": "PendingNotExpired",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "ReentrancyGuardReentrantCall",
     "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ReportsNotAuthorized",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "RoundGapTooLarge",
+    "inputs": [
+      {
+        "name": "round",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "lastRound",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "SafeERC20FailedOperation",
+    "inputs": [
+      {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
   },
   {
     "type": "error",
@@ -2015,6 +2234,27 @@ export const campaignVaultAbi = [
   },
   {
     "type": "error",
+    "name": "TooManyPending",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "UnauthorizedTransmitter",
+    "inputs": [
+      {
+        "name": "origin",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "expected",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
     "name": "UnknownClip",
     "inputs": []
   },
@@ -2035,6 +2275,38 @@ export const creatorReputationAbi = [
     "type": "constructor",
     "inputs": [],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "addVault",
+    "inputs": [
+      {
+        "name": "vault_",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "isVault",
+    "inputs": [
+      {
+        "name": "vault",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -2116,14 +2388,7 @@ export const creatorReputationAbi = [
   },
   {
     "type": "function",
-    "name": "renounceOwnership",
-    "inputs": [],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "setVault",
+    "name": "removeVault",
     "inputs": [
       {
         "name": "vault_",
@@ -2131,6 +2396,13 @@ export const creatorReputationAbi = [
         "internalType": "address"
       }
     ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "renounceOwnership",
+    "inputs": [],
     "outputs": [],
     "stateMutability": "nonpayable"
   },
@@ -2218,19 +2490,6 @@ export const creatorReputationAbi = [
     "stateMutability": "nonpayable"
   },
   {
-    "type": "function",
-    "name": "vault",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
     "type": "event",
     "name": "OwnershipTransferred",
     "inputs": [
@@ -2288,7 +2547,7 @@ export const creatorReputationAbi = [
   },
   {
     "type": "event",
-    "name": "VaultSet",
+    "name": "VaultAdded",
     "inputs": [
       {
         "name": "vault",
@@ -2298,6 +2557,24 @@ export const creatorReputationAbi = [
       }
     ],
     "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "VaultRemoved",
+    "inputs": [
+      {
+        "name": "vault",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "InvalidVault",
+    "inputs": []
   },
   {
     "type": "error",
@@ -2325,16 +2602,6 @@ export const creatorReputationAbi = [
         "internalType": "address"
       }
     ]
-  },
-  {
-    "type": "error",
-    "name": "VaultAlreadySet",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "ZeroAddress",
-    "inputs": []
   }
 ] as const;
 

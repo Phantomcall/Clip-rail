@@ -1,0 +1,6 @@
+{
+  "filter_paths": "lib/|test/|script/|src/cre/|src/mocks/",
+  "detectors_to_exclude": "timestamp",
+  "exclude_informational": true,
+  "exclude_optimization": true
+}

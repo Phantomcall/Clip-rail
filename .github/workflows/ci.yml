@@ -74,26 +74,52 @@ jobs:
         run: bun x cre-compile main.ts "$RUNNER_TEMP/oracle.wasm"
 
   contracts:
-    name: forge build and test
+    name: forge fmt, build, test (10k fuzz), ABI in sync
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: contracts
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Check for a Foundry project
-        id: foundry
-        run: echo "present=$([ -f contracts/foundry.toml ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
       - uses: foundry-rs/foundry-toolchain@v1
-        if: steps.foundry.outputs.present == 'true'
-      - name: forge build
-        if: steps.foundry.outputs.present == 'true'
-        working-directory: contracts
+        with:
+          version: v1.8.3 # pinned: fmt output and the compiler pipeline must match local
+      - name: forge fmt --check
+        run: forge fmt --check
+      - name: forge build (contract sizes)
         run: forge build --sizes
-      - name: forge test
-        if: steps.foundry.outputs.present == 'true'
-        working-directory: contracts
+      # FOUNDRY_PROFILE=ci: 10,000 fuzz runs and deeper invariant runs (PRD §9.1 F4).
+      - name: forge test (ci profile)
         run: forge test -vvv
-      - name: Skip (no contracts yet)
-        if: steps.foundry.outputs.present != 'true'
-        run: echo "contracts/foundry.toml not found; skipping until the Foundry project lands."
+        env:
+          FOUNDRY_PROFILE: ci
+      # packages/abi must be regenerated from the contracts, never edited by hand or left stale.
+      - name: ABI in packages/abi matches the contracts
+        run: |
+          ./scripts/export-abi.sh
+          git diff --exit-code -- ../packages/abi || { echo "::error::packages/abi is stale. Run contracts/scripts/export-abi.sh and commit."; exit 1; }
+
+  slither:
+    name: slither (fail on medium or higher)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: contracts
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.8.3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install slither-analyzer==0.11.6
+      # Intentional findings are suppressed inline with a reason (slither-disable-next-line); see slither.config.json.
+      - name: slither
+        run: slither . --config-file slither.config.json --fail-medium

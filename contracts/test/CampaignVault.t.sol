@@ -17,31 +17,31 @@ contract CampaignVaultTest is Test {
     function setUp() public {
         reputation = new CreatorReputation();
         vault = new CampaignVault(FORWARDER, reputation, 1800, 1800);
-        reputation.setVault(address(vault));
+        reputation.addVault(address(vault));
         usdc = new MockUSDC();
         vault.setTokenAllowed(address(usdc), true);
     }
 
     function test_Wiring() public view {
         assertEq(vault.getForwarderAddress(), FORWARDER);
-        assertEq(reputation.vault(), address(vault));
+        assertTrue(reputation.isVault(address(vault)));
         assertTrue(vault.tokenAllowed(address(usdc)));
         assertEq(vault.pendingTimeout(), 1800);
     }
 
-    function test_SetVaultOnlyOnce() public {
-        vm.expectRevert(ICreatorReputation.VaultAlreadySet.selector);
-        reputation.setVault(address(1));
+    function test_AddVaultTwiceReverts() public {
+        vm.expectRevert(ICreatorReputation.InvalidVault.selector);
+        reputation.addVault(address(vault));
     }
 
-    /// Vector = keccak256(encodePacked(uint256 1, address 0x…dEaD)), same as packages/shared claimCode().
+    /// Vector = keccak256(encodePacked(uint256 1, address 0x…dEaD))[:8]; pinned identically in packages/shared tests.
     function test_ClaimCodeMatchesShared() public view {
-        assertEq(vault.claimCode(1, 0x000000000000000000000000000000000000dEaD), "CR-09DAD212");
+        assertEq(vault.claimCode(1, 0x000000000000000000000000000000000000dEaD), "CR-09DAD21282658239");
     }
 
     function test_ClaimCodeShape(uint256 campaignId, address clipper) public view {
         bytes memory code = bytes(vault.claimCode(campaignId, clipper));
-        assertEq(code.length, 11);
+        assertEq(code.length, 19);
         assertEq(code[2], bytes1("-"));
     }
 

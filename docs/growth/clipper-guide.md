@@ -9,7 +9,7 @@
 ## Steps
 1. Open the campaign link: **[campaign link]**
 2. Tap **Get my claim code** → **Create account with passkey** → confirm with Face ID or fingerprint.
-3. Copy your claim code (it looks like `CR-3FA9B21C`).
+3. Copy your claim code (it looks like `CR-3FA9B21C7D02E4A1`).
 4. Cut a **20–60 second vertical clip** from the source video. Hook in the first 2 seconds, captions on.
 5. Post it as a **YouTube Short**. Paste your claim code **anywhere in the description**.
 6. Back in Cliprail, paste your Short's link → **Check** → when all three ticks are green, tap **Register clip**.

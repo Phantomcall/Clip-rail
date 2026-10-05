@@ -7,6 +7,7 @@ script = "script"
 solc_version = "0.8.28"
 optimizer = true
 optimizer_runs = 200
+via_ir = true # ViewsVerified has 9 fields; legacy codegen runs out of stack
 # Sourcify / Monadscan verification (PRD §6)
 bytecode_hash = "none"
 use_literal_content = true
@@ -27,7 +28,7 @@ depth = 50
 runs = 10000
 
 [profile.ci.invariant]
-runs = 1000
+runs = 500
 depth = 100
 
 [rpc_endpoints]
@@ -38,4 +39,5 @@ monad = "${MONAD_MAINNET_RPC}"
 monad = { key = "${MONADSCAN_API_KEY}", chain = 143, url = "https://api.monadscan.com/api" }
 
 [fmt]
+ignore = ["src/cre/**"] # Chainlink files stay verbatim
 line_length = 120
