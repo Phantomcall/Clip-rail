@@ -75,7 +75,7 @@ export function JudgeSandbox() {
           <li>Live campaign: <Link href="/campaigns/1" className="text-accent-hover hover:underline">real clippers, real payouts</Link></li>
           <li>
             Vault contract ({NETWORK}):{" "}
-            {ADDR.vault ? <a href={addressUrl(ADDR.vault)} target="_blank" rel="noreferrer" className="font-mono text-accent-hover hover:underline">{ADDR.vault}</a> : <span className="text-muted">deploying soon</span>}
+            {ADDR.vault ? <a href={addressUrl(ADDR.vault)} target="_blank" rel="noreferrer" className="font-mono break-all text-accent-hover hover:underline">{ADDR.vault}</a> : <span className="text-muted">deploying soon</span>}
           </li>
           <li>Code: <a href="https://github.com/Phantomcall/Clip-rail" target="_blank" rel="noreferrer" className="text-accent-hover hover:underline">github.com/Phantomcall/Clip-rail</a></li>
         </ul>
