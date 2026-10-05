@@ -39,6 +39,12 @@ contract CampaignVaultTest is Test {
         assertEq(vault.claimCode(1, 0x000000000000000000000000000000000000dEaD), "CR-09DAD21282658239");
     }
 
+    /// David's vectors from the oracle side, at the 64-bit length; also pinned in packages/shared tests.
+    function test_ClaimCodeMatchesOracleVectors() public view {
+        assertEq(vault.claimCode(1, 0x1111111111111111111111111111111111111111), "CR-F3A32C19D9D554E9");
+        assertEq(vault.claimCode(42, 0x000000000000000000000000000000000000dEaD), "CR-BD9D77C0603F18F8");
+    }
+
     function test_ClaimCodeShape(uint256 campaignId, address clipper) public view {
         bytes memory code = bytes(vault.claimCode(campaignId, clipper));
         assertEq(code.length, 19);

@@ -32,6 +32,8 @@ test("claimCode format and determinism", () => {
 
 test("claimCode matches CampaignVault.claimCode() (vector pinned in contracts/test/CampaignVault.t.sol)", () => {
   assert.equal(claimCode(1n, "0x000000000000000000000000000000000000dEaD"), "CR-09DAD21282658239");
+  assert.equal(claimCode(1n, "0x1111111111111111111111111111111111111111"), "CR-F3A32C19D9D554E9");
+  assert.equal(claimCode(42n, "0x000000000000000000000000000000000000dEaD"), "CR-BD9D77C0603F18F8");
 });
 
 test("descriptionHasCode is case-insensitive", () => {

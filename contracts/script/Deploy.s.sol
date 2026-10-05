@@ -14,13 +14,16 @@ import {MockUSDC} from "../src/mocks/MockUSDC.sol";
 /// Env: ORACLE_ADDRESS (required): the cliprail-oracle wallet that broadcasts `cre workflow simulate --broadcast`.
 ///      GUARDIAN (optional, default: deployer): may pause, never unpause.
 ///      TIMELOCK_DELAY (optional, default: 86400 on mainnet, 0 = no timelock on testnet).
+///      PENDING_TIMEOUT / RESOLVE_WINDOW (optional, seconds; defaults: testnet 600 / 1800, mainnet 172800 / 172800).
+///      WRITE_ADDRESSES (optional, default: true): write the deployed addresses into packages/abi/addresses.json.
 ///      PROPOSER (optional, default: deployer): who may schedule and cancel owner actions. Use a team multisig on
 ///      mainnet. Anyone may execute a scheduled action once its delay has passed.
 ///
 /// Testnet:  ORACLE_ADDRESS=0x… forge script script/Deploy.s.sol --rpc-url monadTestnet --account cliprail-deployer --broadcast
 /// Mainnet rehearsal (I-3.6): anvil --fork-url https://rpc.monad.xyz, then --rpc-url http://localhost:8545
-/// TODO I-2.6: write addresses into packages/abi/addresses.json.
 contract Deploy is Script {
+    string constant ADDRESSES_JSON = "../packages/abi/addresses.json";
+
     // Testnet (10143)
     address constant TESTNET_FORWARDER_MOCK = 0xB9F79d863261869B234c481D1f9A7af84AeAd192;
     address constant TESTNET_USDC = 0x534b2f3A21130d7a60830c2Df862319e593943A3;
@@ -33,7 +36,9 @@ contract Deploy is Script {
     function run() external {
         bool mainnet = block.chainid == 143;
         address forwarder = mainnet ? MAINNET_FORWARDER_MOCK : TESTNET_FORWARDER_MOCK;
-        uint64 timeout = mainnet ? 172_800 : 1_800;
+        // Testnet: a 10-minute pending timeout so the judge sandbox can show a rejection.
+        uint64 pendingTimeout = uint64(vm.envOr("PENDING_TIMEOUT", mainnet ? uint256(172_800) : uint256(600)));
+        uint64 resolveWindow = uint64(vm.envOr("RESOLVE_WINDOW", mainnet ? uint256(172_800) : uint256(1_800)));
         address oracle = vm.envAddress("ORACLE_ADDRESS");
         uint256 delay = vm.envOr("TIMELOCK_DELAY", mainnet ? uint256(1 days) : uint256(0));
 
@@ -42,18 +47,19 @@ contract Deploy is Script {
         address guardian = vm.envOr("GUARDIAN", deployer);
 
         CreatorReputation reputation = new CreatorReputation();
-        CampaignVault vault = new CampaignVault(forwarder, reputation, timeout, timeout);
+        CampaignVault vault = new CampaignVault(forwarder, reputation, pendingTimeout, resolveWindow);
         reputation.addVault(address(vault));
 
+        address mockUsdc;
         if (mainnet) {
             vault.setTokenAllowed(MAINNET_USDC, true);
             vault.setTokenAllowed(MAINNET_AUSD, true);
         } else {
-            MockUSDC mock = new MockUSDC();
-            vault.setTokenAllowed(address(mock), true);
+            mockUsdc = address(new MockUSDC());
+            vault.setTokenAllowed(mockUsdc, true);
             vault.setTokenAllowed(TESTNET_USDC, true);
             vault.setTokenAllowed(TESTNET_AUSD, true);
-            console.log("mockUsdc  ", address(mock));
+            console.log("mockUsdc  ", mockUsdc);
         }
 
         // The mock forwarder is permissionless: only reports broadcast by our oracle wallet are accepted.
@@ -73,9 +79,23 @@ contract Deploy is Script {
         vm.stopBroadcast();
 
         console.log("chainId   ", block.chainid);
+        console.log("startBlock", block.number); // Envio start block (the deploy lands in this block or the next)
         console.log("reputation", address(reputation));
         console.log("vault     ", address(vault));
         console.log("oracle    ", oracle);
         console.log("guardian  ", guardian);
+        console.log("pendingTimeout", pendingTimeout);
+
+        if (vm.envOr("WRITE_ADDRESSES", true) && (block.chainid == 143 || block.chainid == 10143)) {
+            _writeAddress(".vault", address(vault));
+            _writeAddress(".reputation", address(reputation));
+            if (mockUsdc != address(0)) _writeAddress(".mockUsdc", mockUsdc);
+            console.log("wrote packages/abi/addresses.json");
+        }
+    }
+
+    function _writeAddress(string memory field, address value) internal {
+        string memory key = string.concat(".", vm.toString(block.chainid), field);
+        vm.writeJson(string.concat('"', vm.toString(value), '"'), ADDRESSES_JSON, key);
     }
 }
