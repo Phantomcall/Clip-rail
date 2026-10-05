@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 /**
- * Minimal loader for client screens. Replace with TanStack Query when live data lands (P-3.2).
+ * Minimal one-shot loader for client screens. Indexer-backed screens poll with useLive (lib/live.ts) instead.
  * `deps` must be primitives; loading is derived from whether the stored result belongs to the current deps.
  */
 export function useAsync<T>(fn: () => Promise<T>, deps: (string | number | boolean | null | undefined)[]) {
