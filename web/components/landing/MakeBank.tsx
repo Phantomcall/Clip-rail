@@ -72,19 +72,19 @@ const steps = [
   { n: "03", title: "Get paid", body: "An oracle checks your real views every few minutes. After a 24-hour hold, USDC lands in your account.", ui: <BalanceMini />, photo: "/photos/step-paid.webp", alt: "Clipper delighted at a payout on her phone" },
 ];
 
-const BAND_PHOTO = "/photos/band-crowd.webp";
+const BAND_PHOTO = "/photos/band-lights.webp";
 
 /** "How it works": each step as a real UI card, over a full-width darkened photo. */
 export function MakeBank() {
   return (
-    <section className="relative isolate overflow-hidden text-white">
+    <section className="relative isolate -mt-56 overflow-hidden text-white">
       {/* Full-bleed photo backdrop, darkened for readable text, fading in and out at the edges so it blends with
           the sections above and below in every theme */}
-      <div aria-hidden className="absolute inset-0 -z-10 [mask-image:linear-gradient(180deg,transparent,black_9rem,black_calc(100%-9rem),transparent)]">
+      <div aria-hidden className="absolute inset-0 -z-10 [mask-image:linear-gradient(180deg,black,black_calc(100%-9rem),transparent)]">
         <Image src={BAND_PHOTO} alt="" fill sizes="100vw" className="object-cover" />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgb(15_15_19/0.5)_0%,rgb(15_15_19/0.35)_30%,rgb(15_15_19/0.7)_75%,rgb(15_15_19/0.85)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgb(8_21_48/0.55)_0%,rgb(12_14_32/0.35)_30%,rgb(12_12_22/0.7)_75%,rgb(12_12_22/0.85)_100%)]" />
       </div>
-      <div className="mx-auto max-w-6xl px-5 pt-36 pb-40 sm:px-10">
+      <div className="mx-auto max-w-6xl px-5 pt-80 pb-40 sm:px-10">
         <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold tracking-wider text-white/60 uppercase">How it works</span>
         <h2 className="mt-5 text-4xl font-bold sm:text-5xl">Get views. Get paid.</h2>
         <p className="mt-3 max-w-xl text-white/60">

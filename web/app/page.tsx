@@ -21,7 +21,7 @@ export default async function Home() {
   return (
     <>
       {/* the sky sits behind the hero and keeps going down through the next few sections */}
-      <div className="relative isolate -mt-[4.5rem]">
+      <div className="cr-sky-into-photo relative isolate z-10 -mt-[4.5rem]">
         <SkyBackdrop />
       <LiveRefresh />
       <Hero totals={totals} />

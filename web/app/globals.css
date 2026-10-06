@@ -167,7 +167,10 @@
   --color-fg: #121216; --color-muted: #6b6a75; color: var(--color-fg);
 }
 /* the page fades out with its own overlay (PageSky), so the backdrop's built-in bottom fades are off here */
-.cr-sky-band .cr-bottom-fade { display: none; }
+.cr-sky-band .cr-bottom-fade, .cr-sky-into-photo .cr-bottom-fade { display: none; }
+/* Landing: the sky fades to transparent over its last 14rem, revealing the How it works photo tucked underneath
+   (MakeBank's -mt-56), so the two cross-fade with no page colour in between. */
+.cr-sky-into-photo > .cr-sky { mask-image: linear-gradient(to bottom, black calc(100% - 14rem), transparent); }
 
 /* while the theme animates, let page colours ease too (the sky has its own transitions) */
 .theme-anim :where(body *:not(.cr-sky, .cr-sky *)) {
