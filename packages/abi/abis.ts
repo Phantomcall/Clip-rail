@@ -2524,6 +2524,19 @@ export const creatorReputationAbi = [
   },
   {
     "type": "function",
+    "name": "TIER1_MAX_REJECTIONS",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint32",
+        "internalType": "uint32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "TIER1_VIEWS",
     "inputs": [],
     "outputs": [

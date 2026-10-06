@@ -17,6 +17,8 @@ interface IReputationLinked {
 contract CreatorReputation is ICreatorReputation, Ownable {
     uint64 public constant TIER1_VIEWS = 5_000;
     uint64 public constant TIER2_VIEWS = 50_000;
+    /// @notice Tier 1 tolerates one rejecting brand, so a single brand can't remove it (audit V1-3).
+    uint32 public constant TIER1_MAX_REJECTIONS = 1;
     /// @notice Tier 2 needs rejections / (clipsPaid + rejections) below 5% (decision 5).
     uint256 public constant TIER2_MAX_REJECTION_BPS = 500;
 
@@ -86,14 +88,14 @@ contract CreatorReputation is ICreatorReputation, Ownable {
         return _stats[clipper];
     }
 
-    /// @notice 0 = new · 1 = ≥5k paid views and 0 rejections · 2 = ≥50k paid views and rejection rate < 5%.
+    /// @notice 0 = new · 1 = ≥5k paid views and at most 1 rejecting brand · 2 = ≥50k paid views and rejection rate < 5%.
     function tier(address clipper) public view override returns (uint8) {
         Stats storage s = _stats[clipper];
         if (s.paidViews >= TIER2_VIEWS) {
             uint256 outcomes = uint256(s.clipsPaid) + s.rejections;
             if (uint256(s.rejections) * 10_000 < TIER2_MAX_REJECTION_BPS * outcomes) return 2;
         }
-        if (s.paidViews >= TIER1_VIEWS && s.rejections == 0) return 1;
+        if (s.paidViews >= TIER1_VIEWS && s.rejections <= TIER1_MAX_REJECTIONS) return 1;
         return 0;
     }
 

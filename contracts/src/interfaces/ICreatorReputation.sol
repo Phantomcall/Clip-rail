@@ -36,6 +36,6 @@ interface ICreatorReputation {
     /// @notice True once `brand` has rejected one of `clipper`'s clips (counted in stats.rejections).
     function rejectedBy(address clipper, address brand) external view returns (bool);
     function stats(address clipper) external view returns (Stats memory);
-    /// @notice 0 = new · 1 = ≥5k paid views and 0 rejections · 2 = ≥50k paid views and rejection rate < 5%
+    /// @notice 0 = new · 1 = ≥5k paid views and at most 1 rejecting brand · 2 = ≥50k paid views and rejection rate < 5%
     function tier(address clipper) external view returns (uint8);
 }

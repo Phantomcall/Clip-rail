@@ -229,7 +229,8 @@ Intentional findings are suppressed only at their exact line, each with a reason
 - **Sweep:** `sweep(clipIds)` ends watched clips whose campaign is closed or past `endsAt`, so they stop taking oracle
   page slots (review follow-up). This also resolves the info note "clips of closed campaigns keep status Active".
 - **Reputation (I-2.4):** real stats replace the stub. `clipsPaid` counts distinct clips per vault, not releases.
-  Tier 2 uses `rejections / (clipsPaid + rejections) < 5%`. The `uninitialized-state` Slither suppression for the
+  Tier 2 uses `rejections / (clipsPaid + rejections) < 5%`. After the v1 audit, `rejections` counts distinct brands
+  and tier 1 allows one rejecting brand (V1-3). The `uninitialized-state` Slither suppression for the
   stub is gone.
 - **`expirePending` is blocked while paused**, because the oracle can't activate clips while paused either.
 

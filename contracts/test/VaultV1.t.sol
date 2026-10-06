@@ -284,7 +284,7 @@ contract VaultV1Test is Test {
         assertEq(vault.getCampaign(id).reserved, 0);
         assertEq(vault.getCampaign(id).paid, 5e6);
         assertEq(reputation.stats(clipper).rejections, 1);
-        assertEq(reputation.tier(clipper), 0); // a rejection drops tier 1
+        assertEq(reputation.tier(clipper), 1); // one rejecting brand is tolerated (audit V1-3)
         assertEq(vault.watchListLength(), 0);
 
         vm.prank(brand);
@@ -404,6 +404,19 @@ contract VaultV1Test is Test {
         vm.prank(address(vault));
         reputation.recordRejection(clipper, brand2);
         assertEq(reputation.stats(clipper).rejections, 2); // a second brand counts
+    }
+
+    /// Audit V1-3: tier 1 survives one rejecting brand, not two.
+    function test_Tier1_ToleratesOneRejectingBrand() public {
+        vm.startPrank(address(vault));
+        reputation.recordPaid(clipper, brand, 1, 5_000, 5e6);
+        assertEq(reputation.tier(clipper), 1);
+        reputation.recordRejection(clipper, brand);
+        reputation.recordRejection(clipper, brand); // same brand again: still one
+        assertEq(reputation.tier(clipper), 1);
+        reputation.recordRejection(clipper, makeAddr("brand2"));
+        assertEq(reputation.tier(clipper), 0); // a second brand: tier 1 lost
+        vm.stopPrank();
     }
 
     function test_AutoResolve_AcceptsAfterWindow() public {
@@ -600,7 +613,7 @@ contract VaultV1Test is Test {
         assertEq(reputation.tier(clipper), 2);
 
         reputation.recordRejection(clipper, brand); // 1 / 20 = 5%: not below 5%
-        assertEq(reputation.tier(clipper), 0);
+        assertEq(reputation.tier(clipper), 1); // falls back to tier 1 (one rejecting brand)
         reputation.recordPaid(clipper, brand, 20, 0, 0); // 1 / 21 < 5%
         assertEq(reputation.tier(clipper), 2);
         vm.stopPrank();
