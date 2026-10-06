@@ -72,11 +72,16 @@ const steps = [
   { n: "03", title: "Get paid", body: "An oracle checks your real views every few minutes. After a 24-hour hold, USDC lands in your account.", ui: <BalanceMini />, photo: "/photos/step-paid.webp", alt: "Clipper delighted at a payout on her phone" },
 ];
 
-/** Dark "money" band (Vyro-style), showing each step as a real UI card. */
+const BAND_PHOTO = "/photos/band-crowd.webp";
+
+/** Dark "money" band (Vyro-style), showing each step as a real UI card over a darkened photo. */
 export function MakeBank() {
   return (
     <section className="px-3">
-      <div className="mx-auto max-w-6xl rounded-[32px] bg-night px-5 py-14 text-white sm:px-10 sm:py-20">
+      <div className="relative isolate mx-auto max-w-6xl overflow-hidden rounded-[32px] bg-night px-5 py-14 text-white sm:px-10 sm:py-20">
+        {/* Photo backdrop, darkened so the text and cards stay readable */}
+        <Image src={BAND_PHOTO} alt="" fill sizes="(min-width: 1152px) 72rem, 100vw" className="-z-10 object-cover" />
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgb(15_15_19/0.45)_0%,rgb(15_15_19/0.35)_30%,rgb(15_15_19/0.7)_75%,rgb(15_15_19/0.9)_100%)]" />
         <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold tracking-wider text-white/60 uppercase">How it works</span>
         <h2 className="mt-5 text-4xl font-bold sm:text-5xl">Get views. Get paid.</h2>
         <p className="mt-3 max-w-xl text-white/60">
