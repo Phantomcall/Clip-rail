@@ -4,7 +4,7 @@ Account layer (Mera passkeys), every write in the web app, `packages/shared`, th
 runner, Vercel, CI. Task IDs are from `docs/prd/Cliprail-Task-Playbook.pdf` (DAVID section).
 Newest entry first in the log at the bottom. **Update this file with every change.**
 
-_Last updated: 2026-10-06._
+_Last updated: 2026-10-06 (testnet v1)._
 
 ## Where things stand
 
@@ -15,7 +15,7 @@ _Last updated: 2026-10-06._
 | D-0.3 Vercel | Done | Project `cliprail` (personal scope `chibey-maxs-projects`), root `web/`, live at https://cliprail.vercel.app. Not linked to GitHub; deploy with `vercel deploy --prod` from the repo root. |
 | D-0.4 / D-1.6 Device matrix | Not started | Passkeys work on the live URL; fill `docs/device-matrix.md` per device. |
 | D-1.1 to D-1.5 Web account layer | Done | Merged in PR #7. |
-| D-2.1 to D-2.5 CRE workflow | Done | Merged in PR #7; fixes for ABI v0 on branch `david/abi-v0-sync`. |
+| D-2.1 to D-2.5 CRE workflow | Done | Merged in PR #7; ABI and v1 fixes in the `david/abi-v0-sync` PR. |
 | D-3.1 First broadcast report | Blocked | Needs the oracle wallet private key in `cre/.env` and Isaac to register the 3 test Shorts. |
 | D-3.2 Oracle runner | Done | `.github/workflows/oracle-runner.yml`, off until repo variables are set and `CRE_API_KEY` exists. |
 | D-3.3 Write hooks | Done | create, register, send-out, set-payout. Flag/resolve/top-up/close/sandbox still mocked (D-5.1, D-6.3). |
@@ -24,39 +24,39 @@ _Last updated: 2026-10-06._
 
 ## Branch state
 
-- `main` has PR #7 (my Day 1–3 work + CI) and Isaac's #8–#10 (contracts, ABI v0, vault core).
-- **`david/abi-v0-sync` (uncommitted, not pushed)**: needed before the first report and before Isaac's
-  relayer goes live.
-  - `cre/oracle/logic.ts`: `ClipStatus` now matches the Solidity enum (`None=0, Pending=1, Active=2…`).
-    The old values were off by one and would have left new clips Pending forever.
-  - `cre/oracle/logic.test.ts`: test that reads `enum ClipStatus` from `ICampaignVault.sol` and fails on drift.
-  - `cre/oracle/abi.ts`, `web/lib/abi.ts`: use Isaac's generated `campaignVaultAbi` from `@cliprail/abi`.
-  - `cre/oracle/main.ts`: typed reads; pages `activeClips` until `offset >= watchListLength()`
-    (100 per page, max 12 pages: CRE allows 15 EVM reads per run).
-  - `cre/oracle/config.testnet.json`: testnet v0 vault address; `pageSize` added to both configs.
-  - `web/lib/actions.ts`: `nonce` added to `/relay/register` and `/relay/payout-address` bodies (Isaac's request).
-  - `cre/README.md`, `cre/.env.example`: pinned oracle wallet and paging documented.
-  - `.gitignore` + untracked `cre/oracle/.cre_build_tmp.js` (a 1 MB CLI artifact I committed by mistake in #7).
+- `main` has PR #7 (my Day 1–3 work + CI) and Isaac's/Patrick's #8–#14 (contracts, ABI, vault v1, lens,
+  indexer, auth UI, mobile).
+- **`david/abi-v0-sync` (PR open, rebased on main at `0f75ee5`)**:
+  - Untracks `cre/oracle/.cre_build_tmp.js` (a 1 MB CLI artifact I committed by mistake in #7) and ignores it.
+  - `ClipStatus` matches the Solidity enum (`None=0, Pending=1, Active=2…`); the old values were off by one and
+    would have left new clips Pending forever. A test reads the enum from `ICampaignVault.sol` and fails on drift.
+  - Oracle and web use Isaac's generated `campaignVaultAbi` from `@cliprail/abi`; typed vault reads.
+  - Oracle pages `activeClips` until `offset >= watchListLength()` (100 per page, max 12 pages: CRE allows
+    15 EVM reads per run).
+  - `nonce` added to `/relay/register` and `/relay/payout-address` bodies (Isaac's request).
+  - Oracle testnet config points at the **v1** vault.
   - This file.
 - `backup/pre-key-scrub` (local only): old branch tip that still contains the revoked keys. Safe to delete.
 
-## Testnet v0 (chain 10143)
+## Testnet v1 (chain 10143)
+
+Source of truth: `packages/abi/addresses.json`. v1 replaced v0 (`0xf9B2…Af45`) on 2026-10-06.
 
 | What | Value |
 |---|---|
-| Vault | `0xf9B2B301B94Aa534a872f0e54fAAAA319061Af45` |
-| Reputation | `0x530E1171f7b49E20A567376671f3Fb72f8dcAc8d` |
-| MockUSDC | `0x9a60703A756c7936180BC4BdfA2323355cBd984f` |
-| Start block (Envio) | 68486852 |
+| Vault | `0x6D7A51c58EB07Ab7bb1B0468A9be02fE9001BcAf` |
+| Lens (`claimCode` and other views moved here) | `0x6f8d90BD1D58c592876391Db01db780b69A64938` |
+| Reputation | `0x5c38812Ec071dEcd89aB2c433f3ddB94E1731913` |
+| MockUSDC | `0x92cE6862a977Fe61D966C3903e8E5f5d7d84a7ec` |
 | Oracle wallet / `reportTransmitter` | `0x5eF544B1A110CEe1ecbe9DAAA8e578Ad90b8779d`, funded with 5 MON. Only this wallet's reports are accepted (vault checks `tx.origin`). |
 | Brand / owner (Isaac) | `0xC7e501C18846080439131E31Ad5D4b56f7bcA0F0` |
 | `pendingTimeout` | 600 s |
 | Forwarder | testnet mock `0xB9F79d863261869B234c481D1f9A7af84AeAd192` |
 
-Verified live on 2026-10-06: claim codes match the vault byte for byte (16 hex), the EIP-712 domain
-separator matches `cliprailDomain()`, and a dry-run simulate reads `round 0 · 0 active clips`.
+Verified live on v1 (2026-10-06): the lens `claimCode` matches `@cliprail/shared`, the transmitter is the oracle
+wallet, and a dry-run simulate reads `round 0 · 0 active clips` (no clips registered yet).
 
-**Campaign #1:** MockUSDC, budget 1,000, $1 per 1k views, $20 per clip, 600 s hold, 0.5% like floor,
+**Campaign #1 (v1):** MockUSDC, budget 1,000, $1 per 1k views, $20 per clip, 600 s hold, 0.5% like floor,
 starts 2026-10-05 21:43 UTC. Claim code for Isaac's wallet: `CR-0E9A273285510A02`.
 
 **Test Shorts** (channel Dev_Dave, all checked against the oracle rules through the YouTube API):
@@ -85,7 +85,7 @@ Before the first broadcast, confirm the key in `cre/.env` derives to `0x5eF5…7
 
 ## Next steps
 
-1. Commit `david/abi-v0-sync` as focused commits, push, PR, get a review.
+1. Get the `david/abi-v0-sync` PR reviewed and merged.
 2. Oracle key from Bitwarden into `cre/.env`; Isaac registers the 3 Shorts; run the first broadcast (D-3.1)
    and check `ViewsVerified` on testnet.monadvision.com.
 3. Get views and likes on the test Shorts so a report actually accrues.
@@ -93,6 +93,11 @@ Before the first broadcast, confirm the key in `cre/.env` derives to `0x5eF5…7
 5. Device matrix (D-0.4 / D-1.6) on the live URL.
 6. When CRE approves deploy access: create the org API key, add GitHub secrets, set
    `ORACLE_TESTNET_ENABLED=true`, then follow D-4.1 for the deployed workflow.
+
+## Heads-up for teammates
+
+- `indexer/scripts/with-env.sh` still defaults `ENVIO_VAULT_10143` to the **v0** vault (`0xf9B2…Af45`).
+  Patrick's file; mentioned in the PR rather than changed.
 
 ## Decisions
 
@@ -117,6 +122,10 @@ Before the first broadcast, confirm the key in `cre/.env` derives to `0x5eF5…7
   `node --experimental-strip-types` can't load `@cliprail/abi` (extensionless import), so use bun for ad-hoc scripts.
 
 ## Log
+
+- **2026-10-06 (night)** – Committed `david/abi-v0-sync` in focused commits, rebased onto main (25 new commits incl.
+  testnet v1), regenerated the lockfile, pointed the oracle at the v1 vault, re-verified live (claim code via lens,
+  transmitter, dry run), opened the PR.
 
 - **2026-10-06** – Verified the 3 test Shorts. Published clip 1 to YouTube via Studio (clips 2–3 uploaded by David).
   Removed the tracked CRE build artifact. Started this handoff file.
