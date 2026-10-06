@@ -1,6 +1,6 @@
 {
   "schedule": "0 */2 * * * *",
-  "vault": "0xf9B2B301B94Aa534a872f0e54fAAAA319061Af45",
+  "vault": "0x6D7A51c58EB07Ab7bb1B0468A9be02fE9001BcAf",
   "chainSelectorName": "monad-testnet",
   "isTestnet": true,
   "batch": 50,

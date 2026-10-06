@@ -34,7 +34,7 @@ cre workflow simulate oracle --target testnet --non-interactive --trigger-index 
 cre workflow simulate oracle --target testnet --broadcast --non-interactive --trigger-index 0
 ```
 
-`oracle/config.<net>.json` holds the vault address (testnet v0: `0xf9B2B301B94Aa534a872f0e54fAAAA319061Af45`).
+`oracle/config.<net>.json` holds the vault address (testnet v1: `0x6D7A51c58EB07Ab7bb1B0468A9be02fE9001BcAf`; source of truth is `packages/abi/addresses.json`).
 
 **Only the pinned oracle wallet can broadcast.** The mock forwarder is open to anyone, so the vault checks
 `tx.origin == reportTransmitter` (testnet: `0x5eF544B1A110CEe1ecbe9DAAA8e578Ad90b8779d`). `CRE_ETH_PRIVATE_KEY`
