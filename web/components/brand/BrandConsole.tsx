@@ -16,7 +16,7 @@ import { getCampaignsByBrand, getClipsForCampaign, now } from "@/lib/data";
 import { count, duration, percent, timeLeft, usd } from "@/lib/format";
 import type { Address, Campaign, Clip } from "@/lib/types";
 import { parseUsd } from "@/lib/units";
-import { useAsync } from "@/lib/useAsync";
+import { useLive } from "@/lib/live";
 
 function busy(s: string) {
   return s === "signing" || s === "pending";
@@ -146,7 +146,7 @@ function CloseDialog({ campaign }: { campaign: Campaign }) {
 }
 
 function CampaignPanel({ campaign }: { campaign: Campaign }) {
-  const { data: clips, loading } = useAsync(() => getClipsForCampaign(campaign.id), [campaign.id]);
+  const { data: clips, loading } = useLive(["campaign-clips", campaign.id], () => getClipsForCampaign(campaign.id));
   const NOW = now();
   const likeFloorHit = (c: Clip) => c.lastViews > 0 && (c.likes * 10_000) / c.lastViews < campaign.minLikeBps;
 
@@ -200,7 +200,7 @@ function CampaignPanel({ campaign }: { campaign: Campaign }) {
 }
 
 export function BrandConsole({ address }: { address: Address }) {
-  const { data: campaigns, loading } = useAsync(() => getCampaignsByBrand(address), [address]);
+  const { data: campaigns, loading } = useLive(["brand-campaigns", address], () => getCampaignsByBrand(address));
   if (loading) return <Skeleton className="h-64" />;
   if (!campaigns || campaigns.length === 0) {
     return <EmptyState title="You haven't launched a campaign yet." action={<LinkButton href="/brand/new">Launch a campaign</LinkButton>} />;

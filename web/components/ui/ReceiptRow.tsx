@@ -10,12 +10,13 @@ export function ReceiptRow({ receipt, now }: { receipt: Receipt; now: number }) 
       <span className="tabular text-sm">
         +{count(receipt.deltaViews)} views <span className="text-muted">({count(receipt.totalViews)} total)</span>
       </span>
-      <span className="tabular text-sm font-semibold">
+      <span className="tabular text-sm font-semibold whitespace-nowrap">
         {receipt.released ? (
           <span className="text-money">{usd(receipt.amount)} paid</span>
         ) : (
           <span className="text-holding">
-            {usd(receipt.amount)} · {unlocked ? "releasing" : `unlocks in ${duration(receipt.unlockAt - now)}`}
+            {usd(receipt.amount)}
+            <span className="block text-xs font-medium sm:inline"> {unlocked ? "· releasing" : `· unlocks in ${duration(receipt.unlockAt - now)}`}</span>
           </span>
         )}
       </span>

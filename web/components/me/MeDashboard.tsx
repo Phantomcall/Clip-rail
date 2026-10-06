@@ -16,16 +16,13 @@ import { StatTile } from "@/components/ui/StatTile";
 import { earningsSummary, getClipper, getClipsByClipper, getReceiptsByClipper, now } from "@/lib/data";
 import { count, duration, usd } from "@/lib/format";
 import type { Address } from "@/lib/types";
-import { useAsync } from "@/lib/useAsync";
+import { useLive } from "@/lib/live";
 
 export function MeDashboard({ address }: { address: Address }) {
-  const { data, loading, error } = useAsync(
-    async () => {
-      const [clips, receipts, profile] = await Promise.all([getClipsByClipper(address), getReceiptsByClipper(address), getClipper(address)]);
-      return { clips, receipts, profile };
-    },
-    [address],
-  );
+  const { data, loading, error } = useLive(["me", address], async () => {
+    const [clips, receipts, profile] = await Promise.all([getClipsByClipper(address), getReceiptsByClipper(address), getClipper(address)]);
+    return { clips, receipts, profile };
+  });
   const NOW = now();
 
   if (loading) {
@@ -77,7 +74,7 @@ export function MeDashboard({ address }: { address: Address }) {
               <li key={c.id} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <a href={`https://youtube.com/shorts/${c.videoId}`} target="_blank" rel="noreferrer" className="truncate font-medium hover:text-accent-hover">{c.title}</a>
+                    <a href={`https://youtube.com/shorts/${c.videoId}`} target="_blank" rel="noreferrer" className="block truncate font-medium hover:text-accent-hover">{c.title}</a>
                     <StatusBadge status={c.status} />
                   </div>
                   <div className="tabular mt-1 flex flex-wrap gap-x-4 text-xs text-muted">
