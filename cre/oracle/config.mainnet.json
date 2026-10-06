@@ -4,6 +4,7 @@
   "chainSelectorName": "monad-mainnet",
   "isTestnet": false,
   "batch": 50,
+  "pageSize": 100,
   "maxClips": 500,
   "gasBase": "150000",
   "gasPerEntry": "60000",

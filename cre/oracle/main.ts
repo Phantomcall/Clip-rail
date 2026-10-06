@@ -25,7 +25,7 @@ import {
 } from "@chainlink/cre-sdk";
 import { type Address, decodeFunctionResult, encodeFunctionData, type Hex, zeroAddress } from "viem";
 import { z } from "zod";
-import { vaultReadAbi } from "./abi";
+import { vaultAbi } from "./abi";
 import {
   type ActiveClip,
   buildUpdates,
@@ -48,6 +48,8 @@ const configSchema = z.object({
   isTestnet: z.boolean(),
   /** Video IDs per videos.list call (YouTube's max is 50). */
   batch: z.number().int().min(1).max(50),
+  /** Watch-list entries per activeClips() call. */
+  pageSize: z.number().int().min(1).max(500),
   /** Clips read per run. maxClips / batch must stay ≤ 14 (CRE allows 15 HTTP calls per run). */
   maxClips: z.number().int().min(1).max(700),
   gasBase: z.string().regex(/^\d+$/),
@@ -58,23 +60,54 @@ const configSchema = z.object({
 
 type Config = z.infer<typeof configSchema>;
 
-function readVault<F extends "lastRound" | "activeClips">(
-  runtime: Runtime<Config>,
-  evm: EVMClient,
-  functionName: F,
-  args: F extends "activeClips" ? readonly [bigint, bigint] : readonly [],
-) {
+/** eth_call against the vault at the last finalized block, so every node reads the same state. */
+function callVault(runtime: Runtime<Config>, evm: EVMClient, data: Hex): Hex {
   const reply = evm
     .callContract(runtime, {
-      call: encodeCallMsg({
-        from: zeroAddress,
-        to: runtime.config.vault as Address,
-        data: encodeFunctionData({ abi: vaultReadAbi, functionName, args } as never),
-      }),
+      call: encodeCallMsg({ from: zeroAddress, to: runtime.config.vault as Address, data }),
       blockNumber: LAST_FINALIZED_BLOCK_NUMBER,
     })
     .result();
-  return decodeFunctionResult({ abi: vaultReadAbi, functionName, data: bytesToHex(reply.data) } as never);
+  return bytesToHex(reply.data);
+}
+
+function readLastRound(runtime: Runtime<Config>, evm: EVMClient): bigint {
+  const data = callVault(runtime, evm, encodeFunctionData({ abi: vaultAbi, functionName: "lastRound" }));
+  return decodeFunctionResult({ abi: vaultAbi, functionName: "lastRound", data });
+}
+
+/** CRE allows 15 EVM reads per run: lastRound + watchListLength + at most this many pages. */
+const MAX_PAGES = 12;
+
+/**
+ * activeClips(offset, limit) walks `limit` watch-list entries and drops flagged clips and closed or empty
+ * campaigns, so a page can be short. Page by watch-list position until offset >= watchListLength().
+ */
+function readActiveClips(runtime: Runtime<Config>, evm: EVMClient, pageSize: number, maxClips: number): ActiveClip[] {
+  const lenData = callVault(runtime, evm, encodeFunctionData({ abi: vaultAbi, functionName: "watchListLength" }));
+  const len = decodeFunctionResult({ abi: vaultAbi, functionName: "watchListLength", data: lenData });
+  const out: ActiveClip[] = [];
+  const step = BigInt(pageSize);
+  for (let offset = 0n, page = 0; offset < len && out.length < maxClips && page < MAX_PAGES; offset += step, page++) {
+    const data = callVault(
+      runtime,
+      evm,
+      encodeFunctionData({ abi: vaultAbi, functionName: "activeClips", args: [offset, step] }),
+    );
+    for (const c of decodeFunctionResult({ abi: vaultAbi, functionName: "activeClips", data })) {
+      out.push({
+        clipId: c.clipId,
+        campaignId: c.campaignId,
+        clipper: c.clipper,
+        videoId: c.videoId,
+        status: c.status,
+        lastViews: c.lastViews,
+        lastLikes: c.lastLikes,
+      });
+    }
+  }
+  if (out.length > maxClips) runtime.log(`watch list has more than ${maxClips} reportable clips; reporting the first ${maxClips}`);
+  return out.slice(0, maxClips);
 }
 
 /**
@@ -101,16 +134,8 @@ const onTick = (runtime: Runtime<Config>): string => {
   if (!network) throw new Error(`Unknown chain ${cfg.chainSelectorName}`);
   const evm = new EVMClient(network.chainSelector.selector);
 
-  const lastRound = readVault(runtime, evm, "lastRound", []) as bigint;
-  const clips = (readVault(runtime, evm, "activeClips", [0n, BigInt(cfg.maxClips)]) as readonly ActiveClip[]).map((c) => ({
-    clipId: c.clipId,
-    campaignId: c.campaignId,
-    clipper: c.clipper,
-    videoId: c.videoId,
-    status: Number(c.status),
-    lastViews: c.lastViews,
-    lastLikes: c.lastLikes,
-  }));
+  const lastRound = readLastRound(runtime, evm);
+  const clips = readActiveClips(runtime, evm, cfg.pageSize, cfg.maxClips);
   runtime.log(`round ${lastRound} · ${clips.length} active clips`);
   if (clips.length === 0) return "no active clips";
 
