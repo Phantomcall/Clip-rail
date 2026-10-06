@@ -159,6 +159,7 @@ const registerClip: Exec<[campaignId: string, videoId: string]> = async ({ accou
     campaignId: message.campaignId.toString(),
     videoId,
     clipper: address,
+    nonce: message.nonce.toString(),
     deadline: message.deadline.toString(),
     sig,
   });
@@ -213,6 +214,7 @@ const setPayout: Exec<[payout: Address]> = async ({ account, address, pending },
   const hash = await postRelay("/relay/payout-address", {
     clipper: address,
     payout,
+    nonce: message.nonce.toString(),
     deadline: message.deadline.toString(),
     sig,
   });

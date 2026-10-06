@@ -1,42 +1,7 @@
-/**
- * Interim ABI fragments written from the frozen interface (PRD §5.1). Replace with the generated
- * ABI from @cliprail/abi once Isaac publishes it (handoff H3); the signatures must not change.
- */
-export const vaultAbi = [
-  {
-    type: "function",
-    name: "createCampaign",
-    stateMutability: "nonpayable",
-    inputs: [
-      {
-        name: "p",
-        type: "tuple",
-        components: [
-          { name: "token", type: "address" },
-          { name: "budget", type: "uint128" },
-          { name: "cpm", type: "uint128" },
-          { name: "maxPerClip", type: "uint128" },
-          { name: "maxViewsPerReport", type: "uint64" },
-          { name: "minLikeBps", type: "uint16" },
-          { name: "holdSecs", type: "uint32" },
-          { name: "startsAt", type: "uint64" },
-          { name: "endsAt", type: "uint64" },
-          { name: "minTier", type: "uint8" },
-          { name: "briefHash", type: "bytes32" },
-        ],
-      },
-    ],
-    outputs: [{ name: "campaignId", type: "uint256" }],
-  },
-  {
-    type: "function",
-    name: "nonces",
-    stateMutability: "view",
-    inputs: [{ name: "clipper", type: "address" }],
-    outputs: [{ type: "uint256" }],
-  },
-] as const;
+/** Vault ABI generated from contracts/ (packages/abi, handoff H1). */
+export { campaignVaultAbi as vaultAbi } from "@cliprail/abi";
 
+/** ERC-20 reads and approve, plus Circle FiatToken's EIP-712 `version()`, used for USDC. */
 export const erc20Abi = [
   {
     type: "function",
