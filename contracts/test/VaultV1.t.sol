@@ -24,6 +24,20 @@ contract BlacklistUSDC is MockUSDC {
     }
 }
 
+/// A smart-contract wallet (like a Mera passkey account) that validates signatures with ERC-1271.
+contract MockSmartWallet {
+    address public immutable signer;
+
+    constructor(address signer_) {
+        signer = signer_;
+    }
+
+    function isValidSignature(bytes32 hash, bytes calldata sig) external view returns (bytes4) {
+        (bytes32 r, bytes32 s, uint8 v) = (bytes32(sig[0:32]), bytes32(sig[32:64]), uint8(sig[64]));
+        return ecrecover(hash, v, r, s) == signer ? bytes4(0x1626ba7e) : bytes4(0xffffffff);
+    }
+}
+
 /// ERC-20 that signals a failed transfer by returning false instead of reverting (allowed by the standard).
 contract FalseReturnToken is MockUSDC {
     mapping(address => bool) public refuse;
@@ -110,6 +124,71 @@ contract VaultV1Test is Test {
     function _one(uint256 clipId) internal pure returns (uint256[] memory a) {
         a = new uint256[](1);
         a[0] = clipId;
+    }
+
+    // ─────────────────────────── smart-contract wallets (PRD F1, F2: passkey accounts) ───────────────────────────
+
+    function _digest(bytes32 structHash) internal view returns (bytes32) {
+        return keccak256(abi.encodePacked("\x19\x01", vault.domainSeparator(), structHash));
+    }
+
+    function _sign(uint256 pk, bytes32 digest) internal pure returns (bytes memory) {
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk, digest);
+        return abi.encodePacked(r, s, v);
+    }
+
+    /// A passkey-style smart wallet registers gaslessly (ERC-1271), sets a payout address, and gets paid; a brand that
+    /// is a smart wallet creates and funds a campaign.
+    function test_SmartWallet_GaslessRegisterPayoutAndBrand() public {
+        (address owner, uint256 pk) = makeAddrAndKey("passkey");
+        MockSmartWallet wallet = new MockSmartWallet(owner);
+        address w = address(wallet);
+
+        // Brand is a smart wallet too (F1): msg.sender is the account.
+        MockSmartWallet brandWallet = new MockSmartWallet(owner);
+        ICampaignVault.CampaignParams memory p = _params();
+        usdc.mint(address(brandWallet), p.budget);
+        vm.startPrank(address(brandWallet));
+        usdc.approve(address(vault), p.budget);
+        uint256 id = vault.createCampaign(p);
+        vm.stopPrank();
+        assertEq(vault.getCampaign(id).brand, address(brandWallet));
+
+        // Gasless register (F2): the wallet's signer signs, a relayer submits.
+        uint256 deadline = block.timestamp + 15 minutes;
+        bytes32 sh = keccak256(
+            abi.encode(vault.REGISTER_CLIP_TYPEHASH(), id, keccak256(bytes("sssssssssss")), w, uint256(0), deadline)
+        );
+        ICampaignVault.RegisterClip memory r = ICampaignVault.RegisterClip(id, "sssssssssss", w, 0, deadline);
+        bytes memory sig = _sign(pk, _digest(sh));
+        vm.prank(makeAddr("relayer"));
+        uint256 clip = vault.registerClipWithSig(r, sig);
+        assertEq(vault.getClip(clip).clipper, w);
+        assertEq(vault.nonces(w), 1);
+
+        vm.expectRevert(ICampaignVault.InvalidNonce.selector);
+        vault.registerClipWithSig(r, sig); // no replay
+
+        // A signature from anyone but the wallet's signer is refused.
+        bytes32 sh2 = keccak256(
+            abi.encode(vault.REGISTER_CLIP_TYPEHASH(), id, keccak256(bytes("ttttttttttt")), w, uint256(1), deadline)
+        );
+        bytes memory badSig = _sign(0xBAD, _digest(sh2));
+        vm.expectRevert(ICampaignVault.InvalidSignature.selector);
+        vault.registerClipWithSig(ICampaignVault.RegisterClip(id, "ttttttttttt", w, 1, deadline), badSig);
+
+        // Gasless payout address, then a payout to it.
+        address payout = makeAddr("exchange");
+        bytes32 ph = keccak256(abi.encode(vault.SET_PAYOUT_TYPEHASH(), w, payout, uint256(1), deadline));
+        vault.setPayoutAddressWithSig(ICampaignVault.SetPayout(w, payout, 1, deadline), _sign(pk, _digest(ph)));
+        assertEq(vault.payoutAddressOf(w), payout);
+
+        _report(clip, 0);
+        _report(clip, 5_000);
+        vm.warp(T0 + HOLD);
+        vault.release(_one(clip));
+        assertEq(usdc.balanceOf(payout), 5e6);
+        assertEq(reputation.stats(w).paidViews, 5_000); // reputation follows the account, not the payout address
     }
 
     // ─────────────────────────── actors: owner and incident response ───────────────────────────
