@@ -4,6 +4,7 @@ pragma solidity ^0.8.28;
 import {Script, console} from "forge-std/Script.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 import {CampaignVault} from "../src/CampaignVault.sol";
+import {CampaignVaultLens} from "../src/CampaignVaultLens.sol";
 import {CreatorReputation} from "../src/CreatorReputation.sol";
 import {MockUSDC} from "../src/mocks/MockUSDC.sol";
 
@@ -50,6 +51,7 @@ contract Deploy is Script {
         CreatorReputation reputation = new CreatorReputation();
         CampaignVault vault = new CampaignVault(forwarder, reputation, pendingTimeout, resolveWindow);
         reputation.addVault(address(vault));
+        CampaignVaultLens lens = new CampaignVaultLens(vault); // read-only keeper views, no owner
 
         address mockUsdc;
         if (mainnet) {
@@ -83,6 +85,7 @@ contract Deploy is Script {
         console.log("startBlock", block.number); // Envio start block (the deploy lands in this block or the next)
         console.log("reputation", address(reputation));
         console.log("vault     ", address(vault));
+        console.log("lens      ", address(lens));
         console.log("oracle    ", oracle);
         console.log("guardian  ", guardian);
         console.log("pendingTimeout", pendingTimeout);
@@ -90,6 +93,7 @@ contract Deploy is Script {
         if (vm.envOr("WRITE_ADDRESSES", true) && (block.chainid == 143 || block.chainid == 10143)) {
             _writeAddress(".vault", address(vault));
             _writeAddress(".reputation", address(reputation));
+            _writeAddress(".lens", address(lens));
             if (mockUsdc != address(0)) _writeAddress(".mockUsdc", mockUsdc);
             console.log("wrote packages/abi/addresses.json");
         }

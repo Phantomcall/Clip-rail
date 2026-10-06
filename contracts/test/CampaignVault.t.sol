@@ -3,6 +3,7 @@ pragma solidity ^0.8.28;
 
 import {Test} from "forge-std/Test.sol";
 import {CampaignVault} from "../src/CampaignVault.sol";
+import {CampaignVaultLens} from "../src/CampaignVaultLens.sol";
 import {CreatorReputation} from "../src/CreatorReputation.sol";
 import {MockUSDC} from "../src/mocks/MockUSDC.sol";
 import {ICreatorReputation} from "../src/interfaces/ICreatorReputation.sol";
@@ -12,11 +13,13 @@ contract CampaignVaultTest is Test {
 
     CreatorReputation reputation;
     CampaignVault vault;
+    CampaignVaultLens lens;
     MockUSDC usdc;
 
     function setUp() public {
         reputation = new CreatorReputation();
         vault = new CampaignVault(FORWARDER, reputation, 1800, 1800);
+        lens = new CampaignVaultLens(vault);
         reputation.addVault(address(vault));
         usdc = new MockUSDC();
         vault.setTokenAllowed(address(usdc), true);
@@ -36,17 +39,17 @@ contract CampaignVaultTest is Test {
 
     /// Vector = keccak256(encodePacked(uint256 1, address 0x…dEaD))[:8]; pinned identically in packages/shared tests.
     function test_ClaimCodeMatchesShared() public view {
-        assertEq(vault.claimCode(1, 0x000000000000000000000000000000000000dEaD), "CR-09DAD21282658239");
+        assertEq(lens.claimCode(1, 0x000000000000000000000000000000000000dEaD), "CR-09DAD21282658239");
     }
 
     /// David's vectors from the oracle side, at the 64-bit length; also pinned in packages/shared tests.
     function test_ClaimCodeMatchesOracleVectors() public view {
-        assertEq(vault.claimCode(1, 0x1111111111111111111111111111111111111111), "CR-F3A32C19D9D554E9");
-        assertEq(vault.claimCode(42, 0x000000000000000000000000000000000000dEaD), "CR-BD9D77C0603F18F8");
+        assertEq(lens.claimCode(1, 0x1111111111111111111111111111111111111111), "CR-F3A32C19D9D554E9");
+        assertEq(lens.claimCode(42, 0x000000000000000000000000000000000000dEaD), "CR-BD9D77C0603F18F8");
     }
 
     function test_ClaimCodeShape(uint256 campaignId, address clipper) public view {
-        bytes memory code = bytes(vault.claimCode(campaignId, clipper));
+        bytes memory code = bytes(lens.claimCode(campaignId, clipper));
         assertEq(code.length, 19);
         assertEq(code[2], bytes1("-"));
     }

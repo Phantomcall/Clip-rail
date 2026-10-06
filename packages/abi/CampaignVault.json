@@ -92,6 +92,19 @@
   },
   {
     "type": "function",
+    "name": "MAX_TRANCHES_PER_RELEASE",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "REGISTER_CLIP_TYPEHASH",
     "inputs": [],
     "outputs": [
@@ -195,13 +208,13 @@
     "name": "autoResolve",
     "inputs": [
       {
-        "name": "",
+        "name": "clipId",
         "type": "uint256",
         "internalType": "uint256"
       }
     ],
     "outputs": [],
-    "stateMutability": "pure"
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -215,30 +228,6 @@
       }
     ],
     "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "claimCode",
-    "inputs": [
-      {
-        "name": "campaignId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "clipper",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "string",
-        "internalType": "string"
-      }
-    ],
-    "stateMutability": "pure"
   },
   {
     "type": "function",
@@ -277,13 +266,31 @@
     "name": "closeCampaign",
     "inputs": [
       {
-        "name": "",
+        "name": "campaignId",
         "type": "uint256",
         "internalType": "uint256"
       }
     ],
     "outputs": [],
-    "stateMutability": "pure"
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "closeCampaignTo",
+    "inputs": [
+      {
+        "name": "campaignId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "refundTo",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -515,6 +522,25 @@
   },
   {
     "type": "function",
+    "name": "everFlagged",
+    "inputs": [
+      {
+        "name": "clipId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "expirePending",
     "inputs": [
       {
@@ -528,69 +554,21 @@
   },
   {
     "type": "function",
-    "name": "expiredFlags",
-    "inputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256[]",
-        "internalType": "uint256[]"
-      }
-    ],
-    "stateMutability": "pure"
-  },
-  {
-    "type": "function",
-    "name": "expiredPending",
-    "inputs": [
-      {
-        "name": "offset",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "limit",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "ids",
-        "type": "uint256[]",
-        "internalType": "uint256[]"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "flag",
     "inputs": [
       {
-        "name": "",
+        "name": "clipId",
         "type": "uint256",
         "internalType": "uint256"
       },
       {
-        "name": "",
+        "name": "reasonHash",
         "type": "bytes32",
         "internalType": "bytes32"
       }
     ],
     "outputs": [],
-    "stateMutability": "pure"
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -874,8 +852,56 @@
   },
   {
     "type": "function",
+    "name": "keeperList",
+    "inputs": [
+      {
+        "name": "list",
+        "type": "uint8",
+        "internalType": "enum ICampaignVault.KeeperList"
+      },
+      {
+        "name": "offset",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "limit",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "ids",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "lastRound",
     "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "nextUnlockAt",
+    "inputs": [
+      {
+        "name": "clipId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
     "outputs": [
       {
         "name": "",
@@ -982,6 +1008,25 @@
   },
   {
     "type": "function",
+    "name": "refundAddressOf",
+    "inputs": [
+      {
+        "name": "campaignId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "registerClip",
     "inputs": [
       {
@@ -1057,40 +1102,16 @@
   },
   {
     "type": "function",
-    "name": "releasableClips",
-    "inputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256[]",
-        "internalType": "uint256[]"
-      }
-    ],
-    "stateMutability": "pure"
-  },
-  {
-    "type": "function",
     "name": "release",
     "inputs": [
       {
-        "name": "",
+        "name": "clipIds",
         "type": "uint256[]",
         "internalType": "uint256[]"
       }
     ],
     "outputs": [],
-    "stateMutability": "pure"
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -1130,18 +1151,18 @@
     "name": "resolve",
     "inputs": [
       {
-        "name": "",
+        "name": "clipId",
         "type": "uint256",
         "internalType": "uint256"
       },
       {
-        "name": "",
+        "name": "reject",
         "type": "bool",
         "internalType": "bool"
       }
     ],
     "outputs": [],
-    "stateMutability": "pure"
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -1326,6 +1347,19 @@
   },
   {
     "type": "function",
+    "name": "sweep",
+    "inputs": [
+      {
+        "name": "clipIds",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "tokenAllowed",
     "inputs": [
       {
@@ -1475,6 +1509,31 @@
         "type": "bytes32",
         "indexed": false,
         "internalType": "bytes32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "CampaignRefunded",
+    "inputs": [
+      {
+        "name": "id",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "to",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint128",
+        "indexed": false,
+        "internalType": "uint128"
       }
     ],
     "anonymous": false
@@ -1753,6 +1812,31 @@
   },
   {
     "type": "event",
+    "name": "ReleaseFailed",
+    "inputs": [
+      {
+        "name": "clipId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "to",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint128",
+        "indexed": false,
+        "internalType": "uint128"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "Released",
     "inputs": [
       {
@@ -1972,6 +2056,11 @@
   },
   {
     "type": "error",
+    "name": "AlreadyFlagged",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "CampaignEnded",
     "inputs": []
   },
@@ -1993,6 +2082,11 @@
   {
     "type": "error",
     "name": "ExpiredDeadline",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "FlagExpired",
     "inputs": []
   },
   {
@@ -2034,6 +2128,11 @@
   {
     "type": "error",
     "name": "InvalidPayout",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidRefundAddress",
     "inputs": []
   },
   {
@@ -2117,11 +2216,6 @@
   {
     "type": "error",
     "name": "NotGuardian",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "NotImplemented",
     "inputs": []
   },
   {
@@ -2250,11 +2344,6 @@
         "internalType": "address"
       }
     ]
-  },
-  {
-    "type": "error",
-    "name": "UnknownClip",
-    "inputs": []
   },
   {
     "type": "error",

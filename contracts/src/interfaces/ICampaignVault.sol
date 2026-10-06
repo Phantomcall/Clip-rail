@@ -6,6 +6,14 @@ pragma solidity ^0.8.28;
 interface ICampaignVault {
     // ─────────────────────────── Types ───────────────────────────
 
+    /// @notice Watch = Pending/Active clips the oracle reports on; Pay = clips with unreleased tranches;
+    ///         Flag = clips awaiting resolve.
+    enum KeeperList {
+        Watch,
+        Pay,
+        Flag
+    }
+
     enum CampaignStatus {
         None,
         Active,
@@ -156,6 +164,11 @@ interface ICampaignVault {
     event Flagged(uint256 indexed clipId, address indexed brand, bytes32 reasonHash, uint64 deadline);
     event Resolved(uint256 indexed clipId, bool rejected, uint128 returned);
     event Released(uint256 indexed clipId, address indexed clipper, uint128 amount);
+    /// @notice A payout transfer failed (e.g. a blacklisted payout address); the tranches stay unreleased and the
+    ///         rest of the batch is still paid.
+    event ReleaseFailed(uint256 indexed clipId, address indexed to, uint128 amount);
+    /// @notice Budget returned by a reject after the campaign closed, sent to the campaign's refund address.
+    event CampaignRefunded(uint256 indexed id, address indexed to, uint128 amount);
 
     event PayoutAddressSet(address indexed clipper, address indexed payout);
     event TokenAllowed(address indexed token, bool allowed);
@@ -164,7 +177,6 @@ interface ICampaignVault {
 
     // ─────────────────────────── Errors ───────────────────────────
 
-    error NotImplemented();
     error TokenNotAllowed();
     error InvalidParams();
     error NotBrand();
@@ -177,7 +189,6 @@ interface ICampaignVault {
     error InvalidNonce();
     error InvalidSignature();
     error StaleRound(uint64 round, uint64 lastRound);
-    error UnknownClip();
     error NotFlaggable();
     error NotFlagged();
     error FlagNotExpired();
@@ -189,6 +200,10 @@ interface ICampaignVault {
     error PendingNotExpired();
     error InvalidPayout();
     error NotGuardian();
+    error AlreadyFlagged();
+    /// @notice The flag window has passed: only autoResolve (accept) is possible now (audit V1-2).
+    error FlagExpired();
+    error InvalidRefundAddress();
 
     // ─────────────────────────── Brand ───────────────────────────
 
@@ -197,9 +212,14 @@ interface ICampaignVault {
         external
         returns (uint256 campaignId);
     function topUp(uint256 campaignId, uint128 amount) external;
-    /// @notice Brand any time; anyone after endsAt. Refunds budget − reserved − paid.
+    /// @notice Brand any time; anyone after endsAt. Refunds budget − reserved − paid to the brand.
     function closeCampaign(uint256 campaignId) external;
+    /// @notice Brand only: close and send the refund (and any later reject returns) to `refundTo`, e.g. when the
+    ///         brand's own address can't receive the token.
+    function closeCampaignTo(uint256 campaignId, address refundTo) external;
+    /// @notice Pays the clip's matured tranches first, then freezes the rest (audit V1-1).
     function flag(uint256 clipId, bytes32 reasonHash) external;
+    /// @notice Brand only, before the flag deadline (audit V1-2).
     function resolve(uint256 clipId, bool reject) external;
 
     // ─────────────────────────── Clipper ───────────────────────────
@@ -214,6 +234,8 @@ interface ICampaignVault {
     function autoResolve(uint256 clipId) external;
     /// @notice Rejects a Pending clip whose pendingTimeout has passed without proven ownership.
     function expirePending(uint256 clipId) external;
+    /// @notice Ends watched clips whose campaign is closed or past endsAt, so they stop taking oracle page slots.
+    function sweep(uint256[] calldata clipIds) external;
 
     // ─────────────────────────── Owner ───────────────────────────
 
@@ -231,12 +253,12 @@ interface ICampaignVault {
     function getClip(uint256 clipId) external view returns (Clip memory);
     function getTranches(uint256 clipId) external view returns (Tranche[] memory);
     function activeClips(uint256 offset, uint256 limit) external view returns (ActiveClip[] memory);
-    function releasableClips(uint256 offset, uint256 limit) external view returns (uint256[] memory);
-    function expiredFlags(uint256 offset, uint256 limit) external view returns (uint256[] memory);
-    /// @notice Pending clips past pendingTimeout, for the keeper to pass to expirePending.
-    function expiredPending(uint256 offset, uint256 limit) external view returns (uint256[] memory);
+    /// @notice A raw, unfiltered page of one keeper list. CampaignVaultLens filters these into the keeper's
+    ///         to-do lists (releasable, expired flags, expired pending, sweepable).
+    function keeperList(KeeperList list, uint256 offset, uint256 limit) external view returns (uint256[] memory);
+    /// @notice unlockAt of the clip's first unreleased tranche; type(uint64).max when none is left.
+    function nextUnlockAt(uint256 clipId) external view returns (uint64);
     function lastRound() external view returns (uint64);
-    function claimCode(uint256 campaignId, address clipper) external pure returns (string memory);
     /// @notice One counter shared by RegisterClip and SetPayout signatures.
     function nonces(address clipper) external view returns (uint256);
     function payoutAddressOf(address clipper) external view returns (address);

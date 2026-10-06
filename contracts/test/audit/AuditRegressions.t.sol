@@ -5,6 +5,7 @@ import {Test} from "forge-std/Test.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {CampaignVault} from "../../src/CampaignVault.sol";
+import {CampaignVaultLens} from "../../src/CampaignVaultLens.sol";
 import {CreatorReputation} from "../../src/CreatorReputation.sol";
 import {MockUSDC} from "../../src/mocks/MockUSDC.sol";
 import {ICampaignVault} from "../../src/interfaces/ICampaignVault.sol";
@@ -28,6 +29,7 @@ contract AuditRegressionsTest is Test {
     PermissionlessForwarder mockForwarder;
     CreatorReputation reputation;
     CampaignVault vault;
+    CampaignVaultLens lens;
     MockUSDC usdc;
 
     address oracle = makeAddr("oracle");
@@ -41,6 +43,7 @@ contract AuditRegressionsTest is Test {
         mockForwarder = new PermissionlessForwarder();
         reputation = new CreatorReputation();
         vault = new CampaignVault(address(mockForwarder), reputation, 1800, 1800);
+        lens = new CampaignVaultLens(vault);
         reputation.addVault(address(vault));
         usdc = new MockUSDC();
         vault.setTokenAllowed(address(usdc), true);
@@ -213,7 +216,7 @@ contract AuditRegressionsTest is Test {
     // ─────────────── H-3: claim code length ───────────────
 
     function test_H3_ClaimCodeIs64Bits() public view {
-        bytes memory code = bytes(vault.claimCode(1, victim));
+        bytes memory code = bytes(lens.claimCode(1, victim));
         assertEq(code.length, 19); // "CR-" + 16 hex = 64 bits
         for (uint256 i = 3; i < 19; ++i) {
             bytes1 ch = code[i];
@@ -344,13 +347,13 @@ contract AuditRegressionsTest is Test {
         uint256 a = _reg(victim, id, "aaaaaaaaaaa");
         uint256 b = _reg(victim, id, "bbbbbbbbbbb");
         _oracleReport(_one(_upd(b, 100, 10, 1))); // b activates
-        assertEq(vault.expiredPending(0, 10).length, 0);
+        assertEq(lens.expiredPending(0, 10).length, 0);
         vm.warp(T0 + 1800);
-        uint256[] memory ids = vault.expiredPending(0, 10);
+        uint256[] memory ids = lens.expiredPending(0, 10);
         assertEq(ids.length, 1);
         assertEq(ids[0], a);
         vault.expirePending(ids[0]);
-        assertEq(vault.expiredPending(0, 10).length, 0);
+        assertEq(lens.expiredPending(0, 10).length, 0);
     }
 
     function test_L3_ConstructorValidates() public {
@@ -412,9 +415,9 @@ contract AuditRegressionsTest is Test {
 
     function test_Rep_OwnerCannotWriteStats() public {
         vm.expectRevert(ICreatorReputation.NotVault.selector);
-        reputation.recordPaid(victim, brand, 1000, 1e6);
+        reputation.recordPaid(victim, brand, 1, 1000, 1e6);
         vm.expectRevert(ICreatorReputation.NotVault.selector);
-        reputation.recordRejection(victim);
+        reputation.recordRejection(victim, brand);
     }
 
     function test_Rep_OldVaultKeepsWritingUntilRemoved() public {
@@ -423,19 +426,20 @@ contract AuditRegressionsTest is Test {
         assertTrue(reputation.isVault(address(vault)));
         assertTrue(reputation.isVault(address(v2)));
 
-        // Both pass the vault check (recordPaid itself is still the I-2.4 stub, so it reverts after the check).
+        // Both vaults can write while authorised.
         vm.prank(address(vault));
-        vm.expectRevert(bytes("TODO I-2.4"));
-        reputation.recordPaid(victim, brand, 1000, 1e6);
+        reputation.recordPaid(victim, brand, 1, 1000, 1e6);
+        assertEq(reputation.stats(victim).paidViews, 1000);
 
         // After the old vault has released everything, it is removed and can no longer write.
         reputation.removeVault(address(vault));
         vm.prank(address(vault));
         vm.expectRevert(ICreatorReputation.NotVault.selector);
-        reputation.recordPaid(victim, brand, 1000, 1e6);
+        reputation.recordPaid(victim, brand, 1, 1000, 1e6);
         vm.prank(address(v2));
-        vm.expectRevert(bytes("TODO I-2.4"));
-        reputation.recordPaid(victim, brand, 1000, 1e6);
+        reputation.recordPaid(victim, brand, 1, 1000, 1e6);
+        assertEq(reputation.stats(victim).paidViews, 2000);
+        assertEq(reputation.stats(victim).clipsPaid, 2); // clip 1 of each vault is a different clip
     }
 
     function test_Rep_SwitchGoesThroughTimelock() public {
