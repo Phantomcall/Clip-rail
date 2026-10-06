@@ -5,8 +5,8 @@
 import { encodeAbiParameters, type Hex } from "viem";
 import { claimCode, descriptionHasCode, FLAG_OWNERSHIP_OK, FLAG_UNAVAILABLE } from "@cliprail/shared/claim";
 
-/** Clip states as the vault numbers them (PRD §5.1). */
-export const ClipStatus = { Pending: 0, Active: 1, Flagged: 2, Rejected: 3, Ended: 4 } as const;
+/** ICampaignVault.ClipStatus, in declaration order. logic.test.ts checks this against the Solidity enum. */
+export const ClipStatus = { None: 0, Pending: 1, Active: 2, Flagged: 3, Rejected: 4, Ended: 5 } as const;
 
 /** One row of CampaignVault.activeClips(offset, limit). */
 export interface ActiveClip {

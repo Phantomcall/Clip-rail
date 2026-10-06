@@ -136,3 +136,11 @@ test("worst case fits CRE limits: consensus observation < 25 KB, report < 50 KB"
   assert.ok(new TextEncoder().encode(serializeUpdates(full)).length < 25_000);
   assert.ok((encodeReport(max, full).length - 2) / 2 < 50_000);
 });
+
+test("ClipStatus matches ICampaignVault.ClipStatus declaration order", () => {
+  const sol = readFileSync(new URL("../../contracts/src/interfaces/ICampaignVault.sol", import.meta.url), "utf8");
+  const body = /enum ClipStatus \{([^}]*)\}/.exec(sol)?.[1];
+  assert.ok(body, "enum ClipStatus not found in ICampaignVault.sol");
+  const names = body.split(",").map((s) => s.replace(/\/\/.*$/gm, "").trim()).filter(Boolean);
+  assert.deepEqual(Object.fromEntries(names.map((n, i) => [n, i])), ClipStatus);
+});
