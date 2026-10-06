@@ -74,14 +74,17 @@ const steps = [
 
 const BAND_PHOTO = "/photos/band-crowd.webp";
 
-/** Dark "money" band (Vyro-style), showing each step as a real UI card over a darkened photo. */
+/** "How it works": each step as a real UI card, over a full-width darkened photo. */
 export function MakeBank() {
   return (
-    <section className="px-3">
-      <div className="relative isolate mx-auto max-w-6xl overflow-hidden rounded-[32px] bg-night px-5 py-14 text-white sm:px-10 sm:py-20">
-        {/* Photo backdrop, darkened so the text and cards stay readable */}
-        <Image src={BAND_PHOTO} alt="" fill sizes="(min-width: 1152px) 72rem, 100vw" className="-z-10 object-cover" />
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgb(15_15_19/0.45)_0%,rgb(15_15_19/0.35)_30%,rgb(15_15_19/0.7)_75%,rgb(15_15_19/0.9)_100%)]" />
+    <section className="relative isolate overflow-hidden text-white">
+      {/* Full-bleed photo backdrop, darkened for readable text, fading in and out at the edges so it blends with
+          the sections above and below in every theme */}
+      <div aria-hidden className="absolute inset-0 -z-10 [mask-image:linear-gradient(180deg,transparent,black_9rem,black_calc(100%-9rem),transparent)]">
+        <Image src={BAND_PHOTO} alt="" fill sizes="100vw" className="object-cover" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgb(15_15_19/0.5)_0%,rgb(15_15_19/0.35)_30%,rgb(15_15_19/0.7)_75%,rgb(15_15_19/0.85)_100%)]" />
+      </div>
+      <div className="mx-auto max-w-6xl px-5 pt-36 pb-40 sm:px-10">
         <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold tracking-wider text-white/60 uppercase">How it works</span>
         <h2 className="mt-5 text-4xl font-bold sm:text-5xl">Get views. Get paid.</h2>
         <p className="mt-3 max-w-xl text-white/60">
