@@ -1,4 +1,3 @@
-import { LiveRefresh } from "@/lib/live";
 import Link from "next/link";
 import { PageHeader } from "@/components/site/PageHeader";
 import { TierBadge } from "@/components/ui/Badge";
@@ -13,7 +12,6 @@ export default async function LeaderboardPage() {
   const topCampaigns = [...campaigns].sort((a, b) => b.verifiedViews - a.verifiedViews).slice(0, 5);
   return (
     <>
-    <LiveRefresh />
     <PageHeader title="Leaderboard">Ranked by paid, verified views. Bot views and rejected clips don&apos;t count.</PageHeader>
     <div className="mx-auto grid max-w-6xl gap-10 px-4 py-10 lg:grid-cols-[1fr_20rem]">
       <section>

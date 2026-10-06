@@ -1,4 +1,3 @@
-import { LiveRefresh } from "@/lib/live";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/site/PageHeader";
 import { ClipsTable } from "@/components/site/ClipsTable";
@@ -32,7 +31,6 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
 
   return (
     <>
-    <LiveRefresh />
     <PageHeader
       eyebrow={
         <>

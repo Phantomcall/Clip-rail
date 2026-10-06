@@ -1,4 +1,3 @@
-import { LiveRefresh } from "@/lib/live";
 import { PageHeader } from "@/components/site/PageHeader";
 import { CampaignCard } from "@/components/site/CampaignCard";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -13,7 +12,6 @@ export default async function CampaignsPage() {
   const closed = campaigns.filter((c) => c.status === "Closed");
   return (
     <>
-    <LiveRefresh />
     <PageHeader title="Campaigns">Every budget below is already locked in escrow. Pick one, clip it, get paid per verified view.</PageHeader>
     <div className="mx-auto max-w-6xl px-4 py-10">
       <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Open now</h2>

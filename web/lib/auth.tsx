@@ -27,8 +27,6 @@ type Status = "signed-out" | "signing-in" | "locked" | "signed-in";
 
 interface AuthValue {
   address: Address | null;
-  /** The name picked at sign-up, if known on this device. */
-  handle: string | null;
   status: Status;
   /** Last user-facing auth error; null after a quiet cancel or a success. */
   error: string | null;
@@ -193,12 +191,11 @@ function MeraAuthProvider({ children }: { children: React.ReactNode }) {
   }, [adopt, known]);
 
   const address = known?.address ?? null;
-  const handle = known?.handle ?? null;
   const status: Status = busy ? "signing-in" : live && known ? "signed-in" : known ? "locked" : "signed-out";
 
   const value = useMemo<AuthValue>(
-    () => ({ address, handle, status, error, isMock: false, signUp, signIn, signOut, getAccount }),
-    [address, handle, status, error, signUp, signIn, signOut, getAccount],
+    () => ({ address, status, error, isMock: false, signUp, signIn, signOut, getAccount }),
+    [address, status, error, signUp, signIn, signOut, getAccount],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -220,7 +217,6 @@ function MockAuthProvider({ preset, children }: { preset: "clipper" | "brand"; c
   const value = useMemo<AuthValue>(
     () => ({
       address,
-      handle: address ? (as === "brand" ? "orbit.wallet" : "tobi.cuts") : null,
       status,
       error: null,
       isMock: true,
@@ -238,7 +234,7 @@ function MockAuthProvider({ preset, children }: { preset: "clipper" | "brand"; c
         if (address) setAddress(who === "brand" ? MOCK_BRAND : MOCK_CLIPPER);
       },
     }),
-    [address, status, fakeSign, as],
+    [address, status, fakeSign],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

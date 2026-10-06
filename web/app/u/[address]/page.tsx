@@ -53,7 +53,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ addres
           {clips.map((c) => (
             <li key={c.id} className="flex items-center justify-between gap-3 p-4">
               <div className="min-w-0">
-                <a href={`https://youtube.com/shorts/${c.videoId}`} target="_blank" rel="noreferrer" className="block truncate font-medium hover:text-accent-hover">{c.title}</a>
+                <a href={`https://youtube.com/shorts/${c.videoId}`} target="_blank" rel="noreferrer" className="truncate font-medium hover:text-accent-hover">{c.title}</a>
                 <div className="tabular text-xs text-muted">{count(c.lastViews)} verified views</div>
               </div>
               <StatusBadge status={c.status} />

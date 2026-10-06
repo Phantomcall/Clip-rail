@@ -5,5 +5,4 @@ packages:
   - "cre/oracle"
   - "packages/*"
 allowBuilds:
-  esbuild: true # via vitest (indexer tests): installs its native binary
   unrs-resolver: true

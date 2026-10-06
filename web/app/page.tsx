@@ -1,4 +1,3 @@
-import { LiveRefresh } from "@/lib/live";
 import Link from "next/link";
 import { BriefFlow } from "@/components/landing/BriefFlow";
 import { ClipWall } from "@/components/landing/ClipWall";
@@ -22,7 +21,6 @@ export default async function Home() {
       {/* the sky sits behind the hero and keeps going down through the next few sections */}
       <div className="relative isolate -mt-[4.5rem]">
         <SkyBackdrop />
-      <LiveRefresh />
       <Hero totals={totals} />
       <TrustBar />
       <div className="px-4 pt-12"><StatStrip totals={totals} /></div>

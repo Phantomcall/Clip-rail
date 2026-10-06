@@ -3,7 +3,6 @@ import localFont from "next/font/local";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { PageSky } from "@/components/site/PageSky";
-import { TabBar } from "@/components/site/TabBar";
 import { Providers } from "@/components/Providers";
 import { THEME_SCRIPT } from "@/components/site/ThemeToggle";
 import "./globals.css";
@@ -32,7 +31,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
-      <body className="flex min-h-dvh flex-col pb-[calc(5rem+env(safe-area-inset-bottom))] sm:pb-0" suppressHydrationWarning>
+      <body className="flex min-h-dvh flex-col" suppressHydrationWarning>
         <Providers>
           <Header />
           <main className="relative isolate flex-1">
@@ -40,7 +39,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             {children}
           </main>
           <Footer />
-          <TabBar />
         </Providers>
       </body>
     </html>

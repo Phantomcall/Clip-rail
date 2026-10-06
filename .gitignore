@@ -15,7 +15,6 @@ coverage/
 *.log
 .DS_Store
 # Envio generated
-indexer/.envio/
 indexer/generated/
 # Foundry
 contracts/out/

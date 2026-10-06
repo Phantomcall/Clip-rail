@@ -1,6 +1,7 @@
-# Cliprail indexer schema (playbook P-2.4). Mirrors web/lib/types.ts; web/lib/queries.ts reads it.
+# Cliprail indexer schema (playbook P-2.4). Mirrors web/lib/types.ts.
 # Token amounts are USDC units (6 decimals) as BigInt; times are unix seconds.
-# Handlers live in src/handlers/; config.yaml lists the events.
+# Handlers (src/EventHandlers.ts) and config.yaml are written once Isaac's ABI v0 lands (H3),
+# using `pnpx envio init` → Contract Import → Local ABI, chain 10143 (+143 for production, P-7.1).
 
 enum CampaignStatus {
   Active
@@ -33,7 +34,6 @@ type Campaign {
   briefHash: String!
   status: CampaignStatus!
   clipsCount: Int!
-  # Views actually paid (capped views are never paid, so this can be below the clips' YouTube totals)
   verifiedViews: BigInt!
   createdAt: Int!
   clips: [Clip!]! @derivedFrom(field: "campaign")
@@ -51,8 +51,6 @@ type Clip {
   released: BigInt!
   registeredAt: Int!
   flaggedAt: Int
-  # Reports the like floor marked suspect (accrued nothing)
-  suspectReports: Int!
   receipts: [Receipt!]! @derivedFrom(field: "clip")
 }
 
@@ -68,11 +66,6 @@ type Clipper {
   clips: [Clip!]! @derivedFrom(field: "clipper")
 }
 
-# One row per (clipper, brand) the clipper has earned from; drives Clipper.brands.
-type ClipperBrand {
-  id: ID! # clipper-brand
-}
-
 # One ViewsVerified event = one VerifiedView receipt.
 type Receipt {
   id: ID! # txHash-logIndex
@@ -81,8 +74,7 @@ type Receipt {
   clipper: Clipper!
   round: BigInt!
   totalViews: BigInt!
-  deltaViews: BigInt! # velocity-capped delta from the event
-  paidViews: BigInt! # views this receipt actually paid (same formula as the vault's tranche)
+  deltaViews: BigInt!
   likes: BigInt!
   amount: BigInt!
   unlockAt: Int!

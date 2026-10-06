@@ -1,9 +1,9 @@
 import { LinkButton } from "@/components/ui/Button";
 import { AvatarStack } from "@/components/ui/Avatar";
-import { CheckCircle } from "@/components/ui/Icons";
+import { CheckCircle, ShortsIcon } from "@/components/ui/Icons";
+import { ShortThumb } from "@/components/ui/ShortThumb";
 import { compact, usd } from "@/lib/format";
 import type { Totals } from "@/lib/types";
-import { PhoneShorts } from "./PhoneShorts";
 import { ProductWindow } from "./ProductWindow";
 
 function Chip({ children, className }: { children: React.ReactNode; className?: string }) {
@@ -44,18 +44,24 @@ export function Hero({ totals }: { totals: Totals }) {
         </div>
       </div>
 
-      {/* Product shot: the clipper dashboard on the left, a phone playing the Shorts that earned it on the right */}
-      <div className="relative mx-auto mt-14 grid max-w-6xl items-center gap-10 px-4 lg:grid-cols-[minmax(0,1fr)_17.5rem]">
-        <div className="relative min-w-0">
-          <Chip className="-top-4 left-10">
-            <CheckCircle /> 2,310 views verified · <span className="text-money">+$2.31</span>
-          </Chip>
-          <Chip className="-bottom-4 left-1/3">
-            <span className="size-2 rounded-full bg-money" /> Paid $12.00 · 24 h after verification
-          </Chip>
-          <ProductWindow />
+      <div className="relative mx-auto mt-14 max-w-5xl px-4">
+        {/* Floating receipts around the product (Cut.pro-style), our own moments */}
+        <div className="absolute -top-10 -left-36 z-10 hidden w-32 animate-float xl:block">
+          <ShortThumb caption="the 2-second hook that pays" views={18420} hue={262} paid="+$18.42" />
         </div>
-        <PhoneShorts />
+        <div className="absolute -right-32 bottom-6 z-10 hidden w-28 animate-float [animation-delay:-3s] xl:block">
+          <ShortThumb caption="bots earn nothing" views={12330} hue={195} />
+        </div>
+        <Chip className="-top-4 right-24">
+          <ShortsIcon /> Claim code <code className="font-mono text-accent">CR-3FA9B21C7D02E4A1</code> found
+        </Chip>
+        <Chip className="-top-4 left-28">
+          <CheckCircle /> 2,310 views verified · <span className="text-money">+$2.31</span>
+        </Chip>
+        <Chip className="-bottom-4 left-1/3">
+          <span className="size-2 rounded-full bg-money" /> Paid $12.00 · 24 h after verification
+        </Chip>
+        <ProductWindow />
       </div>
     </section>
   );
