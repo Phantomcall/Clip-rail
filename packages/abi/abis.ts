@@ -2222,11 +2222,6 @@ export const campaignVaultAbi = [
   },
   {
     "type": "error",
-    "name": "NotImplemented",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "NotPending",
     "inputs": []
   },
@@ -2351,11 +2346,6 @@ export const campaignVaultAbi = [
         "internalType": "address"
       }
     ]
-  },
-  {
-    "type": "error",
-    "name": "UnknownClip",
-    "inputs": []
   },
   {
     "type": "error",

@@ -43,6 +43,11 @@ contract Handler is Test {
     bool public flaggedClipWasPaid; // ghost: must stay false
     uint256 public closes;
 
+    // Money model: predicts every token movement from the tranche data, independently of the vault's own
+    // bookkeeping, and records the first action whose real balance changes differ from the prediction.
+    string public modelError;
+    uint256 public funded; // every token that ever entered the vault
+
     constructor(VaultHarness v, MockUSDC u, address f, address o, address own, uint256[2] memory ids) {
         vault = v;
         lens = new CampaignVaultLens(v);
@@ -54,6 +59,58 @@ contract Handler is Test {
         for (uint256 i; i < 4; ++i) {
             clippers[i] = address(uint160(0xC000 + i));
         }
+        funded = v.getCampaign(ids[0]).params.budget + v.getCampaign(ids[1]).params.budget;
+    }
+
+    // ─────────────────────────── money model ───────────────────────────
+
+    /// [vault, clipper 0..3, brand]
+    function _balances() internal view returns (uint256[6] memory b) {
+        b[0] = usdc.balanceOf(address(vault));
+        for (uint256 i; i < 4; ++i) {
+            b[i + 1] = usdc.balanceOf(clippers[i]);
+        }
+        b[5] = usdc.balanceOf(owner);
+    }
+
+    function _slot(address who) internal view returns (uint256) {
+        for (uint256 i; i < 4; ++i) {
+            if (clippers[i] == who) return i + 1;
+        }
+        return 5; // the brand
+    }
+
+    /// What a release would pay right now: matured tranches from the head, at most MAX_TRANCHES_PER_RELEASE.
+    function _matured(uint256 clipId) internal view returns (uint256 amount) {
+        ICampaignVault.Tranche[] memory ts = vault.getTranches(clipId);
+        uint256 head = vault.trancheHead(clipId);
+        uint256 stop = head + vault.MAX_TRANCHES_PER_RELEASE();
+        if (stop > ts.length) stop = ts.length;
+        for (uint256 i = head; i < stop && ts[i].unlockAt <= block.timestamp; ++i) {
+            amount += ts[i].amount;
+        }
+    }
+
+    function _unreleased(uint256 clipId) internal view returns (uint256 amount) {
+        ICampaignVault.Tranche[] memory ts = vault.getTranches(clipId);
+        for (uint256 i = vault.trancheHead(clipId); i < ts.length; ++i) {
+            amount += ts[i].amount;
+        }
+    }
+
+    /// Checks that each party received exactly `out[i]` from the vault and nothing else moved.
+    function _check(uint256[6] memory before, uint256[6] memory out, string memory action) internal {
+        if (bytes(modelError).length != 0) return;
+        uint256[6] memory a = _balances();
+        uint256 total;
+        for (uint256 i = 1; i < 6; ++i) {
+            total += out[i];
+            if (a[i] != before[i] + out[i]) {
+                modelError = string.concat(action, ": party ", vm.toString(i), " got the wrong amount");
+                return;
+            }
+        }
+        if (a[0] + total != before[0]) modelError = string.concat(action, ": vault balance moved unexpectedly");
     }
 
     /// 12 video ids shared by everyone, so duplicate and squatting paths get exercised.
@@ -84,8 +141,10 @@ contract Handler is Test {
             us[i] = ICampaignVault.ClipUpdate(clipId, views, likes, published, flags);
         }
         uint64 round = vault.lastRound() + 1;
+        uint256[6] memory b0 = _balances();
         vm.prank(forwarder, oracle);
         vault.onReport("", abi.encode(round, us));
+        _check(b0, [uint256(0), 0, 0, 0, 0, 0], "report");
         if (round > maxRoundSeen) maxRoundSeen = round;
     }
 
@@ -113,7 +172,19 @@ contract Handler is Test {
             ids[i] = uint256(keccak256(abi.encode(seed, i))) % count + 1;
             before[i] = vault.getClip(ids[i]).released;
         }
+        uint256[6] memory b0 = _balances();
+        uint256[6] memory out;
+        for (uint256 i; i < n; ++i) {
+            bool seen;
+            for (uint256 j; j < i; ++j) {
+                if (ids[j] == ids[i]) seen = true; // a repeated id pays nothing the second time
+            }
+            ICampaignVault.Clip memory c = vault.getClip(ids[i]);
+            bool payable_ = c.status == ICampaignVault.ClipStatus.Active || c.status == ICampaignVault.ClipStatus.Ended;
+            if (!seen && payable_) out[_slot(vault.payoutAddressOf(c.clipper))] += _matured(ids[i]);
+        }
         vault.release(ids);
+        _check(b0, out, "release");
         for (uint256 i; i < n; ++i) {
             ICampaignVault.Clip memory c = vault.getClip(ids[i]);
             if (c.status == ICampaignVault.ClipStatus.Flagged && c.released != before[i]) flaggedClipWasPaid = true;
@@ -124,47 +195,78 @@ contract Handler is Test {
     function flag(uint256 seed) external {
         uint256 id = _fromList(ICampaignVault.KeeperList.Pay, seed);
         if (id == 0) return;
+        uint256[6] memory b0 = _balances();
+        uint256[6] memory out;
+        ICampaignVault.Clip memory c = vault.getClip(id);
+        uint256 matured = _matured(id);
         vm.prank(owner); // the test contract created both campaigns, so it is the brand
-        try vault.flag(id, bytes32(seed)) {} catch {}
+        try vault.flag(id, bytes32(seed)) {
+            out[_slot(vault.payoutAddressOf(c.clipper))] = matured; // V1-1: matured earnings are paid, not frozen
+        } catch {}
+        _check(b0, out, "flag");
     }
 
     /// Picks from the flag list, and stays inside the flag window most of the time (the deadline is tested too).
     function resolve(uint256 seed, bool reject) external {
         uint256 id = _fromList(ICampaignVault.KeeperList.Flag, seed);
         if (id == 0) return;
+        uint256[6] memory b0 = _balances();
+        uint256[6] memory out;
+        bool closed = vault.getCampaign(vault.getClip(id).campaignId).status == ICampaignVault.CampaignStatus.Closed;
+        uint256 unreleased = _unreleased(id);
         vm.prank(owner);
-        try vault.resolve(id, reject) {} catch {}
+        try vault.resolve(id, reject) {
+            if (reject && closed) out[5] = unreleased; // after close, a reject's return goes to the brand
+        } catch {}
+        _check(b0, out, "resolve");
     }
 
     function autoResolve(uint256 seed) external {
         uint256 id = _clip(seed);
         if (id == 0) return;
+        uint256[6] memory b0 = _balances();
         try vault.autoResolve(id) {} catch {}
+        _check(b0, [uint256(0), 0, 0, 0, 0, 0], "autoResolve");
     }
 
     function close(uint256 seed) external {
         if (seed % 40 != 0) return; // rare, so campaigns stay open most of a run
+        uint256[6] memory b0 = _balances();
+        uint256[6] memory out;
+        ICampaignVault.Campaign memory k = vault.getCampaign(campaigns[seed % 2]);
         vm.prank(owner);
         try vault.closeCampaign(campaigns[seed % 2]) {
             closes++;
+            out[5] = k.params.budget - k.reserved - k.paid; // exact refund
         } catch {}
+        _check(b0, out, "close");
     }
 
     function sweep() external {
+        uint256[6] memory b0 = _balances();
         vault.sweep(lens.sweepableClips(0, 50));
+        _check(b0, [uint256(0), 0, 0, 0, 0, 0], "sweep");
     }
 
     function expire(uint256 clipSeed) external {
         uint256 count = vault.clipCount();
         if (count == 0) return;
+        uint256[6] memory b0 = _balances();
         try vault.expirePending(clipSeed % count + 1) {} catch {}
+        _check(b0, [uint256(0), 0, 0, 0, 0, 0], "expirePending");
     }
 
     function topUp(uint256 campaignSeed, uint256 amount) external {
         amount = bound(amount, 1, 5e6); // small, so the $50 campaign still runs out of budget
         usdc.mint(address(this), amount);
         usdc.approve(address(vault), amount);
-        try vault.topUp(campaigns[campaignSeed % 2], uint128(amount)) {} catch {}
+        uint256 before = usdc.balanceOf(address(vault));
+        try vault.topUp(campaigns[campaignSeed % 2], uint128(amount)) {
+            funded += amount;
+            if (usdc.balanceOf(address(vault)) != before + amount) {
+                modelError = "topUp: vault didn't receive the amount";
+            }
+        } catch {}
     }
 
     function togglePause() external {
@@ -200,7 +302,7 @@ contract VaultInvariantsTest is Test {
                 maxPerClip: i == 0 ? 20e6 : 100e6,
                 maxViewsPerReport: 20_000,
                 minLikeBps: 50,
-                holdSecs: 86_400,
+                holdSecs: i == 0 ? 3_600 : 86_400, // 1 h on the small campaign, so payouts happen within a run
                 startsAt: uint64(block.timestamp),
                 endsAt: uint64(block.timestamp + 30 days),
                 minTier: 0,
@@ -228,6 +330,20 @@ contract VaultInvariantsTest is Test {
             assertLe(uint256(k.reserved) + k.paid, k.params.budget, "reserved + paid > budget");
             assertEq(accrued[cid], uint256(k.reserved) + k.paid, "sum accrued != reserved + paid");
         }
+    }
+
+    /// Money model: every action moved exactly the tokens the model predicted, to exactly the right party.
+    function invariant_moneyModel() public view {
+        assertEq(handler.modelError(), "", handler.modelError());
+    }
+
+    /// Conservation: every token that entered the vault is still there or went to a clipper or the brand.
+    function invariant_conservation() public view {
+        uint256 total = usdc.balanceOf(address(vault)) + usdc.balanceOf(address(this));
+        for (uint256 i; i < 4; ++i) {
+            total += usdc.balanceOf(handler.clippers(i));
+        }
+        assertEq(total, handler.funded(), "tokens created or lost");
     }
 
     /// The vault holds exactly every campaign's unpaid budget: no shortfall, and no stuck tokens.

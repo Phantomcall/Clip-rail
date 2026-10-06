@@ -177,7 +177,6 @@ interface ICampaignVault {
 
     // ─────────────────────────── Errors ───────────────────────────
 
-    error NotImplemented();
     error TokenNotAllowed();
     error InvalidParams();
     error NotBrand();
@@ -190,7 +189,6 @@ interface ICampaignVault {
     error InvalidNonce();
     error InvalidSignature();
     error StaleRound(uint64 round, uint64 lastRound);
-    error UnknownClip();
     error NotFlaggable();
     error NotFlagged();
     error FlagNotExpired();

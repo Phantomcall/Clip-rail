@@ -2220,11 +2220,6 @@
   },
   {
     "type": "error",
-    "name": "NotImplemented",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "NotPending",
     "inputs": []
   },
@@ -2349,11 +2344,6 @@
         "internalType": "address"
       }
     ]
-  },
-  {
-    "type": "error",
-    "name": "UnknownClip",
-    "inputs": []
   },
   {
     "type": "error",

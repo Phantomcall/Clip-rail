@@ -24,6 +24,20 @@ contract BlacklistUSDC is MockUSDC {
     }
 }
 
+/// ERC-20 that signals a failed transfer by returning false instead of reverting (allowed by the standard).
+contract FalseReturnToken is MockUSDC {
+    mapping(address => bool) public refuse;
+
+    function setRefuse(address who, bool b) external {
+        refuse[who] = b;
+    }
+
+    function transfer(address to, uint256 value) public override returns (bool) {
+        if (refuse[to]) return false;
+        return super.transfer(to, value);
+    }
+}
+
 /// v1: release, flag/resolve/autoResolve, close, sweep, reputation tiers (PRD F5–F8, audit R-1 … R-6).
 contract VaultV1Test is Test {
     address constant FORWARDER = address(0xF0);
@@ -98,6 +112,35 @@ contract VaultV1Test is Test {
         a[0] = clipId;
     }
 
+    // ─────────────────────────── actors: owner and incident response ───────────────────────────
+
+    /// The owner can't trap campaign money: disallowing the token blocks new campaigns only.
+    function test_Owner_DisallowingTokenDoesNotBlockPayoutsOrClose() public {
+        uint256 id = _create(_params());
+        uint256 clip = _earning(id, clipper, "aaaaaaaaaaa", 5_000);
+        vault.setTokenAllowed(address(usdc), false);
+        vm.warp(T0 + HOLD);
+        vault.release(_one(clip));
+        assertEq(usdc.balanceOf(clipper), 5e6);
+        vm.prank(brand);
+        vault.closeCampaign(id);
+        assertEq(usdc.balanceOf(brand), 145e6);
+    }
+
+    /// Leaked oracle key: a pause skips every report from then on, but tranches forged before the pause still
+    /// release after their hold unless the brand flags them (documented trade-off, audit V1-10).
+    function test_Incident_PauseStopsNewForgeriesNotMaturedOnes() public {
+        uint256 id = _create(_params());
+        uint256 clip = _earning(id, clipper, "aaaaaaaaaaa", 5_000); // forged before anyone notices
+        vault.setPaused(true);
+        _report(clip, 25_000); // further forgeries are skipped while paused
+        assertEq(vault.getClip(clip).accrued, 5e6);
+
+        vm.warp(T0 + HOLD);
+        vault.release(_one(clip)); // release works while paused, by design
+        assertEq(usdc.balanceOf(clipper), 5e6);
+    }
+
     // ─────────────────────────── keeper lists and lens ───────────────────────────
 
     function test_KeeperList_PagesAndNextUnlock() public {
@@ -147,6 +190,24 @@ contract VaultV1Test is Test {
         assertEq(lens.releasableClips(0, 10).length, 0); // fully paid: off the pay list
         vault.release(_one(clip)); // running twice is harmless
         assertEq(usdc.balanceOf(clipper), 8e6);
+    }
+
+    /// One release pays at most MAX_TRANCHES_PER_RELEASE tranches per clip; the next call pays the rest.
+    function test_Release_BatchCapPaysTheRestNextCall() public {
+        uint256 id = _create(_params());
+        uint256 clip = _earning(id, clipper, "aaaaaaaaaaa", 0);
+        for (uint64 v = 10; v <= 2_050; v += 10) {
+            _report(clip, v); // 205 tranches of $0.01
+        }
+        assertEq(vault.getTranches(clip).length, 205);
+        vm.warp(T0 + HOLD);
+
+        vault.release(_one(clip));
+        assertEq(usdc.balanceOf(clipper), 200 * 1e4); // exactly 200 tranches
+        assertEq(vault.nextUnlockAt(clip), T0 + HOLD); // the rest is still owed and matured
+        vault.release(_one(clip));
+        assertEq(usdc.balanceOf(clipper), 205 * 1e4);
+        assertEq(vault.nextUnlockAt(clip), type(uint64).max);
     }
 
     function test_Release_UpdatesReputation() public {
@@ -206,6 +267,33 @@ contract VaultV1Test is Test {
         usdc.setBlocked(clipper, false);
         vault.release(_one(a));
         assertEq(usdc.balanceOf(clipper), 4e6);
+    }
+
+    /// R-1 for tokens that return false instead of reverting: the payout counts as failed and is rolled back.
+    function test_Release_FalseReturnTokenCountsAsFailed() public {
+        FalseReturnToken t = new FalseReturnToken();
+        vault.setTokenAllowed(address(t), true);
+        ICampaignVault.CampaignParams memory p = _params();
+        p.token = address(t);
+        t.mint(brand, p.budget);
+        vm.startPrank(brand);
+        t.approve(address(vault), p.budget);
+        uint256 id = vault.createCampaign(p);
+        vm.stopPrank();
+        uint256 clip = _earning(id, clipper, "aaaaaaaaaaa", 5_000);
+        vm.warp(T0 + HOLD);
+
+        t.setRefuse(clipper, true);
+        vm.expectEmit(address(vault));
+        emit ICampaignVault.ReleaseFailed(clip, clipper, 5e6);
+        vault.release(_one(clip));
+        assertEq(vault.getClip(clip).released, 0);
+        assertEq(vault.getCampaign(id).paid, 0);
+        assertEq(t.balanceOf(address(vault)), p.budget);
+
+        t.setRefuse(clipper, false);
+        vault.release(_one(clip));
+        assertEq(t.balanceOf(clipper), 5e6);
     }
 
     function test_Release_WorksWhilePaused() public {
@@ -362,6 +450,27 @@ contract VaultV1Test is Test {
         assertEq(vault.getClip(clip).released, 0);
     }
 
+    /// Only the campaign's brand can resolve its flag: not the clipper, not another brand, not a stranger.
+    function test_Resolve_OnlyTheBrand() public {
+        uint256 id = _create(_params());
+        uint256 clip = _earning(id, clipper, "aaaaaaaaaaa", 5_000);
+        vm.prank(brand);
+        vault.flag(clip, "x");
+
+        address otherBrand = makeAddr("otherBrand");
+        _create(_params()); // otherBrand isn't this campaign's brand either way
+        address[3] memory who = [clipper, otherBrand, makeAddr("stranger")];
+        for (uint256 i; i < 3; ++i) {
+            vm.prank(who[i]);
+            vm.expectRevert(ICampaignVault.NotBrand.selector);
+            vault.resolve(clip, true);
+            vm.prank(who[i]);
+            vm.expectRevert(ICampaignVault.NotBrand.selector);
+            vault.resolve(clip, false);
+        }
+        assertEq(uint8(vault.getClip(clip).status), uint8(ICampaignVault.ClipStatus.Flagged));
+    }
+
     /// Audit V1-2: after the deadline the brand can no longer decide; silence is acceptance.
     function test_Resolve_RevertsAfterDeadline() public {
         uint256 id = _create(_params());
@@ -404,6 +513,17 @@ contract VaultV1Test is Test {
         vm.prank(address(vault));
         reputation.recordRejection(clipper, brand2);
         assertEq(reputation.stats(clipper).rejections, 2); // a second brand counts
+    }
+
+    /// stats.brands counts distinct brands that paid the clipper, not payouts.
+    function test_Reputation_BrandsCountedOnce() public {
+        vm.startPrank(address(vault));
+        reputation.recordPaid(clipper, brand, 1, 100, 1);
+        reputation.recordPaid(clipper, brand, 2, 100, 1);
+        assertEq(reputation.stats(clipper).brands, 1);
+        reputation.recordPaid(clipper, makeAddr("brand2"), 3, 100, 1);
+        assertEq(reputation.stats(clipper).brands, 2);
+        vm.stopPrank();
     }
 
     /// Audit V1-3: tier 1 survives one rejecting brand, not two.
@@ -482,6 +602,10 @@ contract VaultV1Test is Test {
         uint256 id = _create(_params());
         vm.expectRevert(ICampaignVault.NotBrand.selector);
         vault.closeCampaign(id); // stranger before endsAt
+
+        vm.warp(T0 + 30 days); // exactly endsAt: still open (it still accrues), so still brand-only
+        vm.expectRevert(ICampaignVault.NotBrand.selector);
+        vault.closeCampaign(id);
 
         vm.warp(T0 + 30 days + 1);
         vault.closeCampaign(id); // anyone after endsAt; refund still goes to the brand
@@ -582,6 +706,40 @@ contract VaultV1Test is Test {
     }
 
     // ─────────────────────────── pause and pending (review follow-up 4) ───────────────────────────
+
+    /// At exactly endsAt a campaign still accrues, so its clips aren't sweepable until one second later.
+    function test_Sweep_EndsAtBoundary() public {
+        uint256 id = _create(_params());
+        uint256 clip = _earning(id, clipper, "aaaaaaaaaaa", 5_000);
+        vm.warp(T0 + 30 days);
+        assertEq(lens.sweepableClips(0, 10).length, 0);
+        vault.sweep(_one(clip)); // a no-op while open
+        assertEq(uint8(vault.getClip(clip).status), uint8(ICampaignVault.ClipStatus.Active));
+        vm.warp(T0 + 30 days + 1);
+        assertEq(lens.sweepableClips(0, 10)[0], clip);
+    }
+
+    /// A clip that is Flagged when its campaign is swept resolves back to Ended (not Active) when the flag is accepted.
+    function test_Sweep_FlaggedClipResolvesToEnded() public {
+        uint256 id = _create(_params());
+        uint256 clip = _earning(id, clipper, "aaaaaaaaaaa", 5_000);
+        vm.prank(brand);
+        vault.flag(clip, "x");
+        vm.prank(brand);
+        vault.closeCampaign(id);
+
+        assertEq(lens.sweepableClips(0, 10)[0], clip);
+        vault.sweep(lens.sweepableClips(0, 10));
+        assertEq(vault.watchListLength(), 0);
+        assertEq(uint8(vault.getClip(clip).status), uint8(ICampaignVault.ClipStatus.Flagged)); // still frozen
+
+        vm.prank(brand);
+        vault.resolve(clip, false);
+        assertEq(uint8(vault.getClip(clip).status), uint8(ICampaignVault.ClipStatus.Ended));
+        vm.warp(T0 + HOLD);
+        vault.release(_one(clip)); // an accepted Ended clip is still paid what it earned
+        assertEq(usdc.balanceOf(clipper), 5e6);
+    }
 
     function test_ExpirePendingBlockedWhilePaused() public {
         uint256 id = _create(_params());
