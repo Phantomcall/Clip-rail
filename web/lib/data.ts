@@ -5,6 +5,7 @@
  */
 import { getBrief } from "@/lib/briefs";
 import { gql, hasIndexer, num } from "@/lib/graphql";
+import { ytMeta } from "@/lib/ytmeta";
 import * as Q from "@/lib/queries";
 import type { Address, Campaign, Clip, Clipper, Receipt, Tier, Totals } from "@/lib/types";
 import * as mock from "@/mocks/data";
@@ -50,7 +51,7 @@ function toClip(r: Row): Clip {
     campaignId: ref(r.campaign),
     clipper: ref(r.clipper) as Address,
     videoId: r.videoId as string,
-    title: `Short ${r.videoId as string}`, // titles come from YouTube previews; the indexer only knows the id
+    title: `Short ${r.videoId as string}`, // placeholder; withTitles() swaps in the real YouTube title
     status: r.status as Clip["status"],
     lastViews: num(r.lastViews as string),
     likes: num(r.likes as string),
@@ -58,6 +59,12 @@ function toClip(r: Row): Clip {
     released: num(r.released as string),
     registeredAt: num(r.registeredAt as number),
   };
+}
+
+/** Swap the placeholder titles for the videos' real YouTube titles (best effort; keeps the placeholder on failure). */
+async function withTitles(clips: Clip[]): Promise<Clip[]> {
+  const metas = await Promise.all(clips.map((c) => ytMeta(c.videoId)));
+  return clips.map((c, i) => (metas[i] ? { ...c, title: metas[i].title } : c));
 }
 
 function toClipper(r: Row): Clipper {
@@ -117,13 +124,13 @@ export async function getCampaignsByBrand(brand: Address): Promise<Campaign[]> {
 export async function getClipsForCampaign(id: string): Promise<Clip[]> {
   if (!hasIndexer()) return mock.clipsForCampaign(id);
   const d = await gql<{ Clip: Row[] }>(Q.Q_CLIPS_BY_CAMPAIGN, { id });
-  return d.Clip.map(toClip);
+  return withTitles(d.Clip.map(toClip));
 }
 
 export async function getClipsByClipper(clipper: Address): Promise<Clip[]> {
   if (!hasIndexer()) return mock.clips.filter((c) => c.clipper.toLowerCase() === clipper.toLowerCase());
   const d = await gql<{ Clip: Row[] }>(Q.Q_CLIPS_BY_CLIPPER, { c: clipper.toLowerCase() });
-  return d.Clip.map(toClip);
+  return withTitles(d.Clip.map(toClip));
 }
 
 export async function getReceiptsByClipper(clipper: Address): Promise<Receipt[]> {
