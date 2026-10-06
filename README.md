@@ -67,13 +67,16 @@ Envio HyperIndex ◀── events (receipts, payouts, flags) ── Next.js app 
 
 ## Contracts
 
-**Monad testnet (10143), v0.** Verified on MonadVision. Source of truth: `packages/abi/addresses.json`.
+**Monad testnet (10143), v1** (deployed at block 68749763). Source of truth: `packages/abi/addresses.json`. Source verification on MonadVision: pending.
 
 | Contract | Address |
 |---|---|
-| CampaignVault | [`0xf9B2B301B94Aa534a872f0e54fAAAA319061Af45`](https://testnet.monadvision.com/address/0xf9B2B301B94Aa534a872f0e54fAAAA319061Af45) |
-| CreatorReputation | [`0x530E1171f7b49E20A567376671f3Fb72f8dcAc8d`](https://testnet.monadvision.com/address/0x530E1171f7b49E20A567376671f3Fb72f8dcAc8d) |
-| MockUSDC | [`0x9a60703A756c7936180BC4BdfA2323355cBd984f`](https://testnet.monadvision.com/address/0x9a60703A756c7936180BC4BdfA2323355cBd984f) |
+| CampaignVault | [`0x6D7A51c58EB07Ab7bb1B0468A9be02fE9001BcAf`](https://testnet.monadvision.com/address/0x6D7A51c58EB07Ab7bb1B0468A9be02fE9001BcAf) |
+| CampaignVaultLens | [`0x6f8d90BD1D58c592876391Db01db780b69A64938`](https://testnet.monadvision.com/address/0x6f8d90BD1D58c592876391Db01db780b69A64938) |
+| CreatorReputation | [`0x5c38812Ec071dEcd89aB2c433f3ddB94E1731913`](https://testnet.monadvision.com/address/0x5c38812Ec071dEcd89aB2c433f3ddB94E1731913) |
+| MockUSDC | [`0x92cE6862a977Fe61D966C3903e8E5f5d7d84a7ec`](https://testnet.monadvision.com/address/0x92cE6862a977Fe61D966C3903e8E5f5d7d84a7ec) |
+
+The v0 vault (`0xf9B2…Af45`) is retired: its release and close were stubs, so it can no longer pay out.
 
 _Mainnet (143) addresses, function table and invariants: added by Isaac (I-8.3)._
 
