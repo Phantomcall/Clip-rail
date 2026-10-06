@@ -35,6 +35,8 @@ contract CampaignVault is ICampaignVault, ReceiverTemplate, EIP712, ReentrancyGu
     uint8 public constant UNAVAILABLE_STRIKES = 3;
     /// @notice Open Pending clips one clipper may have in one campaign (limits watch-list spam).
     uint8 public constant MAX_PENDING_PER_CLIPPER = 3;
+    /// @notice Tranches paid per clip per release call, to bound gas; the rest are paid on the next call.
+    uint256 public constant MAX_TRANCHES_PER_RELEASE = 200;
 
     bytes32 public constant REGISTER_CLIP_TYPEHASH =
         keccak256("RegisterClip(uint256 campaignId,string videoId,address clipper,uint256 nonce,uint256 deadline)");
@@ -73,6 +75,18 @@ contract CampaignVault is ICampaignVault, ReceiverTemplate, EIP712, ReentrancyGu
     /// @dev Pending and Active clips the oracle still has to watch (swap-and-pop; index is 1-based).
     uint256[] internal _watchList;
     mapping(uint256 clipId => uint256) internal _watchIndex;
+
+    /// @dev Clips with unreleased tranches, for the keeper (releasableClips).
+    uint256[] internal _payList;
+    mapping(uint256 clipId => uint256) internal _payIndex;
+
+    /// @dev Flagged clips, for the keeper (expiredFlags).
+    uint256[] internal _flagList;
+    mapping(uint256 clipId => uint256) internal _flagIndex;
+
+    mapping(uint256 clipId => bool) public everFlagged; // one flag per clip (audit R-3)
+    mapping(uint256 clipId => ClipStatus) internal _statusBeforeFlag;
+    mapping(uint256 campaignId => address) internal _refundTo; // set on close (audit R-2)
 
     constructor(address forwarder, ICreatorReputation reputation_, uint64 pendingTimeout_, uint64 resolveWindow_)
         ReceiverTemplate(forwarder)
@@ -116,19 +130,48 @@ contract CampaignVault is ICampaignVault, ReceiverTemplate, EIP712, ReentrancyGu
         emit CampaignToppedUp(campaignId, amount);
     }
 
-    /// @dev TODO I-2.3
-    function closeCampaign(uint256) external pure override {
-        revert NotImplemented();
+    /// @notice Stops accrual and refunds budget − reserved − paid to the brand. Brand any time; anyone after endsAt.
+    ///         Already-reserved tranches still release. Works while paused, so money can always leave.
+    function closeCampaign(uint256 campaignId) external override nonReentrant {
+        Campaign storage c = _campaigns[campaignId];
+        if (msg.sender != c.brand && block.timestamp <= c.params.endsAt) revert NotBrand();
+        _close(campaignId, c, c.brand);
     }
 
-    /// @dev TODO I-2.2
-    function flag(uint256, bytes32) external pure override {
-        revert NotImplemented();
+    /// @notice Brand only: like closeCampaign, but the refund (and any later reject returns) go to `refundTo`.
+    function closeCampaignTo(uint256 campaignId, address refundTo) external override nonReentrant {
+        Campaign storage c = _campaigns[campaignId];
+        if (msg.sender != c.brand) revert NotBrand();
+        if (refundTo == address(0) || refundTo == address(this)) revert InvalidRefundAddress();
+        _close(campaignId, c, refundTo);
     }
 
-    /// @dev TODO I-2.2
-    function resolve(uint256, bool) external pure override {
-        revert NotImplemented();
+    /// @notice Brand freezes a clip that still has unreleased earnings. One flag per clip (audit R-3); if the brand
+    ///         doesn't resolve it within resolveWindow, anyone can autoResolve it as accepted.
+    function flag(uint256 clipId, bytes32 reasonHash) external override {
+        Clip storage clip = _clips[clipId];
+        if (msg.sender != _campaigns[clip.campaignId].brand) revert NotBrand();
+        if (clip.status != ClipStatus.Active && clip.status != ClipStatus.Ended) revert NotFlaggable();
+        if (_trancheHead[clipId] >= _tranches[clipId].length) revert NotFlaggable(); // nothing left to freeze
+        if (everFlagged[clipId]) revert AlreadyFlagged();
+
+        everFlagged[clipId] = true;
+        _statusBeforeFlag[clipId] = clip.status;
+        clip.status = ClipStatus.Flagged;
+        clip.flagDeadline = uint64(block.timestamp) + resolveWindow;
+        _listAdd(_flagList, _flagIndex, clipId);
+        emit Flagged(clipId, msg.sender, reasonHash, clip.flagDeadline);
+    }
+
+    /// @notice Brand resolves its flag. Reject: unreleased earnings return to the budget (or, if the campaign is
+    ///         closed, to its refund address) and count against the clipper's reputation. Accept: the clip resumes.
+    function resolve(uint256 clipId, bool reject) external override nonReentrant {
+        Clip storage clip = _clips[clipId];
+        if (clip.status != ClipStatus.Flagged) revert NotFlagged();
+        Campaign storage c = _campaigns[clip.campaignId];
+        if (msg.sender != c.brand) revert NotBrand();
+        if (reject) _reject(clipId, clip, c);
+        else _accept(clipId, clip);
     }
 
     // ─────────────────────────── Clipper ───────────────────────────
@@ -192,18 +235,42 @@ contract CampaignVault is ICampaignVault, ReceiverTemplate, EIP712, ReentrancyGu
 
     // ─────────────────────────── Anyone (keeper) ───────────────────────────
 
-    /// @dev TODO I-2.1
-    function release(uint256[] calldata) external pure override {
-        revert NotImplemented();
+    /// @notice Pays every matured tranche of the given clips to each clipper's payout address. Anyone can call it
+    ///         (the keeper does, every few minutes). Flagged and Rejected clips are skipped; a failed transfer is
+    ///         skipped with ReleaseFailed instead of blocking the batch (audit R-1). Works while paused.
+    function release(uint256[] calldata clipIds) external override nonReentrant {
+        for (uint256 i; i < clipIds.length; ++i) {
+            _release(clipIds[i]);
+        }
     }
 
-    /// @dev TODO I-2.2
-    function autoResolve(uint256) external pure override {
-        revert NotImplemented();
+    /// @notice Anyone can accept a flag once its resolveWindow has passed without the brand resolving it.
+    function autoResolve(uint256 clipId) external override {
+        Clip storage clip = _clips[clipId];
+        if (clip.status != ClipStatus.Flagged) revert NotFlagged();
+        if (block.timestamp < clip.flagDeadline) revert FlagNotExpired();
+        _accept(clipId, clip);
     }
 
-    /// @notice Anyone can reject a Pending clip once pendingTimeout has passed (no report needed).
-    function expirePending(uint256 clipId) external override {
+    /// @notice Anyone can end watched clips whose campaign is closed or past endsAt; they can never earn again.
+    function sweep(uint256[] calldata clipIds) external override {
+        for (uint256 i; i < clipIds.length; ++i) {
+            uint256 clipId = clipIds[i];
+            Clip storage clip = _clips[clipId];
+            if (_watchIndex[clipId] == 0 || _isOpen(_campaigns[clip.campaignId])) continue;
+            if (clip.status == ClipStatus.Pending) _pendingCount[clip.campaignId][clip.clipper]--;
+            if (clip.status == ClipStatus.Flagged) {
+                _statusBeforeFlag[clipId] = ClipStatus.Ended; // resolves back to Ended, not Active
+                _unwatch(clipId);
+            } else {
+                _end(clipId, clip);
+            }
+        }
+    }
+
+    /// @notice Anyone can reject a Pending clip once pendingTimeout has passed (no report needed). Blocked while
+    ///         paused, because the oracle can't report while paused either (review follow-up 4).
+    function expirePending(uint256 clipId) external override whenNotPaused {
         Clip storage clip = _clips[clipId];
         if (clip.status != ClipStatus.Pending) revert NotPending();
         if (block.timestamp < clip.registeredAt + pendingTimeout) revert PendingNotExpired();
@@ -286,57 +353,35 @@ contract CampaignVault is ICampaignVault, ReceiverTemplate, EIP712, ReentrancyGu
         return _watchList.length;
     }
 
-    /// @dev TODO I-2.1
-    function releasableClips(uint256, uint256) external pure override returns (uint256[] memory) {
-        revert NotImplemented();
+    function keeperList(KeeperList list, uint256 offset, uint256 limit)
+        external
+        view
+        override
+        returns (uint256[] memory ids)
+    {
+        uint256[] storage l = list == KeeperList.Watch ? _watchList : list == KeeperList.Pay ? _payList : _flagList;
+        uint256 len = l.length;
+        uint256 start = offset > len ? len : offset;
+        uint256 end = limit > len - start ? len : start + limit;
+        ids = new uint256[](end - start);
+        for (uint256 i = start; i < end; ++i) {
+            ids[i - start] = l[i];
+        }
     }
 
-    /// @dev TODO I-2.2
-    function expiredFlags(uint256, uint256) external pure override returns (uint256[] memory) {
-        revert NotImplemented();
+    function nextUnlockAt(uint256 clipId) external view override returns (uint64) {
+        Tranche[] storage ts = _tranches[clipId];
+        uint256 head = _trancheHead[clipId];
+        return head < ts.length ? ts[head].unlockAt : type(uint64).max;
     }
 
-    /// @notice Pending clips past pendingTimeout (pages over the watch list, like activeClips).
-    function expiredPending(uint256 offset, uint256 limit) external view override returns (uint256[] memory ids) {
-        uint256 len = _watchList.length;
-        uint256 end = offset + limit > len ? len : offset + limit;
-        if (offset >= end) return ids;
-
-        ids = new uint256[](end - offset);
-        uint256 n;
-        for (uint256 i = offset; i < end; ++i) {
-            uint256 clipId = _watchList[i];
-            Clip storage clip = _clips[clipId];
-            if (clip.status == ClipStatus.Pending && block.timestamp >= clip.registeredAt + pendingTimeout) {
-                ids[n++] = clipId;
-            }
-        }
-        assembly {
-            mstore(ids, n)
-        }
+    function refundAddressOf(uint256 campaignId) external view returns (address) {
+        return _refundTo[campaignId];
     }
 
     function payoutAddressOf(address clipper) external view override returns (address) {
         address p = _payoutAddress[clipper];
         return p == address(0) ? clipper : p;
-    }
-
-    /// @notice "CR-" + upper(hex(keccak256(abi.encodePacked(campaignId, clipper)))[2:18]): 64 bits, so an attacker
-    ///         can't grind an address whose code matches someone else's.
-    /// @dev Must match packages/shared claimCode() and the CRE workflow byte for byte.
-    function claimCode(uint256 campaignId, address clipper) public pure override returns (string memory) {
-        bytes32 h = keccak256(abi.encodePacked(campaignId, clipper));
-        bytes memory hexUpper = "0123456789ABCDEF";
-        bytes memory out = new bytes(19);
-        out[0] = "C";
-        out[1] = "R";
-        out[2] = "-";
-        for (uint256 i; i < 8; ++i) {
-            uint8 b = uint8(h[i]);
-            out[3 + i * 2] = hexUpper[b >> 4];
-            out[4 + i * 2] = hexUpper[b & 0x0f];
-        }
-        return string(out);
     }
 
     /// @notice EIP-712 domain separator for {name:"Cliprail", version:"1", chainId, verifyingContract: this}.
@@ -512,6 +557,7 @@ contract CampaignVault is ICampaignVault, ReceiverTemplate, EIP712, ReentrancyGu
         c.reserved += uint128(amount);
         clip.accrued += uint128(amount);
         _tranches[u.clipId].push(Tranche({amount: uint128(amount), views: paidViews, unlockAt: unlockAt}));
+        if (_payIndex[u.clipId] == 0) _listAdd(_payList, _payIndex, u.clipId);
 
         emit ViewsVerified(
             u.clipId, clip.campaignId, clip.clipper, round, u.views, delta, u.likes, uint128(amount), unlockAt
@@ -532,6 +578,102 @@ contract CampaignVault is ICampaignVault, ReceiverTemplate, EIP712, ReentrancyGu
         clip.status = ClipStatus.Ended;
         _unwatch(clipId);
         emit ClipEnded(clipId);
+    }
+
+    // ─────────────────────────── Internal: payouts, flags, close ───────────────────────────
+
+    function _release(uint256 clipId) internal {
+        Clip storage clip = _clips[clipId];
+        if (clip.status != ClipStatus.Active && clip.status != ClipStatus.Ended) return; // never pay Flagged/Rejected
+
+        Tranche[] storage ts = _tranches[clipId];
+        uint256 head = _trancheHead[clipId];
+        uint256 stop = head + MAX_TRANCHES_PER_RELEASE;
+        if (stop > ts.length) stop = ts.length;
+        uint256 amount = 0;
+        uint256 views = 0;
+        uint256 i = head;
+        for (; i < stop && ts[i].unlockAt <= block.timestamp; ++i) {
+            amount += ts[i].amount;
+            views += ts[i].views;
+        }
+        if (amount == 0) return;
+
+        Campaign storage c = _campaigns[clip.campaignId];
+        address to = _payoutAddress[clip.clipper];
+        if (to == address(0)) to = clip.clipper;
+
+        // Effects before the transfer; rolled back below if the transfer fails.
+        _trancheHead[clipId] = i;
+        clip.released += uint128(amount);
+        c.reserved -= uint128(amount);
+        c.paid += uint128(amount);
+
+        if (!_tryTransfer(c.params.token, to, amount)) {
+            _trancheHead[clipId] = head;
+            clip.released -= uint128(amount);
+            c.reserved += uint128(amount);
+            c.paid -= uint128(amount);
+            emit ReleaseFailed(clipId, to, uint128(amount));
+            return;
+        }
+        if (i == ts.length) _listRemove(_payList, _payIndex, clipId);
+        emit Released(clipId, clip.clipper, uint128(amount));
+
+        // Reputation must never block a payout.
+        try reputation.recordPaid(clip.clipper, c.brand, clipId, uint64(views), uint128(amount)) {} catch {}
+    }
+
+    function _reject(uint256 clipId, Clip storage clip, Campaign storage c) internal {
+        Tranche[] storage ts = _tranches[clipId];
+        uint256 returned = 0;
+        for (uint256 i = _trancheHead[clipId]; i < ts.length; ++i) {
+            returned += ts[i].amount;
+        }
+        _trancheHead[clipId] = ts.length;
+        c.reserved -= uint128(returned);
+        clip.accrued -= uint128(returned); // keeps Σ accrued = reserved + paid (audit R-5)
+        clip.status = ClipStatus.Rejected;
+        _unwatch(clipId);
+        _listRemove(_payList, _payIndex, clipId);
+        _listRemove(_flagList, _flagIndex, clipId);
+
+        emit Resolved(clipId, true, uint128(returned));
+        emit ClipRejected(clipId, uint8(RejectReason.BrandRejected));
+
+        // A closed campaign's budget is already settled: send the returned amount on to its refund address.
+        if (c.status == CampaignStatus.Closed && returned > 0) {
+            c.params.budget -= uint128(returned);
+            address to = _refundTo[clip.campaignId];
+            IERC20(c.params.token).safeTransfer(to, returned);
+            emit CampaignRefunded(clip.campaignId, to, uint128(returned));
+        }
+        try reputation.recordRejection(clip.clipper) {} catch {}
+    }
+
+    function _accept(uint256 clipId, Clip storage clip) internal {
+        ClipStatus previous = _statusBeforeFlag[clipId];
+        clip.status = previous;
+        _listRemove(_flagList, _flagIndex, clipId);
+        emit Resolved(clipId, false, 0);
+    }
+
+    function _close(uint256 campaignId, Campaign storage c, address refundTo) internal {
+        if (c.status != CampaignStatus.Active) revert CampaignNotActive();
+        uint128 refund = c.params.budget - c.reserved - c.paid;
+        c.status = CampaignStatus.Closed;
+        c.params.budget = c.reserved + c.paid;
+        _refundTo[campaignId] = refundTo;
+        if (refund > 0) IERC20(c.params.token).safeTransfer(refundTo, refund);
+        emit CampaignClosed(campaignId, refund);
+    }
+
+    /// @dev Like SafeERC20.safeTransfer, but returns false instead of reverting (e.g. a blacklisted recipient).
+    function _tryTransfer(address token, address to, uint256 amount) internal returns (bool) {
+        (bool ok, bytes memory ret) = token.call(abi.encodeCall(IERC20.transfer, (to, amount)));
+        if (!ok) return false;
+        if (ret.length == 0) return token.code.length > 0;
+        return ret.length >= 32 && abi.decode(ret, (bool));
     }
 
     // ─────────────────────────── Internal: helpers ───────────────────────────
@@ -559,17 +701,27 @@ contract CampaignVault is ICampaignVault, ReceiverTemplate, EIP712, ReentrancyGu
     }
 
     function _watch(uint256 clipId) internal {
-        _watchList.push(clipId);
-        _watchIndex[clipId] = _watchList.length;
+        _listAdd(_watchList, _watchIndex, clipId);
     }
 
     function _unwatch(uint256 clipId) internal {
-        uint256 idx = _watchIndex[clipId];
+        _listRemove(_watchList, _watchIndex, clipId);
+    }
+
+    /// @dev Swap-and-pop set over an array with a 1-based index mapping.
+    function _listAdd(uint256[] storage list, mapping(uint256 => uint256) storage index, uint256 id) internal {
+        if (index[id] != 0) return;
+        list.push(id);
+        index[id] = list.length;
+    }
+
+    function _listRemove(uint256[] storage list, mapping(uint256 => uint256) storage index, uint256 id) internal {
+        uint256 idx = index[id];
         if (idx == 0) return;
-        uint256 last = _watchList[_watchList.length - 1];
-        _watchList[idx - 1] = last;
-        _watchIndex[last] = idx;
-        _watchList.pop();
-        delete _watchIndex[clipId];
+        uint256 last = list[list.length - 1];
+        list[idx - 1] = last;
+        index[last] = idx;
+        list.pop();
+        delete index[id];
     }
 }

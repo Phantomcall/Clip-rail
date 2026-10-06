@@ -1,0 +1,146 @@
+[
+  {
+    "type": "constructor",
+    "inputs": [
+      {
+        "name": "vault_",
+        "type": "address",
+        "internalType": "contract ICampaignVault"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "claimCode",
+    "inputs": [
+      {
+        "name": "campaignId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "clipper",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "stateMutability": "pure"
+  },
+  {
+    "type": "function",
+    "name": "expiredFlags",
+    "inputs": [
+      {
+        "name": "offset",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "limit",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "ids",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "expiredPending",
+    "inputs": [
+      {
+        "name": "offset",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "limit",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "ids",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "releasableClips",
+    "inputs": [
+      {
+        "name": "offset",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "limit",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "ids",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "sweepableClips",
+    "inputs": [
+      {
+        "name": "offset",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "limit",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "ids",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "vault",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract ICampaignVault"
+      }
+    ],
+    "stateMutability": "view"
+  }
+]

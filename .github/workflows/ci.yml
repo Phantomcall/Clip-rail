@@ -89,8 +89,9 @@ jobs:
           version: v1.8.3 # pinned: fmt output and the compiler pipeline must match local
       - name: forge fmt --check
         run: forge fmt --check
+      # EIP-170 only binds what we deploy; test harnesses that subclass the vault are skipped.
       - name: forge build (contract sizes)
-        run: forge build --sizes
+        run: forge build --sizes --skip test
       # FOUNDRY_PROFILE=ci: 10,000 fuzz runs and deeper invariant runs (PRD §9.1 F4).
       - name: forge test (ci profile)
         run: forge test -vvv

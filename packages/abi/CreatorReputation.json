@@ -6,6 +6,45 @@
   },
   {
     "type": "function",
+    "name": "TIER1_VIEWS",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "TIER2_MAX_REJECTION_BPS",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "TIER2_VIEWS",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "addVault",
     "inputs": [
       {
@@ -16,6 +55,30 @@
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "clipCounted",
+    "inputs": [
+      {
+        "name": "vault",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "clipId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -78,41 +141,46 @@
     "name": "recordPaid",
     "inputs": [
       {
-        "name": "",
+        "name": "clipper",
         "type": "address",
         "internalType": "address"
       },
       {
-        "name": "",
+        "name": "brand",
         "type": "address",
         "internalType": "address"
       },
       {
-        "name": "",
+        "name": "clipId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "paidViews",
         "type": "uint64",
         "internalType": "uint64"
       },
       {
-        "name": "",
+        "name": "amount",
         "type": "uint128",
         "internalType": "uint128"
       }
     ],
     "outputs": [],
-    "stateMutability": "view"
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
     "name": "recordRejection",
     "inputs": [
       {
-        "name": "",
+        "name": "clipper",
         "type": "address",
         "internalType": "address"
       }
     ],
     "outputs": [],
-    "stateMutability": "view"
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -190,7 +258,7 @@
     "name": "tier",
     "inputs": [
       {
-        "name": "",
+        "name": "clipper",
         "type": "address",
         "internalType": "address"
       }
@@ -202,7 +270,7 @@
         "internalType": "uint8"
       }
     ],
-    "stateMutability": "pure"
+    "stateMutability": "view"
   },
   {
     "type": "function",

@@ -216,3 +216,69 @@ Intentional findings are suppressed only at their exact line, each with a reason
   and `isVault(vault)` is true.
 - **ABI:** in `CreatorReputation`, `setVault` / `vault()` / `VaultSet` are replaced by `addVault` / `removeVault` /
   `isVault` / `VaultAdded` / `VaultRemoved`. No other package uses them yet.
+
+## 8. v1: release, flag and close (branch `isaac/vault-v1`)
+
+### 8.1 What shipped
+- **Release (F5):** `release(clipIds)` pays every matured tranche (at most 200 per clip per call) to the clipper's payout
+  address, and records paid views in Reputation. It works while paused, so a pause never traps money that's already owed.
+- **Flags:** `flag` freezes a clip's unreleased earnings for `resolveWindow`. `resolve(reject)` lets the brand decide;
+  `autoResolve` lets anyone accept the flag after the window if the brand stays silent.
+- **Close:** `closeCampaign` (the brand at any time; anyone after `endsAt`) and `closeCampaignTo` (the brand picks the
+  refund address). Close refunds `budget − reserved − paid`. Money already reserved for clips stays in the vault.
+- **Sweep:** `sweep(clipIds)` ends watched clips whose campaign is closed or past `endsAt`, so they stop taking oracle
+  page slots (review follow-up). This also resolves the info note "clips of closed campaigns keep status Active".
+- **Reputation (I-2.4):** real stats replace the stub. `clipsPaid` counts distinct clips per vault, not releases.
+  Tier 2 uses `rejections / (clipsPaid + rejections) < 5%`. The `uninitialized-state` Slither suppression for the
+  stub is gone.
+- **`expirePending` is blocked while paused**, because the oracle can't activate clips while paused either.
+
+### 8.2 Audit requirements R-1 to R-6
+| Req | How it's met | Test |
+|---|---|---|
+| R-1 | `_release` uses a non-reverting transfer. On failure it rolls back that clip's effects, emits `ReleaseFailed`, and the batch continues. | `VaultV1.t.sol` (blacklisted payout) |
+| R-2 | `closeCampaignTo(id, refundTo)`. Later reject returns after the close go to the same address (`CampaignRefunded`). | `VaultV1.t.sol` |
+| R-3 | `everFlagged[clipId]`: one flag per clip, ever (`AlreadyFlagged`). | `VaultV1.t.sol` |
+| R-4 | Trust assumption, see 8.3. Every brand decision emits `Resolved(clipId, rejected, returned)`, and the indexer on main already tracks it. | n/a |
+| R-5 | `_reject` lowers `clip.accrued` and `reserved` by the unreleased amount, and removes the clip from the watch, pay and flag lists. | invariants |
+| R-6 | Invariant suite extended (8.4). | `VaultInvariants.t.sol` |
+
+### 8.3 Trust assumption: the brand judges its own flags (R-4)
+A brand that flags a clip and then rejects it gets the clip's **unreleased** earnings back. Money already released
+can't be clawed back. The limits on this power are:
+- one flag per clip, and only while something is unreleased;
+- the hold window caps exposure to the earnings of the last `holdSecs`;
+- silence counts as accepting: after `resolveWindow`, anyone can auto-resolve the flag as accepted;
+- every reject is public (`Resolved` with `rejected = true`), so the indexer and UI can show each brand's reject rate
+  before a clipper joins its campaign.
+
+Clippers should treat a brand's reject rate like a marketplace rating. The PRD and the UI need to say so.
+
+**Edge case:** after a close, a reject sends the returned amount to the refund address with a reverting transfer. If
+that address can't receive the token, the reject reverts, the flag auto-resolves as accepted, and the clipper is
+paid. That fails toward the clipper, which is the safe direction.
+
+### 8.4 Invariants added
+`keeperLists` (the pay and flag lists match clip state exactly), `payoutsReachClippers` (Σ released equals what
+the clippers hold), `flaggedNeverPaid` (a ghost flag: no transfer to a Flagged clip, ever), plus
+watch-list rules for Flagged and swept clips. A coverage probe (4,000 random calls) confirmed the fuzzer reaches
+releases, brand rejects after flags, auto-resolves, closes with later rejects, and sweeps.
+
+### 8.5 Contract size: `CampaignVaultLens`
+v1 pushed `CampaignVault` to 25,576 bytes, over the EIP-170 limit (24,576). Instead of dropping `optimizer_runs` to 1
+(66 bytes of headroom and more gas on every call):
+- the keeper views (`releasableClips`, `expiredFlags`, `expiredPending`, `sweepableClips`) and the pure `claimCode`
+  moved to a new read-only `CampaignVaultLens`. It holds no funds, has no owner, and reads only the vault's public views;
+- the vault exposes `keeperList(Watch | Pay | Flag, offset, limit)` (raw list pages) and `nextUnlockAt(clipId)`.
+
+Result: **the vault is 24,353 bytes (223 under)**; the lens is 3.9 KB. No off-chain code called the moved functions:
+web, the oracle and shared use the TypeScript `claimCode`, and the lens returns the same code as live campaign #1
+(`CR-0E9A273285510A02`). The deploy script now deploys the lens and writes `lens` into `addresses.json`.
+CI's size check now runs with `--skip test`: EIP-170 only applies to what we deploy, and the invariant harness is
+the whole vault plus test helpers.
+
+### 8.6 Still open
+- Write the "an ended clip keeps its video" decision and the R-4 trust assumption into the PRD (it isn't in this repo).
+- The UI should show each brand's reject rate (indexer: `Resolved` events per campaign brand).
+- The 223-byte headroom is small. Any further vault feature should move views to the lens first.
+- Pin `evm_version` (carried over from section 6).

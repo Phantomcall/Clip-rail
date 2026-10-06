@@ -13,4 +13,4 @@ export function addressesFor(network: Network) {
 }
 
 // ABIs generated from contracts/ by contracts/scripts/export-abi.sh (I-0.5, I-1.7).
-export { campaignVaultAbi, creatorReputationAbi, mockUsdcAbi } from "./abis";
+export { campaignVaultAbi, campaignVaultLensAbi, creatorReputationAbi, mockUsdcAbi } from "./abis";

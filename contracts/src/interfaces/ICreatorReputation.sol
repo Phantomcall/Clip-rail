@@ -25,10 +25,13 @@ interface ICreatorReputation {
     function addVault(address vault) external;
     /// @notice Revokes a vault's write access, e.g. once an old vault has released everything after a redeploy.
     function removeVault(address vault) external;
-    function recordPaid(address clipper, address brand, uint64 paidViews, uint128 amount) external;
+    /// @notice Called by a vault on release. `clipId` lets clipsPaid count distinct clips, not releases.
+    function recordPaid(address clipper, address brand, uint256 clipId, uint64 paidViews, uint128 amount) external;
     function recordRejection(address clipper) external;
 
     function isVault(address vault) external view returns (bool);
+    /// @notice True once `clipId` of `vault` has been counted in clipsPaid.
+    function clipCounted(address vault, uint256 clipId) external view returns (bool);
     function stats(address clipper) external view returns (Stats memory);
     /// @notice 0 = new · 1 = ≥5k paid views and 0 rejections · 2 = ≥50k paid views and rejection rate < 5%
     function tier(address clipper) external view returns (uint8);
