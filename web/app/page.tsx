@@ -3,6 +3,7 @@ import Link from "next/link";
 import { BriefFlow } from "@/components/landing/BriefFlow";
 import { ClipWall } from "@/components/landing/ClipWall";
 import { Fairness } from "@/components/landing/Fairness";
+import { ForClippers } from "@/components/landing/ForClippers";
 import { Faq } from "@/components/landing/Faq";
 import { FinalCta } from "@/components/landing/FinalCta";
 import { Hero } from "@/components/landing/Hero";
@@ -42,6 +43,7 @@ export default async function Home() {
       </div>
 
       <MakeBank />
+      <ForClippers />
       <BriefFlow />
       <Fairness />
       <ClipWall />

@@ -1,10 +1,14 @@
+import Image from "next/image";
 import { Avatar } from "@/components/ui/Avatar";
 import { ShortsIcon, VerifiedIcon } from "@/components/ui/Icons";
 
-function Frame({ children }: { children: React.ReactNode }) {
+/** A real photo of the step, with the step's UI card floating over its lower half. */
+function Frame({ photo, alt, children }: { photo: string; alt: string; children: React.ReactNode }) {
   return (
-    <div className="relative grid aspect-[4/3] place-items-center overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.07] to-white/[0.02] p-5">
-      {children}
+    <div className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-white/10">
+      <Image src={photo} alt={alt} fill sizes="(min-width: 768px) 22rem, 90vw" className="object-cover object-[50%_25%]" />
+      <div className="absolute inset-0 bg-gradient-to-t from-night via-night/30 to-transparent" />
+      <div className="absolute inset-x-5 bottom-5 flex justify-center">{children}</div>
     </div>
   );
 }
@@ -36,7 +40,7 @@ function RegisterMini() {
     <div className="w-full max-w-[16rem] force-light rounded-2xl bg-white p-4 shadow-xl">
       <div className="text-[10px] font-medium tracking-wider text-muted uppercase">Your claim code</div>
       <div className="mt-1 flex items-center justify-between">
-        <code className="font-mono text-lg font-bold">CR-3FA9B21C7D02E4A1</code>
+        <code className="font-mono text-sm font-bold tracking-tight whitespace-nowrap">CR-3FA9B21C7D02E4A1</code>
         <span className="rounded-md bg-surface-2 px-2 py-1 text-[10px] font-semibold">Copy</span>
       </div>
       <div className="mt-3 rounded-lg border border-line px-2.5 py-2 text-[11px] text-muted">youtube.com/shorts/Ab3dEf6hIj9</div>
@@ -63,9 +67,9 @@ function BalanceMini() {
 }
 
 const steps = [
-  { n: "01", title: "Pick a campaign", body: "Every budget is already locked in escrow. See the rate, the rules and what's left before you clip.", ui: <CampaignMini /> },
-  { n: "02", title: "Post with your code", body: "Cut a Short, put your claim code in the description and paste the link. Free: we cover the network fee.", ui: <RegisterMini /> },
-  { n: "03", title: "Get paid", body: "An oracle checks your real views every few minutes. After a 24-hour hold, USDC lands in your account.", ui: <BalanceMini /> },
+  { n: "01", title: "Pick a campaign", body: "Every budget is already locked in escrow. See the rate, the rules and what's left before you clip.", ui: <CampaignMini />, photo: "/photos/step-browse.webp", alt: "Clipper smiling while browsing campaigns on her phone" },
+  { n: "02", title: "Post with your code", body: "Cut a Short, put your claim code in the description and paste the link. Free: we cover the network fee.", ui: <RegisterMini />, photo: "/photos/step-post.webp", alt: "Phone on a gimbal recording dancers for a Short" },
+  { n: "03", title: "Get paid", body: "An oracle checks your real views every few minutes. After a 24-hour hold, USDC lands in your account.", ui: <BalanceMini />, photo: "/photos/step-paid.webp", alt: "Clipper delighted at a payout on her phone" },
 ];
 
 /** Dark "money" band (Vyro-style), showing each step as a real UI card. */
@@ -81,7 +85,7 @@ export function MakeBank() {
         <div className="mt-12 grid gap-10 md:grid-cols-3">
           {steps.map((s) => (
             <div key={s.n}>
-              <Frame>{s.ui}</Frame>
+              <Frame photo={s.photo} alt={s.alt}>{s.ui}</Frame>
               <div className="mt-5">
                 <span className="rounded-md bg-white/10 px-2 py-1 font-mono text-[11px] text-white/60">{s.n}</span>
                 <h3 className="mt-3 text-xl font-semibold">{s.title}</h3>
