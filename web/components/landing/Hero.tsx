@@ -46,7 +46,8 @@ export function Hero({ totals }: { totals: Totals }) {
 
       {/* Product shot: the clipper dashboard on the left, a phone playing the Shorts that earned it on the right */}
       <div className="relative mx-auto mt-14 grid max-w-6xl sm:mt-8 items-center gap-10 px-4 lg:grid-cols-[minmax(0,1fr)_17.5rem]">
-        <div className="relative min-w-0">
+        {/* extends a little past the text column on the left on wide screens */}
+        <div className="relative min-w-0 xl:-ml-10 2xl:-ml-20">
           <Chip className="-top-4 left-10">
             <CheckCircle /> 2,310 views verified · <span className="text-money">+$2.31</span>
           </Chip>
