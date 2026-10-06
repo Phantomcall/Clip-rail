@@ -146,14 +146,17 @@ contract CampaignVault is ICampaignVault, ReceiverTemplate, EIP712, ReentrancyGu
         _close(campaignId, c, refundTo);
     }
 
-    /// @notice Brand freezes a clip that still has unreleased earnings. One flag per clip (audit R-3); if the brand
-    ///         doesn't resolve it within resolveWindow, anyone can autoResolve it as accepted.
-    function flag(uint256 clipId, bytes32 reasonHash) external override {
+    /// @notice Brand freezes a clip's earnings that are still in hold. Matured tranches are the clipper's, so they are
+    ///         paid first (audit V1-1). One flag per clip (audit R-3); if the brand doesn't resolve it within
+    ///         resolveWindow, anyone can autoResolve it as accepted.
+    function flag(uint256 clipId, bytes32 reasonHash) external override nonReentrant {
         Clip storage clip = _clips[clipId];
         if (msg.sender != _campaigns[clip.campaignId].brand) revert NotBrand();
         if (clip.status != ClipStatus.Active && clip.status != ClipStatus.Ended) revert NotFlaggable();
-        if (_trancheHead[clipId] >= _tranches[clipId].length) revert NotFlaggable(); // nothing left to freeze
         if (everFlagged[clipId]) revert AlreadyFlagged();
+        // Unlock times only increase, so something is still in hold iff the newest tranche is.
+        Tranche[] storage ts = _tranches[clipId];
+        if (ts.length == 0 || ts[ts.length - 1].unlockAt <= block.timestamp) revert NotFlaggable();
 
         everFlagged[clipId] = true;
         _statusBeforeFlag[clipId] = clip.status;
@@ -161,15 +164,18 @@ contract CampaignVault is ICampaignVault, ReceiverTemplate, EIP712, ReentrancyGu
         clip.flagDeadline = uint64(block.timestamp) + resolveWindow;
         _listAdd(_flagList, _flagIndex, clipId);
         emit Flagged(clipId, msg.sender, reasonHash, clip.flagDeadline);
+        _pay(clipId, clip); // interactions last
     }
 
-    /// @notice Brand resolves its flag. Reject: unreleased earnings return to the budget (or, if the campaign is
-    ///         closed, to its refund address) and count against the clipper's reputation. Accept: the clip resumes.
+    /// @notice Brand resolves its flag before flagDeadline. Reject: unreleased earnings return to the budget (or, if
+    ///         the campaign is closed, to its refund address) and count against the clipper's reputation. Accept: the
+    ///         clip resumes.
     function resolve(uint256 clipId, bool reject) external override nonReentrant {
         Clip storage clip = _clips[clipId];
         if (clip.status != ClipStatus.Flagged) revert NotFlagged();
         Campaign storage c = _campaigns[clip.campaignId];
         if (msg.sender != c.brand) revert NotBrand();
+        if (block.timestamp >= clip.flagDeadline) revert FlagExpired(); // silence = accept (PRD F6)
         if (reject) _reject(clipId, clip, c);
         else _accept(clipId, clip);
     }
@@ -585,7 +591,12 @@ contract CampaignVault is ICampaignVault, ReceiverTemplate, EIP712, ReentrancyGu
     function _release(uint256 clipId) internal {
         Clip storage clip = _clips[clipId];
         if (clip.status != ClipStatus.Active && clip.status != ClipStatus.Ended) return; // never pay Flagged/Rejected
+        _pay(clipId, clip);
+    }
 
+    /// @dev Pays matured tranches. Callers check the status; flag() calls it right after freezing, which only ever
+    ///      pays tranches whose hold ended before the flag (audit V1-1).
+    function _pay(uint256 clipId, Clip storage clip) internal {
         Tranche[] storage ts = _tranches[clipId];
         uint256 head = _trancheHead[clipId];
         uint256 stop = head + MAX_TRANCHES_PER_RELEASE;
@@ -648,7 +659,7 @@ contract CampaignVault is ICampaignVault, ReceiverTemplate, EIP712, ReentrancyGu
             IERC20(c.params.token).safeTransfer(to, returned);
             emit CampaignRefunded(clip.campaignId, to, uint128(returned));
         }
-        try reputation.recordRejection(clip.clipper) {} catch {}
+        try reputation.recordRejection(clip.clipper, c.brand) {} catch {}
     }
 
     function _accept(uint256 clipId, Clip storage clip) internal {

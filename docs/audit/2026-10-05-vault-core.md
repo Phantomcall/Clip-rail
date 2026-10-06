@@ -244,11 +244,13 @@ Intentional findings are suppressed only at their exact line, each with a reason
 | R-6 | Invariant suite extended (8.4). | `VaultInvariants.t.sol` |
 
 ### 8.3 Trust assumption: the brand judges its own flags (R-4)
-A brand that flags a clip and then rejects it gets the clip's **unreleased** earnings back. Money already released
-can't be clawed back. The limits on this power are:
-- one flag per clip, and only while something is unreleased;
-- the hold window caps exposure to the earnings of the last `holdSecs`;
-- silence counts as accepting: after `resolveWindow`, anyone can auto-resolve the flag as accepted;
+A brand that flags a clip and then rejects it gets back the clip's earnings that were **still in hold** when it
+flagged. Earnings whose hold has ended are paid out by the flag itself. The limits on this power are:
+- one flag per clip, and only while something is still in hold;
+- the hold window caps exposure to the earnings of the last `holdSecs` (audit V1-1);
+- silence counts as accepting: the brand must decide before the deadline, and after it only auto-resolve is
+  possible (audit V1-2);
+- each brand counts once in a clipper's rejections (audit V1-3);
 - every reject is public (`Resolved` with `rejected = true`), so the indexer and UI can show each brand's reject rate
   before a clipper joins its campaign.
 
@@ -271,7 +273,7 @@ v1 pushed `CampaignVault` to 25,576 bytes, over the EIP-170 limit (24,576). Inst
   moved to a new read-only `CampaignVaultLens`. It holds no funds, has no owner, and reads only the vault's public views;
 - the vault exposes `keeperList(Watch | Pay | Flag, offset, limit)` (raw list pages) and `nextUnlockAt(clipId)`.
 
-Result: **the vault is 24,353 bytes (223 under)**; the lens is 3.9 KB. No off-chain code called the moved functions:
+Result: **the vault is 24,353 bytes (223 under; 24,462 after the v1 audit fixes)**; the lens is 3.9 KB. No off-chain code called the moved functions:
 web, the oracle and shared use the TypeScript `claimCode`, and the lens returns the same code as live campaign #1
 (`CR-0E9A273285510A02`). The deploy script now deploys the lens and writes `lens` into `addresses.json`.
 CI's size check now runs with `--skip test`: EIP-170 only applies to what we deploy, and the invariant harness is
@@ -280,5 +282,6 @@ the whole vault plus test helpers.
 ### 8.6 Still open
 - Write the "an ended clip keeps its video" decision and the R-4 trust assumption into the PRD (it isn't in this repo).
 - The UI should show each brand's reject rate (indexer: `Resolved` events per campaign brand).
-- The 223-byte headroom is small. Any further vault feature should move views to the lens first.
+- The headroom is small (114 bytes after the v1 audit fixes). Any further vault feature should move views to the lens first.
+- v1 audit: `2026-10-06-vault-v1.md`.
 - Pin `evm_version` (carried over from section 6).

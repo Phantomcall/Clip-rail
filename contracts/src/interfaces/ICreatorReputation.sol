@@ -8,7 +8,7 @@ interface ICreatorReputation {
         uint64 paidViews;
         uint128 earned;
         uint32 clipsPaid;
-        uint32 rejections;
+        uint32 rejections; // distinct brands that rejected one of this clipper's clips (audit V1-3)
         uint32 brands; // distinct brands that have paid this clipper
         uint64 firstSeen;
     }
@@ -27,11 +27,14 @@ interface ICreatorReputation {
     function removeVault(address vault) external;
     /// @notice Called by a vault on release. `clipId` lets clipsPaid count distinct clips, not releases.
     function recordPaid(address clipper, address brand, uint256 clipId, uint64 paidViews, uint128 amount) external;
-    function recordRejection(address clipper) external;
+    /// @notice Called by a vault on a brand reject. Counted once per (clipper, brand).
+    function recordRejection(address clipper, address brand) external;
 
     function isVault(address vault) external view returns (bool);
     /// @notice True once `clipId` of `vault` has been counted in clipsPaid.
     function clipCounted(address vault, uint256 clipId) external view returns (bool);
+    /// @notice True once `brand` has rejected one of `clipper`'s clips (counted in stats.rejections).
+    function rejectedBy(address clipper, address brand) external view returns (bool);
     function stats(address clipper) external view returns (Stats memory);
     /// @notice 0 = new · 1 = ≥5k paid views and 0 rejections · 2 = ≥50k paid views and rejection rate < 5%
     function tier(address clipper) external view returns (uint8);

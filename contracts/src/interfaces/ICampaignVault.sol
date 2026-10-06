@@ -203,6 +203,8 @@ interface ICampaignVault {
     error InvalidPayout();
     error NotGuardian();
     error AlreadyFlagged();
+    /// @notice The flag window has passed: only autoResolve (accept) is possible now (audit V1-2).
+    error FlagExpired();
     error InvalidRefundAddress();
 
     // ─────────────────────────── Brand ───────────────────────────
@@ -217,7 +219,9 @@ interface ICampaignVault {
     /// @notice Brand only: close and send the refund (and any later reject returns) to `refundTo`, e.g. when the
     ///         brand's own address can't receive the token.
     function closeCampaignTo(uint256 campaignId, address refundTo) external;
+    /// @notice Pays the clip's matured tranches first, then freezes the rest (audit V1-1).
     function flag(uint256 clipId, bytes32 reasonHash) external;
+    /// @notice Brand only, before the flag deadline (audit V1-2).
     function resolve(uint256 clipId, bool reject) external;
 
     // ─────────────────────────── Clipper ───────────────────────────

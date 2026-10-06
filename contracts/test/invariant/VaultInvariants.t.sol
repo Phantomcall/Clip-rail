@@ -98,6 +98,11 @@ contract Handler is Test {
         return count == 0 ? 0 : seed % count + 1;
     }
 
+    function _fromList(ICampaignVault.KeeperList list, uint256 seed) internal view returns (uint256) {
+        uint256[] memory ids = vault.keeperList(list, 0, type(uint256).max);
+        return ids.length == 0 ? _clip(seed) : ids[seed % ids.length];
+    }
+
     function release(uint256 seed, uint256 n) external {
         uint256 count = vault.clipCount();
         if (count == 0) return;
@@ -115,15 +120,17 @@ contract Handler is Test {
         }
     }
 
+    /// Picks from the pay list (clips with unreleased earnings), since only those can be flagged.
     function flag(uint256 seed) external {
-        uint256 id = _clip(seed);
+        uint256 id = _fromList(ICampaignVault.KeeperList.Pay, seed);
         if (id == 0) return;
         vm.prank(owner); // the test contract created both campaigns, so it is the brand
         try vault.flag(id, bytes32(seed)) {} catch {}
     }
 
+    /// Picks from the flag list, and stays inside the flag window most of the time (the deadline is tested too).
     function resolve(uint256 seed, bool reject) external {
-        uint256 id = _clip(seed);
+        uint256 id = _fromList(ICampaignVault.KeeperList.Flag, seed);
         if (id == 0) return;
         vm.prank(owner);
         try vault.resolve(id, reject) {} catch {}

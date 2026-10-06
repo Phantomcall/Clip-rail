@@ -417,7 +417,7 @@ contract AuditRegressionsTest is Test {
         vm.expectRevert(ICreatorReputation.NotVault.selector);
         reputation.recordPaid(victim, brand, 1, 1000, 1e6);
         vm.expectRevert(ICreatorReputation.NotVault.selector);
-        reputation.recordRejection(victim);
+        reputation.recordRejection(victim, brand);
     }
 
     function test_Rep_OldVaultKeepsWritingUntilRemoved() public {

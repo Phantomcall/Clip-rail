@@ -2086,6 +2086,11 @@
   },
   {
     "type": "error",
+    "name": "FlagExpired",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "FlagNotExpired",
     "inputs": []
   },

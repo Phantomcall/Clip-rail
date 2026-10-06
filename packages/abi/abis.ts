@@ -2088,6 +2088,11 @@ export const campaignVaultAbi = [
   },
   {
     "type": "error",
+    "name": "FlagExpired",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "FlagNotExpired",
     "inputs": []
   },
@@ -2690,10 +2695,39 @@ export const creatorReputationAbi = [
         "name": "clipper",
         "type": "address",
         "internalType": "address"
+      },
+      {
+        "name": "brand",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "rejectedBy",
+    "inputs": [
+      {
+        "name": "clipper",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "brand",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "function",

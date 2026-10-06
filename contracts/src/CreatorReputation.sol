@@ -25,6 +25,7 @@ contract CreatorReputation is ICreatorReputation, Ownable {
     mapping(address clipper => Stats) internal _stats;
     mapping(address clipper => mapping(address brand => bool)) public paidBy;
     mapping(address vault => mapping(uint256 clipId => bool)) public override clipCounted;
+    mapping(address clipper => mapping(address brand => bool)) public override rejectedBy;
 
     modifier onlyVault() {
         if (!isVault[msg.sender]) revert NotVault();
@@ -70,7 +71,11 @@ contract CreatorReputation is ICreatorReputation, Ownable {
         _emit(clipper, s);
     }
 
-    function recordRejection(address clipper) external override onlyVault {
+    /// @notice Counts at most one rejection per brand (audit V1-3), so a single brand can't sink a clipper's tier by
+    ///         rejecting many small clips. Repeat rejections by the same brand stay visible as Resolved events.
+    function recordRejection(address clipper, address brand) external override onlyVault {
+        if (rejectedBy[clipper][brand]) return;
+        rejectedBy[clipper][brand] = true;
         Stats storage s = _stats[clipper];
         _touch(s);
         s.rejections++;

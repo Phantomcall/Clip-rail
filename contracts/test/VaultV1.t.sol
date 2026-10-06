@@ -308,6 +308,104 @@ contract VaultV1Test is Test {
         assertEq(usdc.balanceOf(clipper), 4e6);
     }
 
+    /// Audit V1-1: a flag can't claw back earnings whose hold is over; they are paid before the freeze.
+    function test_Flag_PaysMaturedTranchesFirst() public {
+        uint256 id = _create(_params());
+        uint256 clip = _earning(id, clipper, "aaaaaaaaaaa", 5_000); // $5, unlocks T0 + HOLD
+        vm.warp(T0 + 1000);
+        _report(clip, 8_000); // $3, unlocks T0 + 1000 + HOLD
+        vm.warp(T0 + HOLD + 1); // first tranche matured, keeper hasn't run
+
+        vm.startPrank(brand);
+        vm.expectEmit(address(vault));
+        emit ICampaignVault.Released(clip, clipper, 5e6);
+        vault.flag(clip, "late");
+        assertEq(usdc.balanceOf(clipper), 5e6); // matured part paid by the flag itself
+
+        vm.expectEmit(address(vault));
+        emit ICampaignVault.Resolved(clip, true, 3e6); // only the part still in hold
+        vault.resolve(clip, true);
+        vm.stopPrank();
+        assertEq(vault.getClip(clip).accrued, 5e6);
+        assertEq(vault.getCampaign(id).paid, 5e6);
+        assertEq(vault.getCampaign(id).reserved, 0);
+    }
+
+    /// Audit V1-1: when everything has matured there is nothing left to flag.
+    function test_Flag_NothingInHoldReverts() public {
+        uint256 id = _create(_params());
+        uint256 clip = _earning(id, clipper, "aaaaaaaaaaa", 5_000);
+        vm.warp(T0 + HOLD);
+        vm.prank(brand);
+        vm.expectRevert(ICampaignVault.NotFlaggable.selector);
+        vault.flag(clip, "late"); // reverts, so the payout inside it is rolled back too
+        assertFalse(vault.everFlagged(clip)); // the brand keeps its one flag
+        vault.release(_one(clip));
+        assertEq(usdc.balanceOf(clipper), 5e6);
+    }
+
+    /// Audit V1-1 edge: a clip with only matured earnings can't be flagged, even if its payout fails. With some
+    /// earnings still in hold and a blacklisted payout, the matured part can't be paid and is frozen with the rest.
+    function test_Flag_BlacklistedPayout() public {
+        uint256 id = _create(_params());
+        uint256 clip = _earning(id, clipper, "aaaaaaaaaaa", 5_000); // $5, unlocks T0 + HOLD
+        vm.warp(T0 + HOLD + 1);
+        usdc.setBlocked(clipper, true);
+        vm.prank(brand);
+        vm.expectRevert(ICampaignVault.NotFlaggable.selector);
+        vault.flag(clip, "x"); // nothing in hold
+
+        _report(clip, 8_000); // $3 more, in hold
+        vm.prank(brand);
+        vault.flag(clip, "x"); // the payout inside fails with ReleaseFailed; the flag still lands
+        assertEq(uint8(vault.getClip(clip).status), uint8(ICampaignVault.ClipStatus.Flagged));
+        assertEq(vault.getClip(clip).released, 0);
+    }
+
+    /// Audit V1-2: after the deadline the brand can no longer decide; silence is acceptance.
+    function test_Resolve_RevertsAfterDeadline() public {
+        uint256 id = _create(_params());
+        uint256 clip = _earning(id, clipper, "aaaaaaaaaaa", 5_000);
+        vm.prank(brand);
+        vault.flag(clip, "x");
+
+        vm.warp(T0 + 1799);
+        uint256 snap = vm.snapshotState();
+        vm.prank(brand);
+        vault.resolve(clip, true); // last second inside the window works
+        vm.revertToState(snap);
+
+        vm.warp(T0 + 1800);
+        vm.startPrank(brand);
+        vm.expectRevert(ICampaignVault.FlagExpired.selector);
+        vault.resolve(clip, true);
+        vm.expectRevert(ICampaignVault.FlagExpired.selector);
+        vault.resolve(clip, false);
+        vm.stopPrank();
+        vault.autoResolve(clip);
+        assertEq(uint8(vault.getClip(clip).status), uint8(ICampaignVault.ClipStatus.Active));
+    }
+
+    /// Audit V1-3 (b): rejections count once per brand.
+    function test_Rejections_CountOncePerBrand() public {
+        uint256 id = _create(_params());
+        for (uint256 i; i < 3; ++i) {
+            string memory vid = string.concat("rrrrrrrrrr", vm.toString(i));
+            uint256 clip = _earning(id, clipper, vid, 100);
+            vm.startPrank(brand);
+            vault.flag(clip, "x");
+            vault.resolve(clip, true);
+            vm.stopPrank();
+        }
+        assertEq(reputation.stats(clipper).rejections, 1); // three rejects, one brand
+        assertTrue(reputation.rejectedBy(clipper, brand));
+
+        address brand2 = makeAddr("brand2");
+        vm.prank(address(vault));
+        reputation.recordRejection(clipper, brand2);
+        assertEq(reputation.stats(clipper).rejections, 2); // a second brand counts
+    }
+
     function test_AutoResolve_AcceptsAfterWindow() public {
         uint256 id = _create(_params());
         uint256 clip = _earning(id, clipper, "aaaaaaaaaaa", 4_000);
@@ -501,7 +599,7 @@ contract VaultV1Test is Test {
         assertEq(reputation.stats(clipper).paidViews, 50_000);
         assertEq(reputation.tier(clipper), 2);
 
-        reputation.recordRejection(clipper); // 1 / 20 = 5%: not below 5%
+        reputation.recordRejection(clipper, brand); // 1 / 20 = 5%: not below 5%
         assertEq(reputation.tier(clipper), 0);
         reputation.recordPaid(clipper, brand, 20, 0, 0); // 1 / 21 < 5%
         assertEq(reputation.tier(clipper), 2);
