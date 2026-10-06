@@ -26,7 +26,7 @@ _Last updated: 2026-10-06 (testnet v1)._
 
 - `main` has PR #7 (my Day 1–3 work + CI) and Isaac's/Patrick's #8–#14 (contracts, ABI, vault v1, lens,
   indexer, auth UI, mobile).
-- **`david/abi-v0-sync` (PR open, rebased on main at `0f75ee5`)**:
+- **`david/abi-v0-sync` = PR #15 (open, CI green, rebased on main at `0f75ee5`)**:
   - Untracks `cre/oracle/.cre_build_tmp.js` (a 1 MB CLI artifact I committed by mistake in #7) and ignores it.
   - `ClipStatus` matches the Solidity enum (`None=0, Pending=1, Active=2…`); the old values were off by one and
     would have left new clips Pending forever. A test reads the enum from `ICampaignVault.sol` and fails on drift.
@@ -85,7 +85,7 @@ Before the first broadcast, confirm the key in `cre/.env` derives to `0x5eF5…7
 
 ## Next steps
 
-1. Get the `david/abi-v0-sync` PR reviewed and merged.
+1. Get PR #15 (`david/abi-v0-sync`) reviewed and merged.
 2. Oracle key from Bitwarden into `cre/.env`; Isaac registers the 3 Shorts; run the first broadcast (D-3.1)
    and check `ViewsVerified` on testnet.monadvision.com.
 3. Get views and likes on the test Shorts so a report actually accrues.
@@ -125,7 +125,7 @@ Before the first broadcast, confirm the key in `cre/.env` derives to `0x5eF5…7
 
 - **2026-10-06 (night)** – Committed `david/abi-v0-sync` in focused commits, rebased onto main (25 new commits incl.
   testnet v1), regenerated the lockfile, pointed the oracle at the v1 vault, re-verified live (claim code via lens,
-  transmitter, dry run), opened the PR.
+  transmitter, dry run), opened PR #15; all 5 CI checks pass.
 
 - **2026-10-06** – Verified the 3 test Shorts. Published clip 1 to YouTube via Studio (clips 2–3 uploaded by David).
   Removed the tracked CRE build artifact. Started this handoff file.
