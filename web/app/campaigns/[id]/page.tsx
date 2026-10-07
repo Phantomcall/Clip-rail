@@ -1,6 +1,7 @@
 import { LiveRefresh } from "@/lib/live";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/site/PageHeader";
+import { BrandRecord } from "@/components/site/BrandRecord";
 import { ClipsTable } from "@/components/site/ClipsTable";
 import { AddressChip } from "@/components/ui/AddressChip";
 import { StatusBadge, TierBadge } from "@/components/ui/Badge";
@@ -9,7 +10,7 @@ import { LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Tip } from "@/components/ui/Tip";
 import { count, duration, percent, timeLeft, usd, viewsBuyable } from "@/lib/format";
-import { getCampaign, getClipsForCampaign, now } from "@/lib/data";
+import { getBrandStats, getCampaign, getClipsForCampaign, now } from "@/lib/data";
 
 const YT_ID = /^[A-Za-z0-9_-]{11}$/;
 
@@ -20,7 +21,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
   if (!c) notFound();
 
   const free = Math.max(c.budget - c.reserved - c.paid, 0);
-  const clips = await getClipsForCampaign(c.id);
+  const [clips, brandStats] = await Promise.all([getClipsForCampaign(c.id), getBrandStats(c.brand)]);
   const rules = [
     { label: "Rate", value: `${usd(c.cpm * 1000, { cents: false })} per 1M views`, tip: `${usd(c.cpm)} for every 1,000 views the oracle verifies, paid in USDC.` },
     { label: "Max per clip", value: usd(c.maxPerClip), tip: "One clip can't earn more than this, so the budget is shared." },
@@ -90,6 +91,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
           ) : (
             <p className="rounded-[var(--radius-control)] bg-surface-2 p-3 text-center text-sm text-muted">This campaign is closed.</p>
           )}
+          <BrandRecord stats={brandStats} />
           <p className="text-xs text-muted">You&apos;ll sign in with a passkey. No app, no seed phrase, no gas.</p>
         </Card>
       </aside>

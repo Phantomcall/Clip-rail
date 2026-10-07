@@ -7,7 +7,7 @@ import { getBrief } from "@/lib/briefs";
 import { gql, hasIndexer, num } from "@/lib/graphql";
 import { ytMeta } from "@/lib/ytmeta";
 import * as Q from "@/lib/queries";
-import type { Address, Campaign, Clip, Clipper, Receipt, Tier, Totals } from "@/lib/types";
+import type { Address, BrandStats, Campaign, Clip, Clipper, Receipt, Tier, Totals } from "@/lib/types";
 import * as mock from "@/mocks/data";
 
 export const now = () => (hasIndexer() ? Math.floor(Date.now() / 1000) : mock.NOW);
@@ -152,6 +152,31 @@ export async function getLeaderboard(limit = 20): Promise<Clipper[]> {
   if (!hasIndexer()) return [...mock.clipperProfiles].sort((a, b) => b.paidViews - a.paidViews).slice(0, limit);
   const d = await gql<{ Clipper: Row[] }>(Q.Q_LEADERBOARD, { limit });
   return d.Clipper.map(toClipper);
+}
+
+export async function getBrandStats(brand: Address): Promise<BrandStats> {
+  if (!hasIndexer()) {
+    const ids = new Set(mock.campaigns.filter((c) => c.brand.toLowerCase() === brand.toLowerCase()).map((c) => c.id));
+    const mine = mock.clips.filter((c) => ids.has(c.campaignId));
+    return {
+      brand,
+      campaigns: ids.size,
+      clipsEarning: mine.filter((c) => c.accrued > 0 || c.status === "Rejected").length,
+      flags: mine.filter((c) => c.status === "Flagged" || c.status === "Rejected").length,
+      rejects: mine.filter((c) => c.status === "Rejected").length,
+      returned: 0,
+    };
+  }
+  const d = await gql<{ Brand_by_pk: Record<string, string | number> | null }>(Q.Q_BRAND, { b: brand.toLowerCase() });
+  const b = d.Brand_by_pk;
+  return {
+    brand,
+    campaigns: num(b?.campaigns),
+    clipsEarning: num(b?.clipsEarning),
+    flags: num(b?.flags),
+    rejects: num(b?.rejects),
+    returned: num(b?.returned),
+  };
 }
 
 export async function getTotals(): Promise<Totals> {
