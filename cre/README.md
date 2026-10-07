@@ -37,8 +37,8 @@ cre workflow simulate oracle --target testnet --broadcast --non-interactive --tr
 `oracle/config.<net>.json` holds the vault address (testnet v1: `0x6D7A51c58EB07Ab7bb1B0468A9be02fE9001BcAf`; source of truth is `packages/abi/addresses.json`).
 
 **Only the pinned oracle wallet can broadcast.** The mock forwarder is open to anyone, so the vault checks
-`tx.origin == reportTransmitter` (testnet: `0x5eF544B1A110CEe1ecbe9DAAA8e578Ad90b8779d`). `CRE_ETH_PRIVATE_KEY`
-must be that wallet's key (from Bitwarden) and the wallet needs testnet MON; reports from any other key revert.
+`tx.origin == reportTransmitter` (testnet: `0xe96307086A533Eb4A1eD71AB48b382bD53f129B9`). `CRE_ETH_PRIVATE_KEY`
+must be that wallet's key and the wallet needs testnet MON; reports from any other key revert.
 
 ### Scheduled runner
 
@@ -71,12 +71,17 @@ In simulation there is one node, so consensus always agrees; the design matters 
 - `UNAVAILABLE` when YouTube doesn't return the video, or it isn't public, or isn't processed.
 - Hidden like counts count as 0, so the on-chain like floor marks the clip suspect.
 - `activeClips(offset, limit)` skips flagged clips and closed or empty campaigns, so a page can be short. The
-  workflow reads `watchListLength()` and pages 100 entries at a time (at most 12 pages: CRE allows 15 EVM
-  reads per run, two of which are `lastRound` and `watchListLength`).
+  workflow reads `watchListLength()` and pages 100 entries at a time (at most 11 pages: CRE allows 15 EVM
+  reads per run, three of which are `lastRound`, `watchListLength` and the post-write `lastRound` check).
 - Active clips with no change since the last report are skipped. Pending clips are always sent, so the vault
   can activate them or reject them after 48 h.
-- Gas limit = `gasBase + gasPerEntry × n` (start: 150k + 60k × n), capped at 9.5M. At most 155 entries fit;
-  if more clips changed, status changes go first, then the biggest view gains, and the rest wait one round.
+- Gas limit = `gasBase + gasPerEntry × n` = 200k + 265k × n (Isaac's v1 measurement on a Monad fork with the
+  real forwarder: a report activating 3 clips costs ~850k), capped at 9.5M. At most 35 entries fit; if more
+  clips changed, status changes go first, then the biggest view gains, and the rest wait one round.
+- **A green transaction is not proof.** On testnet the mock forwarder catches a vault revert (for example out
+  of gas) and still succeeds. After every broadcast the workflow fails the run unless the write reply says the
+  receiver didn't revert **and** `lastRound()` (latest block) equals the round it just sent. A dry run (no
+  `--broadcast`) sends nothing and skips this check.
 - A failed YouTube batch fails the whole run instead of marking its clips unavailable.
 
 ## Limits and quota

@@ -146,6 +146,23 @@ export function prioritize(updates: readonly ClipUpdate[], clips: readonly Activ
     .sort((a, b) => (a.clipId < b.clipId ? -1 : 1));
 }
 
+/** WriteReportReply.receiverContractExecutionStatus value for a vault revert (not exported by the SDK). */
+export const RECEIVER_REVERTED = 1;
+
+/**
+ * Did the vault really apply the report? On testnet the mock forwarder catches a vault revert (for example
+ * out of gas) and still succeeds, so a green transaction proves nothing. Returns an error message, or null.
+ */
+export function reportNotApplied(round: bigint, lastRoundAfter: bigint, receiverStatus: number | undefined): string | null {
+  if (receiverStatus === RECEIVER_REVERTED) {
+    return `the vault reverted inside the forwarder (round ${round}); often out of gas, check gasBase/gasPerEntry`;
+  }
+  if (lastRoundAfter !== round) {
+    return `the report transaction succeeded but vault lastRound is ${lastRoundAfter}, expected ${round}: the vault did not apply it (often out of gas)`;
+  }
+  return null;
+}
+
 /** report = abi.encode(uint64 round, ClipUpdate[] u) (PRD §5.2). */
 export function encodeReport(round: bigint, updates: readonly ClipUpdate[]): Hex {
   return encodeAbiParameters(

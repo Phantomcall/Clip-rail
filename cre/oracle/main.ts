@@ -17,6 +17,7 @@ import {
   handler,
   json,
   LAST_FINALIZED_BLOCK_NUMBER,
+  LATEST_BLOCK_NUMBER,
   ok,
   prepareReportRequest,
   Runner,
@@ -35,6 +36,7 @@ import {
   gasLimitFor,
   maxEntries,
   prioritize,
+  reportNotApplied,
   serializeUpdates,
   videosUrl,
   type YtItem,
@@ -60,24 +62,26 @@ const configSchema = z.object({
 
 type Config = z.infer<typeof configSchema>;
 
-/** eth_call against the vault at the last finalized block, so every node reads the same state. */
-function callVault(runtime: Runtime<Config>, evm: EVMClient, data: Hex): Hex {
+type BlockRef = typeof LAST_FINALIZED_BLOCK_NUMBER;
+
+/** eth_call against the vault, by default at the last finalized block so every node reads the same state. */
+function callVault(runtime: Runtime<Config>, evm: EVMClient, data: Hex, block: BlockRef = LAST_FINALIZED_BLOCK_NUMBER): Hex {
   const reply = evm
     .callContract(runtime, {
       call: encodeCallMsg({ from: zeroAddress, to: runtime.config.vault as Address, data }),
-      blockNumber: LAST_FINALIZED_BLOCK_NUMBER,
+      blockNumber: block,
     })
     .result();
   return bytesToHex(reply.data);
 }
 
-function readLastRound(runtime: Runtime<Config>, evm: EVMClient): bigint {
-  const data = callVault(runtime, evm, encodeFunctionData({ abi: vaultAbi, functionName: "lastRound" }));
+function readLastRound(runtime: Runtime<Config>, evm: EVMClient, block?: BlockRef): bigint {
+  const data = callVault(runtime, evm, encodeFunctionData({ abi: vaultAbi, functionName: "lastRound" }), block);
   return decodeFunctionResult({ abi: vaultAbi, functionName: "lastRound", data });
 }
 
-/** CRE allows 15 EVM reads per run: lastRound + watchListLength + at most this many pages. */
-const MAX_PAGES = 12;
+/** CRE allows 15 EVM reads per run: lastRound, watchListLength, the post-write lastRound check, and pages. */
+const MAX_PAGES = 11;
 
 /**
  * activeClips(offset, limit) walks `limit` watch-list entries and drops flagged clips and closed or empty
@@ -165,7 +169,16 @@ const onTick = (runtime: Runtime<Config>): string => {
   if (reply.txStatus !== TxStatus.SUCCESS) {
     throw new Error(`writeReport failed (${reply.txStatus}): ${reply.errorMessage ?? "no message"} tx=${txHash}`);
   }
-  runtime.log(`report landed: tx=${txHash}`);
+  // Simulation without --broadcast sends nothing, so there is nothing to verify.
+  if (!reply.txHash || reply.txHash.length === 0) {
+    runtime.log("dry run: report built but not sent (no --broadcast)");
+    return `dry run · round ${round}: ${updates.length} clips`;
+  }
+  // Don't trust a green transaction: the mock forwarder swallows vault reverts. Check the vault moved on.
+  const after = readLastRound(runtime, evm, LATEST_BLOCK_NUMBER);
+  const problem = reportNotApplied(round, after, reply.receiverContractExecutionStatus);
+  if (problem) throw new Error(`report NOT applied: ${problem} · tx=${txHash}`);
+  runtime.log(`report applied: round ${round} · tx=${txHash}`);
   return `round ${round}: ${updates.length} clips · tx ${txHash}`;
 };
 

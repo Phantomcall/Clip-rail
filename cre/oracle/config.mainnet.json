@@ -6,7 +6,7 @@
   "batch": 50,
   "pageSize": 100,
   "maxClips": 500,
-  "gasBase": "150000",
-  "gasPerEntry": "60000",
+  "gasBase": "200000",
+  "gasPerEntry": "265000",
   "gasCap": "9500000"
 }
