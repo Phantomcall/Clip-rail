@@ -1,11 +1,12 @@
 {
   "schedule": "0 */2 * * * *",
-  "vault": "0x0000000000000000000000000000000000000000",
+  "vault": "0x6D7A51c58EB07Ab7bb1B0468A9be02fE9001BcAf",
   "chainSelectorName": "monad-testnet",
   "isTestnet": true,
   "batch": 50,
+  "pageSize": 100,
   "maxClips": 500,
-  "gasBase": "150000",
-  "gasPerEntry": "60000",
+  "gasBase": "200000",
+  "gasPerEntry": "265000",
   "gasCap": "9500000"
 }

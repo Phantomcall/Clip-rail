@@ -13,7 +13,7 @@ KeystoneForwarder. Every payout rule runs on chain (PRD §5.2); the workflow onl
 | `secrets.yaml` | `YT_API_KEY` ← env `YT_API_KEY_ORACLE` |
 | `oracle/main.ts` | CRE glue: cron trigger → EVM reads → HTTP in node mode → report → `writeReport` |
 | `oracle/logic.ts` | Pure logic (flags, rounding, prioritising, encoding); unit-tested |
-| `oracle/abi.ts` | Vault reads the oracle uses |
+| `oracle/abi.ts` | Re-exports the generated vault ABI from `@cliprail/abi` |
 | `oracle/config.*.json` | Schedule, vault address, batch size, gas plan per network |
 | `scripts/oracle-loop.sh` | Run the simulator every 60 s from a laptop or VM |
 | `../.github/workflows/oracle-runner.yml` | Run the simulator every 5 min from GitHub Actions |
@@ -34,7 +34,11 @@ cre workflow simulate oracle --target testnet --non-interactive --trigger-index 
 cre workflow simulate oracle --target testnet --broadcast --non-interactive --trigger-index 0
 ```
 
-Before the first run, put the vault address from Isaac's deploy (H4 / H6 / H9) in `oracle/config.<net>.json`.
+`oracle/config.<net>.json` holds the vault address (testnet v1: `0x6D7A51c58EB07Ab7bb1B0468A9be02fE9001BcAf`; source of truth is `packages/abi/addresses.json`).
+
+**Only the pinned oracle wallet can broadcast.** The mock forwarder is open to anyone, so the vault checks
+`tx.origin == reportTransmitter` (testnet: `0xe96307086A533Eb4A1eD71AB48b382bD53f129B9`). `CRE_ETH_PRIVATE_KEY`
+must be that wallet's key and the wallet needs testnet MON; reports from any other key revert.
 
 ### Scheduled runner
 
@@ -66,10 +70,18 @@ In simulation there is one node, so consensus always agrees; the design matters 
   same function the UI and the vault use).
 - `UNAVAILABLE` when YouTube doesn't return the video, or it isn't public, or isn't processed.
 - Hidden like counts count as 0, so the on-chain like floor marks the clip suspect.
+- `activeClips(offset, limit)` skips flagged clips and closed or empty campaigns, so a page can be short. The
+  workflow reads `watchListLength()` and pages 100 entries at a time (at most 11 pages: CRE allows 15 EVM
+  reads per run, three of which are `lastRound`, `watchListLength` and the post-write `lastRound` check).
 - Active clips with no change since the last report are skipped. Pending clips are always sent, so the vault
   can activate them or reject them after 48 h.
-- Gas limit = `gasBase + gasPerEntry × n` (start: 150k + 60k × n), capped at 9.5M. At most 155 entries fit;
-  if more clips changed, status changes go first, then the biggest view gains, and the rest wait one round.
+- Gas limit = `gasBase + gasPerEntry × n` = 200k + 265k × n (Isaac's v1 measurement on a Monad fork with the
+  real forwarder: a report activating 3 clips costs ~850k), capped at 9.5M. At most 35 entries fit; if more
+  clips changed, status changes go first, then the biggest view gains, and the rest wait one round.
+- **A green transaction is not proof.** On testnet the mock forwarder catches a vault revert (for example out
+  of gas) and still succeeds. After every broadcast the workflow fails the run unless the write reply says the
+  receiver didn't revert **and** `lastRound()` (latest block) equals the round it just sent. A dry run (no
+  `--broadcast`) sends nothing and skips this check.
 - A failed YouTube batch fails the whole run instead of marking its clips unavailable.
 
 ## Limits and quota
@@ -82,9 +94,10 @@ In simulation there is one node, so consensus always agrees; the design matters 
 
 ## Open items
 
-- `oracle/abi.ts` assumes `activeClips` returns `(clipId, campaignId, clipper, videoId, status, lastViews,
-  lastLikes)[]` and that `lastRound()` exists. Confirm against Isaac's ABI v0 (H3) and adjust that file
-  and `ActiveClip` in `logic.ts` if they differ.
+- The vault ABI comes from `@cliprail/abi` (Isaac's ABI v0), so a changed `activeClips` row or `lastRound`
+  signature fails the typecheck. `logic.test.ts` checks `ClipStatus` against the Solidity enum.
+- The vault's report processing and `activeClips` are still stubs in ABI v0 (I-1.4); the first real
+  report needs the testnet deploy (H4 / H6).
 - `oracle/fixtures/videos.json` is hand-written in the YouTube response shape. Replace it with a real saved
   response once the oracle key exists.
 - Deploy order once CRE access is approved: see playbook D-4.1.

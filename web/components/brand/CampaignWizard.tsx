@@ -203,7 +203,7 @@ export function CampaignWizard() {
               <Field label="Who can join" htmlFor="tier" hint="Tiers come from clippers' paid, verified history.">
                 <Select id="tier" value={form.minTier} onChange={(e) => set("minTier", Number(e.target.value) as 0 | 1 | 2)}>
                   <option value={0}>Everyone</option>
-                  <option value={1}>Tier 1+ (5k paid views, no rejections)</option>
+                  <option value={1}>Tier 1+ (5k paid views, at most 1 rejecting brand)</option>
                   <option value={2}>Tier 2 (50k paid views, under 5% rejected)</option>
                 </Select>
               </Field>

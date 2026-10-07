@@ -30,7 +30,7 @@ test("claimCode format and determinism", () => {
   assert.notEqual(a, claimCode(2n, "0x4f1e2d3c4b5a69788796a5b4c3d2e1f0a9b8c7d6"));
 });
 
-test("claimCode matches CampaignVault.claimCode() (vector pinned in contracts/test/CampaignVault.t.sol)", () => {
+test("claimCode matches CampaignVaultLens.claimCode() (vector pinned in contracts/test/CampaignVault.t.sol)", () => {
   assert.equal(claimCode(1n, "0x000000000000000000000000000000000000dEaD"), "CR-09DAD21282658239");
   assert.equal(claimCode(1n, "0x1111111111111111111111111111111111111111"), "CR-F3A32C19D9D554E9");
   assert.equal(claimCode(42n, "0x000000000000000000000000000000000000dEaD"), "CR-BD9D77C0603F18F8");

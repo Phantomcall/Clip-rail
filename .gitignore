@@ -23,3 +23,5 @@ contracts/cache/
 contracts/broadcast/
 *.tsbuildinfo
 next-env.d.ts
+# CRE CLI build artifacts
+.cre_build_tmp.js
