@@ -5,9 +5,6 @@ export const id = (n: bigint) => n.toString();
 export const addr = (a: string) => a.toLowerCase();
 export const eventId = (txHash: string, logIndex: number) => `${txHash}-${logIndex}`;
 
-/** RejectReason in ICampaignVault: only a brand reject counts against a clipper's reputation. */
-export const REJECT_BRAND = 1;
-
 /** Views a receipt actually paid: the vault's tranche formula (a capped amount pays fewer views than the delta). */
 export function paidViews(delta: bigint, amount: bigint, cpm: bigint): bigint {
   if (cpm === 0n) return 0n;
@@ -26,6 +23,11 @@ export async function totals(context: Ctx) {
 
 export async function dailyStat(context: Ctx, unixSecs: number) {
   return context.DailyStat.getOrCreate({ id: day(unixSecs), views: 0n, paid: 0n, receipts: 0 });
+}
+
+/** The brand's dispute record, created on first sight. */
+export async function brand(context: Ctx, address: string) {
+  return context.Brand.getOrCreate({ id: addr(address), campaigns: 0, clipsEarning: 0, flags: 0, rejects: 0, returned: 0n });
 }
 
 /** The clipper row, created on first sight (and counted in Totals). */
