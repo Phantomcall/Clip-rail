@@ -22,4 +22,5 @@ export const Q_CLIPS_BY_CLIPPER = `query ($c: String!) { Clip(where: { clipper_i
 export const Q_RECEIPTS_BY_CLIPPER = `query ($c: String!) { Receipt(where: { clipper_id: { _eq: $c } }, order_by: { timestamp: desc }, limit: 100) { ${RECEIPT_FIELDS} } }`;
 export const Q_CLIPPER = `query ($c: String!) { Clipper_by_pk(id: $c) { ${CLIPPER_FIELDS} } }`;
 export const Q_LEADERBOARD = `query ($limit: Int!) { Clipper(order_by: { paidViews: desc }, limit: $limit) { ${CLIPPER_FIELDS} } }`;
+export const Q_BRAND = `query ($b: String!) { Brand_by_pk(id: $b) { campaigns clipsEarning flags rejects returned } }`;
 export const Q_TOTALS = `query { Totals_by_pk(id: "global") { campaigns clippers verifiedViews paid payouts } }`;

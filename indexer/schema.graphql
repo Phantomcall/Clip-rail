@@ -51,6 +51,7 @@ type Clip {
   released: BigInt!
   registeredAt: Int!
   flaggedAt: Int
+  releaseFailures: Int! # payouts that bounced (e.g. a blacklisted payout address); retried on the next release
   # Reports the like floor marked suspect (accrued nothing)
   suspectReports: Int!
   receipts: [Receipt!]! @derivedFrom(field: "clip")
@@ -99,10 +100,21 @@ type Payout {
   txHash: String!
 }
 
+# Per-brand dispute record, so clippers can see how a brand treats clips before joining (audit R-4).
+type Brand {
+  id: ID! # address (lowercase)
+  campaigns: Int!
+  clipsEarning: Int! # distinct clips that earned in this brand's campaigns
+  flags: Int!
+  rejects: Int!
+  returned: BigInt! # earnings taken back by rejects
+}
+
 type Flag {
   id: ID! # clipId
   clip: Clip!
   brand: String!
+  statusBefore: ClipStatus! # Active or Ended: what an accepted flag restores
   reasonHash: String!
   deadline: Int!
   resolved: Boolean!

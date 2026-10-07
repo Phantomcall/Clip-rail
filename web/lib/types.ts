@@ -78,6 +78,18 @@ export interface Receipt {
   released: boolean;
 }
 
+/** How a brand has treated clips: shown to clippers before they join (audit R-4: brands judge their own flags). */
+export interface BrandStats {
+  brand: Address;
+  campaigns: number;
+  /** Distinct clips that earned in this brand's campaigns. */
+  clipsEarning: number;
+  flags: number;
+  rejects: number;
+  /** USDC units taken back by rejects. */
+  returned: number;
+}
+
 export interface Totals {
   campaigns: number;
   clippers: number;

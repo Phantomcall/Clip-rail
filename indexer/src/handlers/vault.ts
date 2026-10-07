@@ -1,7 +1,7 @@
 /** CampaignVault → Campaign, Clip, Clipper, Receipt, Payout, Flag, Totals, DailyStat (PRD §5, schema.graphql). */
 import { indexer } from "envio";
 import { campaignRules } from "../effects";
-import { REJECT_BRAND, addr, clipper, dailyStat, eventId, id, paidViews, totals } from "../lib";
+import { addr, brand, clipper, dailyStat, eventId, id, paidViews, totals } from "../lib";
 
 // ─────────────── campaigns ───────────────
 
@@ -35,6 +35,8 @@ indexer.onEvent({ contract: "CampaignVault", event: "CampaignCreated" }, async (
   });
   const t = await totals(context);
   context.Totals.set({ ...t, campaigns: t.campaigns + 1 });
+  const b = await brand(context, p.brand);
+  context.Brand.set({ ...b, campaigns: b.campaigns + 1 });
 });
 
 indexer.onEvent({ contract: "CampaignVault", event: "CampaignToppedUp" }, async ({ event, context }) => {
@@ -43,8 +45,15 @@ indexer.onEvent({ contract: "CampaignVault", event: "CampaignToppedUp" }, async 
 });
 
 indexer.onEvent({ contract: "CampaignVault", event: "CampaignClosed" }, async ({ event, context }) => {
+  // The vault settles the budget at close: budget = reserved + paid, and the rest goes back to the brand.
   const c = await context.Campaign.getOrThrow(id(event.params.id));
-  context.Campaign.set({ ...c, status: "Closed" });
+  context.Campaign.set({ ...c, status: "Closed", budget: c.budget - event.params.refund });
+});
+
+/** A reject after close sends the returned earnings on to the refund address; the settled budget shrinks with it. */
+indexer.onEvent({ contract: "CampaignVault", event: "CampaignRefunded" }, async ({ event, context }) => {
+  const c = await context.Campaign.getOrThrow(id(event.params.id));
+  context.Campaign.set({ ...c, budget: c.budget - event.params.amount });
 });
 
 // ─────────────── clips ───────────────
@@ -66,6 +75,7 @@ indexer.onEvent({ contract: "CampaignVault", event: "ClipRegistered" }, async ({
     registeredAt: event.block.timestamp,
     flaggedAt: undefined,
     suspectReports: 0,
+    releaseFailures: 0,
   });
   context.Campaign.set({ ...c, clipsCount: c.clipsCount + 1 });
 });
@@ -78,11 +88,7 @@ indexer.onEvent({ contract: "CampaignVault", event: "ClipActivated" }, async ({ 
 indexer.onEvent({ contract: "CampaignVault", event: "ClipRejected" }, async ({ event, context }) => {
   const clip = await context.Clip.getOrThrow(id(event.params.clipId));
   context.Clip.set({ ...clip, status: "Rejected" });
-  // A missing claim code or a duplicate video isn't the clipper's fault; only a brand reject counts.
-  if (Number(event.params.reason) === REJECT_BRAND) {
-    const who = await context.Clipper.getOrThrow(clip.clipper_id);
-    context.Clipper.set({ ...who, rejections: who.rejections + 1 });
-  }
+  // Clipper.rejections comes from ReputationUpdated: the contract counts each rejecting brand once (audit V1-3).
 });
 
 indexer.onEvent({ contract: "CampaignVault", event: "ClipEnded" }, async ({ event, context }) => {
@@ -126,6 +132,10 @@ indexer.onEvent(
     // First earnings from this brand → one more brand; first earnings on this clip → one more clip paid.
     const pair = `${who.id}-${c.brand}`;
     const newBrand = !(await context.ClipperBrand.get(pair));
+    if (clip.accrued === 0n) {
+      const b = await brand(context, c.brand);
+      context.Brand.set({ ...b, clipsEarning: b.clipsEarning + 1 });
+    }
     if (newBrand) context.ClipperBrand.set({ id: pair });
     context.Clipper.set({
       ...who,
@@ -163,12 +173,15 @@ indexer.onEvent({ contract: "CampaignVault", event: "Flagged" }, async ({ event,
     id: clip.id,
     clip_id: clip.id,
     brand: addr(p.brand),
+    statusBefore: clip.status === "Ended" ? "Ended" : "Active",
     reasonHash: p.reasonHash,
     deadline: Number(p.deadline),
     resolved: false,
     rejected: undefined,
     returned: undefined,
   });
+  const b = await brand(context, p.brand);
+  context.Brand.set({ ...b, flags: b.flags + 1 });
 });
 
 /** Rejected: the returned amount leaves the reserve and the clipper's earnings. Status comes from ClipRejected. */
@@ -178,7 +191,9 @@ indexer.onEvent({ contract: "CampaignVault", event: "Resolved" }, async ({ event
   const flag = await context.Flag.get(clip.id);
   if (flag) context.Flag.set({ ...flag, resolved: true, rejected: p.rejected, returned: p.returned });
   if (!p.rejected) {
-    context.Clip.set({ ...clip, status: "Active" });
+    // Accept restores the pre-flag status. Known gap: sweeping a flagged clip makes it resolve to Ended without an
+    // event, so that case shows Active until the vault emits the restored status (asked on PR #14).
+    context.Clip.set({ ...clip, status: flag?.statusBefore ?? "Active" });
     return;
   }
   const [c, who] = await Promise.all([
@@ -188,6 +203,14 @@ indexer.onEvent({ contract: "CampaignVault", event: "Resolved" }, async ({ event
   context.Clip.set({ ...clip, accrued: clip.accrued - p.returned });
   context.Campaign.set({ ...c, reserved: c.reserved - p.returned });
   context.Clipper.set({ ...who, earned: who.earned - p.returned });
+  const b = await brand(context, c.brand);
+  context.Brand.set({ ...b, rejects: b.rejects + 1, returned: b.returned + p.returned });
+});
+
+/** A payout that bounced stays owed and is retried on the next release. */
+indexer.onEvent({ contract: "CampaignVault", event: "ReleaseFailed" }, async ({ event, context }) => {
+  const clip = await context.Clip.getOrThrow(id(event.params.clipId));
+  context.Clip.set({ ...clip, releaseFailures: clip.releaseFailures + 1 });
 });
 
 indexer.onEvent(

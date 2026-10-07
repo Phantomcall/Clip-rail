@@ -15,6 +15,7 @@ contracts:
       - event: CampaignCreated
       - event: CampaignToppedUp
       - event: CampaignClosed
+      - event: CampaignRefunded
       - event: ClipRegistered
       - event: ClipActivated
       - event: ClipRejected
@@ -24,6 +25,7 @@ contracts:
       - event: Flagged
       - event: Resolved
       - event: Released
+      - event: ReleaseFailed
   - name: CreatorReputation
     abi_file_path: ../packages/abi/CreatorReputation.json
     events:

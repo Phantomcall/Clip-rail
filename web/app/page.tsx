@@ -3,6 +3,7 @@ import Link from "next/link";
 import { BriefFlow } from "@/components/landing/BriefFlow";
 import { ClipWall } from "@/components/landing/ClipWall";
 import { Fairness } from "@/components/landing/Fairness";
+import { ForClippers } from "@/components/landing/ForClippers";
 import { Faq } from "@/components/landing/Faq";
 import { FinalCta } from "@/components/landing/FinalCta";
 import { Hero } from "@/components/landing/Hero";
@@ -20,7 +21,7 @@ export default async function Home() {
   return (
     <>
       {/* the sky sits behind the hero and keeps going down through the next few sections */}
-      <div className="relative isolate -mt-[4.5rem]">
+      <div className="cr-sky-into-photo relative isolate z-10 -mt-[4.5rem]">
         <SkyBackdrop />
       <LiveRefresh />
       <Hero totals={totals} />
@@ -42,6 +43,7 @@ export default async function Home() {
       </div>
 
       <MakeBank />
+      <ForClippers />
       <BriefFlow />
       <Fairness />
       <ClipWall />

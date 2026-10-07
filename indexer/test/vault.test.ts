@@ -89,6 +89,27 @@ describe("CampaignVault handlers", () => {
     expect(await indexer.Totals.getOrThrow("global")).toMatchObject({ campaigns: 1, clippers: 1, verifiedViews: 20_000n, paid: 0n, payouts: 0 });
   });
 
+  it("an accepted flag restores the clip's pre-flag status (Ended stays Ended)", async () => {
+    const indexer = createTestIndexer();
+    await indexer.process({
+      chains: {
+        10143: {
+          simulate: [
+            created,
+            registered(1n, 2),
+            { contract: "CampaignVault", event: "ClipActivated", block: at(3), transaction: tx(3), params: { clipId: 1n } },
+            verified(1n, 1n, 4_000n, 4_000n, 4_000_000n, 4),
+            { contract: "CampaignVault", event: "ClipEnded", block: at(5), transaction: tx(5), params: { clipId: 1n } },
+            { contract: "CampaignVault", event: "Flagged", block: at(6), transaction: tx(6), params: { clipId: 1n, brand: BRAND, reasonHash: `0x${"cd".repeat(32)}`, deadline: 1_760_200_000n } },
+            { contract: "CampaignVault", event: "Resolved", block: at(7), transaction: tx(7), params: { clipId: 1n, rejected: false, returned: 0n } },
+          ],
+        },
+      },
+    });
+    expect(await indexer.Clip.getOrThrow("1")).toMatchObject({ status: "Ended", accrued: 4_000_000n });
+    expect(await indexer.Flag.getOrThrow("1")).toMatchObject({ resolved: true, rejected: false, statusBefore: "Ended" });
+  });
+
   it("brand reject returns the accrual and counts against reputation; release moves reserve to paid", async () => {
     const indexer = createTestIndexer();
     await indexer.process({
@@ -106,12 +127,16 @@ describe("CampaignVault handlers", () => {
             { contract: "CampaignVault", event: "Resolved", block: at(7), transaction: tx(7), params: { clipId: 2n, rejected: true, returned: 3_000_000n } },
             { contract: "CampaignVault", event: "ClipRejected", block: at(7), transaction: tx(70), params: { clipId: 2n, reason: 1n } },
             { contract: "CampaignVault", event: "Released", block: at(8), transaction: tx(8), params: { clipId: 1n, clipper: CLIPPER, amount: 5_000_000n } },
+            { contract: "CreatorReputation", event: "ReputationUpdated", block: at(9), transaction: tx(9), params: { clipper: CLIPPER, paidViews: 5_000n, earned: 5_000_000n, rejections: 1n, tier: 0n } },
+            // close: $150 budget − $0 reserved − $5 paid = $145 refunded, budget settles to $5
+            { contract: "CampaignVault", event: "CampaignClosed", block: at(10), transaction: tx(10), params: { id: 1n, refund: 145_000_000n } },
           ],
         },
       },
     });
 
-    expect(await indexer.Campaign.getOrThrow("1")).toMatchObject({ reserved: 0n, paid: 5_000_000n });
+    expect(await indexer.Campaign.getOrThrow("1")).toMatchObject({ reserved: 0n, paid: 5_000_000n, budget: 5_000_000n, status: "Closed" });
+    expect(await indexer.Brand.getOrThrow(BRAND)).toMatchObject({ campaigns: 1, clipsEarning: 2, flags: 1, rejects: 1, returned: 3_000_000n });
     expect(await indexer.Clip.getOrThrow("1")).toMatchObject({ released: 5_000_000n, accrued: 5_000_000n });
     expect(await indexer.Clip.getOrThrow("2")).toMatchObject({ status: "Rejected", accrued: 0n });
     expect(await indexer.Flag.getOrThrow("2")).toMatchObject({ resolved: true, rejected: true, returned: 3_000_000n });

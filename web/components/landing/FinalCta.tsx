@@ -1,5 +1,5 @@
 import { LinkButton } from "@/components/ui/Button";
-import { ShortThumb } from "@/components/ui/ShortThumb";
+import Image from "next/image";
 
 export function FinalCta() {
   return (
@@ -13,9 +13,13 @@ export function FinalCta() {
             <LinkButton href="/brand/new" variant="ink">Launch a campaign</LinkButton>
           </div>
         </div>
-        <div className="pointer-events-none hidden items-center justify-end gap-4 sm:flex">
-          <ShortThumb caption="get paid tonight" hue={150} views={9100} paid="+$9.10" className="w-32 -rotate-6" />
-          <ShortThumb caption="verified views only" hue={28} views={14800} className="mt-10 w-32 rotate-6" />
+        <div className="pointer-events-none relative mt-10 hidden justify-end sm:mt-0 sm:flex">
+          <div className="relative aspect-[4/5] w-60 rotate-3 overflow-hidden rounded-3xl shadow-[0_30px_60px_-20px_rgb(20_10_60/0.6)] ring-4 ring-white/20 lg:w-64">
+            <Image src="/photos/cta-halo.webp" alt="Creator lit by a ring light, surrounded by phones filming her" fill sizes="16rem" className="object-cover" />
+          </div>
+          <div className="force-light absolute bottom-6 left-2 flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-xs font-semibold text-fg shadow-[var(--shadow-float)] lg:left-8">
+            <span className="size-2 rounded-full bg-money" /> +$9.10 · 9,100 verified views
+          </div>
         </div>
       </div>
     </section>
