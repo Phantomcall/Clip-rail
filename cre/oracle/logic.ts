@@ -5,8 +5,8 @@
 import { encodeAbiParameters, type Hex } from "viem";
 import { claimCode, descriptionHasCode, FLAG_OWNERSHIP_OK, FLAG_UNAVAILABLE } from "@cliprail/shared/claim";
 
-/** Clip states as the vault numbers them (PRD §5.1). */
-export const ClipStatus = { Pending: 0, Active: 1, Flagged: 2, Rejected: 3, Ended: 4 } as const;
+/** ICampaignVault.ClipStatus, in declaration order. logic.test.ts checks this against the Solidity enum. */
+export const ClipStatus = { None: 0, Pending: 1, Active: 2, Flagged: 3, Rejected: 4, Ended: 5 } as const;
 
 /** One row of CampaignVault.activeClips(offset, limit). */
 export interface ActiveClip {
@@ -144,6 +144,23 @@ export function prioritize(updates: readonly ClipUpdate[], clips: readonly Activ
     })
     .slice(0, limit)
     .sort((a, b) => (a.clipId < b.clipId ? -1 : 1));
+}
+
+/** WriteReportReply.receiverContractExecutionStatus value for a vault revert (not exported by the SDK). */
+export const RECEIVER_REVERTED = 1;
+
+/**
+ * Did the vault really apply the report? On testnet the mock forwarder catches a vault revert (for example
+ * out of gas) and still succeeds, so a green transaction proves nothing. Returns an error message, or null.
+ */
+export function reportNotApplied(round: bigint, lastRoundAfter: bigint, receiverStatus: number | undefined): string | null {
+  if (receiverStatus === RECEIVER_REVERTED) {
+    return `the vault reverted inside the forwarder (round ${round}); often out of gas, check gasBase/gasPerEntry`;
+  }
+  if (lastRoundAfter !== round) {
+    return `the report transaction succeeded but vault lastRound is ${lastRoundAfter}, expected ${round}: the vault did not apply it (often out of gas)`;
+  }
+  return null;
 }
 
 /** report = abi.encode(uint64 round, ClipUpdate[] u) (PRD §5.2). */

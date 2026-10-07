@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@chainlink/cre-sdk": "^1.23.0",
+    "@cliprail/abi": "workspace:*",
     "@cliprail/shared": "workspace:*",
     "viem": "^2",
     "zod": "^4"

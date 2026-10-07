@@ -13,6 +13,8 @@ import {
   gasLimitFor,
   maxEntries,
   prioritize,
+  RECEIVER_REVERTED,
+  reportNotApplied,
   serializeUpdates,
   videosUrl,
   type YtItem,
@@ -94,11 +96,11 @@ test("serialize round-trips (the consensus boundary)", () => {
   assert.deepEqual(deserializeUpdates(serializeUpdates(updates)), updates);
 });
 
-test("gas: 150k + 60k × n, capped; 155 entries fit under 9.5M", () => {
-  const gas = { gasBase: 150_000n, gasPerEntry: 60_000n, gasCap: 9_500_000n };
-  assert.equal(gasLimitFor(3, gas), 330_000n);
+test("gas: 200k + 265k × n, capped; 35 entries fit under 9.5M", () => {
+  const gas = { gasBase: 200_000n, gasPerEntry: 265_000n, gasCap: 9_500_000n };
+  assert.equal(gasLimitFor(3, gas), 995_000n);
   assert.equal(gasLimitFor(1000, gas), 9_500_000n);
-  assert.equal(maxEntries(gas), 155);
+  assert.equal(maxEntries(gas), 35);
 });
 
 test("prioritize keeps status changes, then the biggest gains, in clipId order", () => {
@@ -124,7 +126,7 @@ test("batching and URL", () => {
 });
 
 test("worst case fits CRE limits: consensus observation < 25 KB, report < 50 KB", () => {
-  const gas = { gasBase: 150_000n, gasPerEntry: 60_000n, gasCap: 9_500_000n };
+  const gas = { gasBase: 200_000n, gasPerEntry: 265_000n, gasCap: 9_500_000n };
   const max = 2n ** 64n - 1n;
   const full = Array.from({ length: maxEntries(gas) }, (_, i) => ({
     clipId: 10n ** 12n + BigInt(i),
@@ -135,4 +137,29 @@ test("worst case fits CRE limits: consensus observation < 25 KB, report < 50 KB"
   }));
   assert.ok(new TextEncoder().encode(serializeUpdates(full)).length < 25_000);
   assert.ok((encodeReport(max, full).length - 2) / 2 < 50_000);
+});
+
+test("ClipStatus matches ICampaignVault.ClipStatus declaration order", () => {
+  const sol = readFileSync(new URL("../../contracts/src/interfaces/ICampaignVault.sol", import.meta.url), "utf8");
+  const body = /enum ClipStatus \{([^}]*)\}/.exec(sol)?.[1];
+  assert.ok(body, "enum ClipStatus not found in ICampaignVault.sol");
+  const names = body.split(",").map((s) => s.replace(/\/\/.*$/gm, "").trim()).filter(Boolean);
+  assert.deepEqual(Object.fromEntries(names.map((n, i) => [n, i])), ClipStatus);
+});
+
+test("reportNotApplied: green tx is not enough (mock forwarder swallows vault reverts)", () => {
+  assert.equal(reportNotApplied(1n, 1n, 0), null);
+  assert.equal(reportNotApplied(1n, 1n, undefined), null);
+  assert.match(reportNotApplied(1n, 1n, RECEIVER_REVERTED) ?? "", /reverted inside the forwarder/);
+  assert.match(reportNotApplied(1n, 0n, 0) ?? "", /lastRound is 0, expected 1/);
+});
+
+test("both configs use the measured v1 gas plan: 200k + 265k per entry, 35 entries per report", () => {
+  for (const net of ["testnet", "mainnet"]) {
+    const cfg = JSON.parse(readFileSync(new URL(`./config.${net}.json`, import.meta.url), "utf8"));
+    const gas = { gasBase: BigInt(cfg.gasBase), gasPerEntry: BigInt(cfg.gasPerEntry), gasCap: BigInt(cfg.gasCap) };
+    assert.equal(maxEntries(gas), 35, net);
+    assert.equal(gasLimitFor(3, gas), 995_000n, net); // Isaac measured ~850k for 3 activations
+    assert.ok(gasLimitFor(35, gas) <= 9_500_000n, net);
+  }
 });
