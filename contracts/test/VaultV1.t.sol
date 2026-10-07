@@ -191,6 +191,58 @@ contract VaultV1Test is Test {
         assertEq(reputation.stats(w).paidViews, 5_000); // reputation follows the account, not the payout address
     }
 
+    // ─────────────────────────── I-5.1 adversarial boundaries ───────────────────────────
+
+    /// Exact per-clip cap: a clip lands exactly on maxPerClip, then earns nothing more and leaves the oracle's list.
+    function test_PerClipCap_ExactBoundary() public {
+        uint256 id = _create(_params()); // maxPerClip $20, $1 per 1,000 views, 20,000 views per report
+        uint256 clip = _earning(id, clipper, "ccccccccccc", 19_999); // $19.999
+        assertEq(vault.getClip(clip).accrued, 19_999_000);
+        assertEq(vault.watchListLength(), 1);
+
+        _report(clip, 20_000); // +1 view = $0.001: exactly the cap
+        assertEq(vault.getClip(clip).accrued, 20e6);
+        assertEq(vault.watchListLength(), 0); // at the cap: no more oracle quota
+
+        uint256 reservedBefore = vault.getCampaign(id).reserved;
+        _report(clip, 25_000); // even if reported anyway, nothing more accrues
+        assertEq(vault.getClip(clip).accrued, 20e6);
+        assertEq(vault.getCampaign(id).reserved, reservedBefore);
+    }
+
+    /// Budget exhausted across 20 clips: the budget is reserved exactly, the clip that crosses it gets the remainder,
+    /// and every later clip earns nothing. Nothing is ever overdrawn.
+    function test_Budget_ExhaustedAcross20Clips() public {
+        ICampaignVault.CampaignParams memory p = _params();
+        p.budget = 152_500_000; // $152.50: room for 15 clips at $10 and $2.50 of a 16th
+        uint256 id = _create(p);
+        uint256[20] memory clips;
+        for (uint256 i; i < 20; ++i) {
+            address who = address(uint160(0xB000 + i));
+            string memory vid = string.concat("bdgt", vm.toString(1_000_000 + i)); // 11 characters
+            clips[i] = _earning(id, who, vid, 10_000); // $10 each
+        }
+        for (uint256 i; i < 15; ++i) {
+            assertEq(vault.getClip(clips[i]).accrued, 10e6);
+        }
+        assertEq(vault.getClip(clips[15]).accrued, 2_500_000); // the remainder, not $10
+        for (uint256 i = 16; i < 20; ++i) {
+            assertEq(vault.getClip(clips[i]).accrued, 0);
+        }
+        ICampaignVault.Campaign memory c = vault.getCampaign(id);
+        assertEq(c.reserved, c.params.budget); // fully reserved, never more
+        assertEq(vault.activeClips(0, 50).length, 0); // no budget left: nothing for the oracle to report
+
+        vm.warp(T0 + HOLD);
+        uint256[] memory all = new uint256[](20);
+        for (uint256 i; i < 20; ++i) {
+            all[i] = clips[i];
+        }
+        vault.release(all);
+        assertEq(usdc.balanceOf(address(vault)), 0); // every token went to a clipper
+        assertEq(vault.getCampaign(id).paid, p.budget);
+    }
+
     // ─────────────────────────── actors: owner and incident response ───────────────────────────
 
     /// The owner can't trap campaign money: disallowing the token blocks new campaigns only.
