@@ -17,6 +17,7 @@ import { count, duration, percent, timeLeft, usd } from "@/lib/format";
 import type { Address, Campaign, Clip } from "@/lib/types";
 import { parseUsd } from "@/lib/units";
 import { useLive } from "@/lib/live";
+import { BrandSetup } from "@/components/brand/BrandSetup";
 
 function busy(s: string) {
   return s === "signing" || s === "pending";
@@ -211,7 +212,7 @@ function BrandOverview({ campaigns }: { campaigns: Campaign[] }) {
   const paid = campaigns.reduce((sum, campaign) => sum + campaign.paid, 0);
   const holding = campaigns.reduce((sum, campaign) => sum + campaign.reserved, 0);
   return (
-    <section className="overflow-hidden rounded-[2rem] border border-line bg-surface shadow-[var(--shadow-float)]">
+    <section className="glass overflow-hidden rounded-[2rem]">
       <div className="relative bg-[#17182a] px-6 py-7 text-white sm:px-8">
         <div aria-hidden className="absolute -top-20 right-10 size-52 rounded-full bg-accent/60 blur-3xl" />
         <div className="relative flex flex-wrap items-end justify-between gap-4">
@@ -233,7 +234,7 @@ function BrandOverview({ campaigns }: { campaigns: Campaign[] }) {
 
 function LaunchCampaignPanel() {
   return (
-    <section className="overflow-hidden rounded-[2rem] border border-line bg-surface shadow-[var(--shadow-float)]">
+    <section className="glass overflow-hidden rounded-[2rem]">
       <div className="bg-[radial-gradient(circle_at_85%_0%,rgb(139_116_255/0.28),transparent_34%),#17182a] px-7 py-10 text-white sm:px-10">
         <p className="text-xs font-semibold tracking-[0.16em] text-white/55 uppercase">Your first campaign</p>
         <h2 className="mt-3 max-w-xl text-3xl font-bold">A better brief brings better clips.</h2>
@@ -251,10 +252,16 @@ export function BrandConsole({ address }: { address: Address }) {
   const { data: campaigns, loading } = useLive(["brand-campaigns", address], () => getCampaignsByBrand(address));
   if (loading) return <Skeleton className="h-64" />;
   if (!campaigns || campaigns.length === 0) {
-    return <LaunchCampaignPanel />;
+    return (
+      <div className="flex flex-col gap-6">
+        <BrandSetup hasCampaign={false} />
+        <LaunchCampaignPanel />
+      </div>
+    );
   }
   return (
     <div className="flex flex-col gap-6">
+      <BrandSetup hasCampaign />
       <BrandOverview campaigns={campaigns} />
       {campaigns.map((c) => <CampaignPanel key={c.id} campaign={c} />)}
     </div>
