@@ -9,10 +9,11 @@ import { ThemeToggle } from "@/components/site/ThemeToggle";
 import { cn } from "@/lib/cn";
 
 const LINKS = [
+  { href: "/guide", label: "How it works", match: (p: string) => p.startsWith("/guide"), show: "lg:block" },
   { href: "/campaigns", label: "Campaigns", match: (p: string) => p.startsWith("/campaigns") || p.startsWith("/clip"), show: "sm:block" },
   { href: "/brand", label: "Brands", match: (p: string) => p.startsWith("/brand"), show: "md:block" },
   { href: "/judges", label: "Judges", match: (p: string) => p.startsWith("/judges"), show: "md:block" },
-  { href: "/leaderboard", label: "Leaderboard", match: (p: string) => p.startsWith("/leaderboard") || p.startsWith("/u/"), show: "lg:block" },
+  { href: "/leaderboard", label: "Leaderboard", match: (p: string) => p.startsWith("/leaderboard") || p.startsWith("/u/"), show: "xl:block" },
 ];
 
 /** Floating glass navbar: light over the sky at the top, firmer once the page scrolls. */
