@@ -1,0 +1,4 @@
+# Copy to ops/.dev.vars for `wrangler dev` (git-ignored). Deployed values: wrangler secret put <NAME>.
+# Relayer wallet key (hex). For local runs against an anvil fork, use an anvil test key, never the real one.
+RELAYER_PK=
+YT_API_KEY_PREVIEW=

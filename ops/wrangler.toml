@@ -1,0 +1,74 @@
+# Cliprail ops Worker. Top level = testnet; `wrangler deploy --env mainnet` for mainnet (I-4.2).
+# Secrets (never in this file): wrangler secret put RELAYER_PK / YT_API_KEY_PREVIEW [--env mainnet]
+name = "cliprail-ops-testnet"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[vars]
+NETWORK = "testnet"
+RPC_URL = "https://testnet-rpc.monad.xyz"
+WEB_ORIGINS = "https://cliprail.vercel.app,https://cliprail-*-chibey-maxs-projects.vercel.app,http://localhost:3000"
+ENVIO_URL = ""
+# Public address of the RELAYER_PK secret (checked before signing). Not a secret.
+RELAYER_ADDRESS = "0xa8869100A6a1A4d134aF2A15600B49394beA04AF"
+
+[triggers]
+crons = ["*/5 * * * *"]
+
+[[kv_namespaces]]
+binding = "RATE"
+id = "accd82cc5ce04470a304df0cc597d91a"
+
+# Per-IP limits (Workers rate limiting binding; no KV writes).
+[[ratelimits]]
+name = "RELAY_LIMIT"
+namespace_id = "1001"
+simple = { limit = 5, period = 60 }
+
+[[ratelimits]]
+name = "PREVIEW_LIMIT"
+namespace_id = "1002"
+simple = { limit = 30, period = 60 }
+
+# All relays, every IP together.
+[[ratelimits]]
+name = "RELAY_GLOBAL_LIMIT"
+namespace_id = "1003"
+simple = { limit = 20, period = 60 }
+
+[observability]
+enabled = true
+
+[env.mainnet]
+name = "cliprail-ops-mainnet"
+
+[env.mainnet.vars]
+NETWORK = "mainnet"
+RPC_URL = "https://rpc.monad.xyz"
+WEB_ORIGINS = "https://cliprail.vercel.app,http://localhost:3000"
+ENVIO_URL = ""
+RELAYER_ADDRESS = "REPLACE_WITH_MAINNET_RELAYER_ADDRESS"
+
+[env.mainnet.triggers]
+crons = ["*/5 * * * *"]
+
+[[env.mainnet.kv_namespaces]]
+binding = "RATE"
+id = "REPLACE_WITH_MAINNET_KV_ID"
+
+[[env.mainnet.ratelimits]]
+name = "RELAY_LIMIT"
+namespace_id = "2001"
+simple = { limit = 5, period = 60 }
+
+[[env.mainnet.ratelimits]]
+name = "PREVIEW_LIMIT"
+namespace_id = "2002"
+simple = { limit = 30, period = 60 }
+
+[[env.mainnet.ratelimits]]
+name = "RELAY_GLOBAL_LIMIT"
+namespace_id = "2003"
+simple = { limit = 20, period = 60 }
