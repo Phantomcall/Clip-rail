@@ -9,6 +9,7 @@ import { CopyButton } from "@/components/ui/CopyButton";
 import { useAuth } from "@/lib/auth";
 import { useBalances } from "@/lib/balances";
 import { shortAddress, usd } from "@/lib/format";
+import { normalizeUsername, usernameError } from "@/lib/names";
 
 function LockIcon() {
   return (
@@ -153,6 +154,7 @@ export function SignInButton() {
   const { address, status, error, signIn, signUp } = useAuth();
   const [open, setOpen] = useState(false);
   const [handle, setHandle] = useState("");
+  const nameError = usernameError(handle);
   // Errors from an earlier attempt shouldn't greet you when the modal opens again.
   const [hiddenError, setHiddenError] = useState<string | null>(null);
   const shownError = error && error !== hiddenError ? error : null;
@@ -191,21 +193,34 @@ export function SignInButton() {
           <form
             onSubmit={async (e) => {
               e.preventDefault();
-              if (await signUp(handle.trim().replace(/^@/, "") || "clipper")) setOpen(false);
+              if (usernameError(handle)) return;
+              if (await signUp(normalizeUsername(handle))) setOpen(false);
             }}
             className="flex flex-col gap-3"
           >
-            <label className="text-xs font-medium text-muted" htmlFor="handle">Pick a name (shown on your public profile)</label>
-            <input
-              id="handle"
-              value={handle}
-              onChange={(e) => setHandle(e.target.value)}
-              placeholder="@yourname"
-              autoComplete="username webauthn"
-              maxLength={32}
-              className="min-h-11 rounded-[var(--radius-control)] border border-line bg-surface-2 px-3 text-sm outline-none focus:border-accent"
-            />
-            <Button type="submit" variant="secondary" loading={busy}>Create account with passkey</Button>
+            <label className="text-xs font-medium text-muted" htmlFor="handle">Pick a username (shown on your public profile)</label>
+            <div className="relative">
+              <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted">@</span>
+              <input
+                id="handle"
+                value={handle}
+                onChange={(e) => setHandle(normalizeUsername(e.target.value))}
+                placeholder="yourname"
+                autoComplete="username webauthn"
+                autoCapitalize="none"
+                spellCheck={false}
+                maxLength={20}
+                aria-invalid={!!(handle && nameError)}
+                aria-describedby="handle-hint"
+                className={`min-h-11 w-full rounded-[var(--radius-control)] border bg-surface-2 pr-3 pl-7 text-sm outline-none focus:border-accent ${handle && nameError ? "border-danger" : "border-line"}`}
+              />
+            </div>
+            <p id="handle-hint" className={`-mt-1 text-xs ${handle && nameError ? "text-danger" : "text-muted"}`}>
+              {handle && nameError ? nameError : handle ? `You'll be @${handle}` : "3–20 letters, numbers, dots or underscores."}
+            </p>
+            <Button type="submit" variant="secondary" loading={busy} disabled={!!nameError}>
+              Create account with passkey
+            </Button>
           </form>
 
           {shownError && (
