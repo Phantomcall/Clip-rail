@@ -5,7 +5,7 @@ import { TxLink } from "./TxLink";
 export function ReceiptRow({ receipt, now }: { receipt: Receipt; now: number }) {
   const unlocked = receipt.unlockAt <= now;
   return (
-    <li className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 border-b border-line py-3 last:border-0 sm:grid-cols-[5rem_1fr_auto_auto] sm:items-center">
+    <li className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 border-b border-line py-3 last:border-0 md:grid-cols-[4.5rem_1fr_auto] md:items-center">
       <span className="tabular text-xs text-muted">Round {receipt.round}</span>
       <span className="tabular text-sm">
         +{count(receipt.deltaViews)} views <span className="text-muted">({count(receipt.totalViews)} total)</span>
