@@ -16,7 +16,7 @@ export function ClipWall() {
             <p className="eyebrow">A live proof feed</p>
             <h2 className="mt-3 text-4xl font-bold sm:text-5xl">Real clips. Real payouts.</h2>
           </div>
-          <div className="rounded-2xl border border-line bg-surface px-4 py-3 text-left shadow-[var(--shadow-soft)]">
+          <div className="glass rounded-2xl px-4 py-3 text-left">
             <div className="flex items-center gap-2 text-xs font-semibold"><span className="size-2 rounded-full bg-money" /> Oracle verified</div>
             <p className="mt-1 text-xs text-muted">Views, rules and payout receipts are public.</p>
           </div>

@@ -1,8 +1,8 @@
 /** "Bots earn nothing": the onchain rules as a bento grid with tiny live-looking illustrations. */
 function Tile({ title, body, children, className = "" }: { title: string; body: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className={`flex flex-col overflow-hidden rounded-3xl border border-line bg-surface shadow-[var(--shadow-soft)] ${className}`}>
-      <div className="dots grid min-h-36 flex-1 place-items-center bg-surface-2/50 p-5">{children}</div>
+    <div className={`glass flex flex-col overflow-hidden rounded-3xl ${className}`}>
+      <div className="dots grid min-h-36 flex-1 place-items-center bg-white/30 p-5 dark:bg-white/[0.02]">{children}</div>
       <div className="p-5">
         <h3 className="text-lg font-semibold">{title}</h3>
         <p className="mt-1 text-sm text-muted">{body}</p>

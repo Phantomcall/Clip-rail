@@ -18,7 +18,7 @@ export function Faq() {
           <p className="mt-4 max-w-sm text-muted">The important parts of Cliprail should be clear before you make a clip or fund a campaign.</p>
           <Link href="/#how-it-works" className="mt-6 inline-flex items-center gap-2 rounded-full bg-accent-soft px-4 py-2 text-sm font-semibold text-accent hover:bg-accent hover:text-white">See how it works <span>→</span></Link>
         </div>
-      <div className="divide-y divide-line rounded-3xl border border-line bg-surface px-5 shadow-[var(--shadow-soft)]">
+      <div className="glass divide-y divide-line rounded-3xl px-5">
         {qa.map(([q, a]) => (
           <details key={q} className="group py-4">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium">

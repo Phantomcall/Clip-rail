@@ -177,6 +177,19 @@
   transition: background-color 1.2s ease, border-color 1.2s ease, color 1.2s ease, fill 1.2s ease !important;
 }
 
+/* Frosted card that matches the floating navbar: the default box for anything that isn't carrying an image. */
+@utility glass {
+  background: rgb(255 255 255 / 0.72);
+  border: 1px solid rgb(255 255 255 / 0.85);
+  box-shadow: 0 1px 2px rgb(20 40 90 / 0.04), 0 12px 32px -14px rgb(20 50 110 / 0.18);
+  backdrop-filter: blur(16px) saturate(1.2);
+  [data-theme="dark"] & {
+    background: rgb(24 28 52 / 0.58);
+    border-color: rgb(255 255 255 / 0.09);
+    box-shadow: 0 12px 32px -14px rgb(0 0 0 / 0.5);
+  }
+}
+
 @utility tabular {
   font-variant-numeric: tabular-nums;
 }
