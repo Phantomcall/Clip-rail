@@ -1,10 +1,14 @@
 import { LinkButton } from "@/components/ui/Button";
 import Image from "next/image";
+import { LoopVideo } from "@/components/ui/LoopVideo";
 
 export function FinalCta() {
   return (
     <section className="px-3">
-      <div className="relative mx-auto grid max-w-6xl overflow-hidden rounded-[32px] bg-accent px-6 py-14 text-white sm:grid-cols-[1.3fr_1fr] sm:px-12">
+      <div className="relative isolate mx-auto grid max-w-6xl overflow-hidden rounded-[32px] bg-accent px-6 py-14 text-white sm:grid-cols-[1.3fr_1fr] sm:px-12">
+        {/* the creator from the photo, filming herself: plays behind the card, tinted to the brand violet */}
+        <LoopVideo src="/video/creator-loop.mp4" poster="/video/creator-loop.jpg" className="absolute inset-0 -z-10 size-full object-cover object-[70%_30%]" />
+        <div aria-hidden className="absolute inset-0 -z-10 bg-[linear-gradient(100deg,rgb(80_50_220/0.92)_0%,rgb(110_84_255/0.78)_45%,rgb(110_84_255/0.25)_100%)]" />
         <div>
           <h2 className="max-w-md text-4xl font-bold sm:text-5xl">Your next clip could pay tonight.</h2>
           <p className="mt-3 max-w-md text-white/80">Pick a campaign, post a Short, get paid per verified view.</p>
