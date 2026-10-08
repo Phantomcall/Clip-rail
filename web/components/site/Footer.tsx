@@ -20,6 +20,7 @@ export function Footer() {
           <Link href="/brand/new" className="hover:text-white">Launch a campaign</Link>
           <Link href="/brand" className="hover:text-white">Brand console</Link>
           <Link href="/judges" className="hover:text-white">For judges</Link>
+          <Link href="/try" className="hover:text-white">Try the demo</Link>
         </div>
       </div>
       <div className="border-t border-white/10">

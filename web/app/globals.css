@@ -163,7 +163,7 @@
 /* Inner pages sit on a blue sky in day mode, so text placed straight on the sky turns white (like the landing hero).
    Anything on a card or panel surface gets the normal light-theme text colours back. */
 [data-theme="light"] main:has(> .cr-page-sky) { --color-fg: #ffffff; --color-muted: rgb(255 255 255 / 0.78); color: var(--color-fg); }
-[data-theme="light"] main:has(> .cr-page-sky) :where(.bg-surface, .bg-surface-2, .bg-white, [class*="bg-surface-2/"], [class*="bg-white/9"], [class*="bg-white/8"]) {
+[data-theme="light"] main:has(> .cr-page-sky) :where(.glass, .bg-surface, .bg-surface-2, .bg-white, [class*="bg-surface-2/"], [class*="bg-white/9"], [class*="bg-white/8"]) {
   --color-fg: #121216; --color-muted: #6b6a75; color: var(--color-fg);
 }
 /* the page fades out with its own overlay (PageSky), so the backdrop's built-in bottom fades are off here */
