@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { LoopVideo } from "@/components/ui/LoopVideo";
 import { Avatar } from "@/components/ui/Avatar";
 import { ShortsIcon, VerifiedIcon } from "@/components/ui/Icons";
 
@@ -73,8 +74,6 @@ const steps = [
   { n: "03", title: "Get paid", body: "An oracle checks your real views every few minutes. After a 24-hour hold, USDC lands in your account.", ui: <BalanceMini />, photo: "/photos/step-paid.webp", alt: "Clipper delighted at a payout on her phone" },
 ];
 
-const BAND_PHOTO = "/photos/band-ocean.webp";
-
 /** "How it works": each step as a real UI card, over a full-width darkened photo. */
 export function MakeBank() {
   return (
@@ -82,7 +81,7 @@ export function MakeBank() {
       {/* Full-bleed photo backdrop, darkened for readable text, fading in and out at the edges so it blends with
           the sections above and below in every theme */}
       <div aria-hidden className="absolute inset-0 -z-10 ">
-        <Image src={BAND_PHOTO} alt="" fill sizes="100vw" className="object-cover" />
+        <LoopVideo src="/video/band-ocean.mp4" poster="/video/band-ocean.jpg" className="absolute inset-0 size-full object-cover" />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgb(11_63_156/0.45)_0%,rgb(12_45_115/0.4)_30%,rgb(10_25_70/0.75)_75%,rgb(8_15_40/0.9)_100%)] transition-[background] duration-[1400ms] dark:bg-[linear-gradient(180deg,rgb(8_21_48/0.6)_0%,rgb(8_21_48/0.45)_30%,rgb(8_14_34/0.78)_75%,rgb(8_11_24/0.9)_100%)]" />
         {/* blend the bottom straight into the ambient sky's first colour, so there's no grey fog between them */}
         <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-[#d6e7fa] dark:to-[#0c1834]" />
