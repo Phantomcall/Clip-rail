@@ -52,6 +52,10 @@
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-8px); }
   }
+  @keyframes shorts-progress {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
   @keyframes marquee {
     from { transform: translateX(0); }
     to { transform: translateX(-50%); }

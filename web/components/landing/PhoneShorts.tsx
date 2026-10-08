@@ -1,12 +1,15 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
+import { LoopVideo } from "@/components/ui/LoopVideo";
 import { CheckCircle, ShortsIcon } from "@/components/ui/Icons";
 import { compact } from "@/lib/format";
 
 type Slide = {
   caption: string;
-  hue: number;
+  /** The Short itself: a looping video, or a still. */
+  media: { video: string; poster: string } | { image: string };
   handle: string;
   campaign: string;
   views: number;
@@ -18,7 +21,7 @@ type Slide = {
 const SLIDES: Slide[] = [
   {
     caption: "the 2-second hook that pays",
-    hue: 262,
+    media: { video: "/video/filming-loop.mp4", poster: "/video/filming-loop.jpg" },
     handle: "@tobi.cuts",
     campaign: "Clip the Cliprail launch talk",
     views: 18420,
@@ -28,7 +31,7 @@ const SLIDES: Slide[] = [
   },
   {
     caption: "bots earn nothing",
-    hue: 195,
+    media: { image: "/clips/clip-06.webp" },
     handle: "@adaeze.edits",
     campaign: "Indie trailer cuts for launch week",
     views: 12330,
@@ -36,6 +39,22 @@ const SLIDES: Slide[] = [
     code: "CR-91C04E7A2B6D58F3",
     note: "1,240 bot views rejected by the like floor",
   },
+  {
+    caption: "POV: you got paid for this",
+    media: { image: "/clips/clip-01.webp" },
+    handle: "@kola.cuts",
+    campaign: "Clip the Cliprail launch talk",
+    views: 31200,
+    earned: "$20.00",
+    code: "CR-5D17A0C3E9B24F86",
+    note: "Hit the $20 per-clip cap · budget shared fairly",
+  },
+];
+
+const RAIL = [
+  { label: (v: number) => compact(Math.round(v * 0.06)), path: "M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 5 6.4 5c2 0 3.3 1 4.1 2.2h3c.8-1.2 2.1-2.2 4.1-2.2C21 5 23.1 8.4 21.6 11.8 19.5 16.4 12 21 12 21Z" },
+  { label: (v: number) => compact(Math.round(v * 0.004)), path: "M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4.5 3.5V17H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" },
+  { label: () => "Share", path: "M14 4l7 7-7 7v-4.2C8.6 13.8 5.2 15.6 3 20c.6-6.4 4-11.1 11-12V4Z" },
 ];
 
 const HOLD_MS = 4200;
@@ -43,14 +62,13 @@ const HOLD_MS = 4200;
 /** One Short, full screen inside the phone: the scene, YouTube-style action rail, and the Cliprail overlay. */
 function ShortScreen({ s }: { s: Slide }) {
   return (
-    <div
-      className="relative h-full w-full shrink-0 overflow-hidden text-white"
-      style={{
-        background: `radial-gradient(80% 45% at 30% 28%, hsl(${s.hue} 90% 68% / .9), transparent 70%),
-          radial-gradient(70% 55% at 80% 80%, hsl(${(s.hue + 60) % 360} 85% 55% / .85), transparent 70%),
-          linear-gradient(160deg, hsl(${s.hue} 45% 22%), hsl(${(s.hue + 30) % 360} 50% 10%))`,
-      }}
-    >
+    <div className="relative h-full w-full shrink-0 overflow-hidden bg-black text-white">
+      {"video" in s.media ? (
+        <LoopVideo src={s.media.video} poster={s.media.poster} className="absolute inset-0 size-full object-cover" />
+      ) : (
+        <Image src={s.media.image} alt="" fill sizes="17rem" className="object-cover" />
+      )}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-transparent via-40% to-black/80" />
       <div className="absolute inset-x-0 top-[22%] pr-14 pl-4 text-center">
         <span className="inline bg-black/70 box-decoration-clone px-2 py-0.5 font-display text-xl leading-relaxed font-bold uppercase">
           {s.caption}
@@ -59,25 +77,32 @@ function ShortScreen({ s }: { s: Slide }) {
 
       {/* right-hand action rail, like the Shorts player */}
       <div className="absolute right-2.5 bottom-[11rem] flex flex-col items-center gap-3 text-[10px] font-semibold">
-        {[
-          ["♥", compact(Math.round(s.views * 0.06))],
-          ["💬", compact(Math.round(s.views * 0.004))],
-          ["↗", "Share"],
-        ].map(([icon, label]) => (
-          <div key={label} className="flex flex-col items-center gap-1">
-            <span className="grid size-9 place-items-center rounded-full bg-black/35 text-sm backdrop-blur">{icon}</span>
-            {label}
+        {RAIL.map((r, n) => (
+          <div key={n} className="flex flex-col items-center gap-1">
+            <span className="grid size-9 place-items-center rounded-full bg-black/35 backdrop-blur">
+              <svg viewBox="0 0 24 24" className="size-[18px]" fill="white" aria-hidden>
+                <path d={r.path} />
+              </svg>
+            </span>
+            {r.label(s.views)}
           </div>
         ))}
+        <span className="mt-1 size-8 animate-[spin_6s_linear_infinite] rounded-md border-2 border-white/80 bg-[conic-gradient(#ff5f6d,#ffc371,#5ee3a1,#6e54ff,#ff5f6d)]" aria-hidden />
       </div>
 
       {/* channel + title */}
       <div className="absolute inset-x-0 bottom-[8.6rem] px-3.5 pr-14 text-xs">
         <div className="flex items-center gap-2 font-semibold">
-          <span className="size-6 rounded-full" style={{ background: `hsl(${s.hue} 70% 60%)` }} />
+          <span className="grid size-6 place-items-center rounded-full bg-accent text-[10px] font-bold">{s.handle[1].toUpperCase()}</span>
           {s.handle}
+          <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-ink">Subscribe</span>
         </div>
         <p className="mt-1 truncate text-white/85">{s.campaign} · #shorts</p>
+      </div>
+
+      {/* playback progress */}
+      <div className="absolute inset-x-0 bottom-0 h-0.5 bg-white/20">
+        <div className="h-full w-full origin-left animate-[shorts-progress_4.2s_linear_infinite] bg-[#ff0033]" />
       </div>
 
       {/* Cliprail overlay: what the oracle saw and what it paid */}
@@ -122,8 +147,13 @@ export function PhoneShorts() {
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      {/* bezel */}
-      <div className="rounded-[2.9rem] border border-white/15 bg-[#16161c] p-2.5 shadow-[0_40px_90px_-30px_rgb(5_10_40/0.6),inset_0_0_0_1.5px_rgb(255_255_255/0.06)]">
+      {/* side buttons */}
+      <span aria-hidden className="absolute top-28 -left-[3px] h-8 w-[3px] rounded-l bg-[#2a2a33]" />
+      <span aria-hidden className="absolute top-40 -left-[3px] h-14 w-[3px] rounded-l bg-[#2a2a33]" />
+      <span aria-hidden className="absolute top-36 -right-[3px] h-20 w-[3px] rounded-r bg-[#2a2a33]" />
+      {/* bezel with a titanium-like edge */}
+      <div className="rounded-[2.9rem] bg-[linear-gradient(145deg,#4a4a55,#1c1c22_35%,#2c2c34_70%,#55555f)] p-[3px] shadow-[0_40px_90px_-30px_rgb(5_10_40/0.6)]">
+      <div className="rounded-[2.75rem] bg-[#0d0d11] p-2">
         <div className="relative aspect-[9/19] overflow-hidden rounded-[2.3rem] bg-black">
           {/* feed: slides stacked vertically, moved up one screen per step */}
           <div
@@ -164,6 +194,7 @@ export function PhoneShorts() {
             ))}
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
