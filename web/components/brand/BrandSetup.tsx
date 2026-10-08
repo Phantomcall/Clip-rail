@@ -96,7 +96,7 @@ export function BrandSetup({ hasCampaign }: { hasCampaign: boolean }) {
       </div>
 
       <div className="relative min-h-72 overflow-hidden rounded-[2rem] shadow-[0_24px_60px_-28px_rgb(10_20_60/0.6)]">
-        <LoopVideo src="/video/creator-loop.mp4" poster="/video/creator-loop.jpg" className="absolute inset-0 size-full object-cover object-[65%_30%]" />
+        <LoopVideo src="/video/brand-led.mp4" poster="/video/brand-led.jpg" className="absolute inset-0 size-full object-cover object-[50%_25%]" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#120d3a]/95 via-[#120d3a]/40 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 p-6 text-white">
           <p className="text-xs font-semibold tracking-widest text-white/70 uppercase">What you&apos;re paying for</p>

@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import { LoopVideo } from "@/components/ui/LoopVideo";
 import { CheckCircle, ShortsIcon } from "@/components/ui/Icons";
@@ -8,8 +7,8 @@ import { compact } from "@/lib/format";
 
 type Slide = {
   caption: string;
-  /** The Short itself: a looping video, or a still. */
-  media: { video: string; poster: string } | { image: string };
+  /** The Short itself: always a looping clip, never a still. */
+  media: { video: string; poster: string };
   handle: string;
   campaign: string;
   views: number;
@@ -21,7 +20,7 @@ type Slide = {
 const SLIDES: Slide[] = [
   {
     caption: "the 2-second hook that pays",
-    media: { video: "/video/filming-loop.mp4", poster: "/video/filming-loop.jpg" },
+    media: { video: "/video/short-selfie.mp4", poster: "/video/short-selfie.jpg" },
     handle: "@tobi.cuts",
     campaign: "Clip the Cliprail launch talk",
     views: 18420,
@@ -31,7 +30,7 @@ const SLIDES: Slide[] = [
   },
   {
     caption: "bots earn nothing",
-    media: { image: "/clips/clip-06.webp" },
+    media: { video: "/video/short-tulips.mp4", poster: "/video/short-tulips.jpg" },
     handle: "@adaeze.edits",
     campaign: "Indie trailer cuts for launch week",
     views: 12330,
@@ -41,7 +40,7 @@ const SLIDES: Slide[] = [
   },
   {
     caption: "POV: you got paid for this",
-    media: { image: "/clips/clip-01.webp" },
+    media: { video: "/video/short-dance.mp4", poster: "/video/short-dance.jpg" },
     handle: "@kola.cuts",
     campaign: "Clip the Cliprail launch talk",
     views: 31200,
@@ -63,11 +62,7 @@ const HOLD_MS = 4200;
 function ShortScreen({ s }: { s: Slide }) {
   return (
     <div className="relative h-full w-full shrink-0 overflow-hidden bg-black text-white">
-      {"video" in s.media ? (
-        <LoopVideo src={s.media.video} poster={s.media.poster} className="absolute inset-0 size-full object-cover" />
-      ) : (
-        <Image src={s.media.image} alt="" fill sizes="17rem" className="object-cover" />
-      )}
+      <LoopVideo src={s.media.video} poster={s.media.poster} className="absolute inset-0 size-full object-cover" />
       <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-transparent via-40% to-black/80" />
       <div className="absolute inset-x-0 top-[22%] pr-14 pl-4 text-center">
         <span className="inline bg-black/70 box-decoration-clone px-2 py-0.5 font-display text-xl leading-relaxed font-bold uppercase">

@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { LoopVideo } from "@/components/ui/LoopVideo";
 import Link from "next/link";
 import { PageHeader } from "@/components/site/PageHeader";
 import { LinkButton } from "@/components/ui/Button";
@@ -12,11 +12,12 @@ type Step = { title: string; body: string };
 
 const TRACKS: Record<
   Track,
-  { label: string; photo: string; pitch: string; steps: Step[]; rules: [string, string][]; cta: { href: string; label: string } }
+  { label: string; video: string; poster: string; pitch: string; steps: Step[]; rules: [string, string][]; cta: { href: string; label: string } }
 > = {
   clippers: {
     label: "Clippers",
-    photo: "/photos/creator-viral.webp",
+    video: "/video/bg-cafe.mp4",
+    poster: "/video/bg-cafe.jpg",
     pitch: "Cut Shorts from campaigns that are already funded, and get paid in USDC for every view an oracle can verify.",
     steps: [
       { title: "Sign up with a passkey", body: "Face ID or your fingerprint. No app, no seed phrase, no gas. Your account works on your phone straight away." },
@@ -37,7 +38,8 @@ const TRACKS: Record<
   },
   brands: {
     label: "Brands",
-    photo: "/photos/creator-studio.webp",
+    video: "/video/guide-podcast.mp4",
+    poster: "/video/guide-podcast.jpg",
     pitch: "Fund a brief once and pay only for views that pass your rules. Whatever isn't earned comes back to you.",
     steps: [
       { title: "Sign in and add USDC", body: "Sign in with a passkey. Your campaign budget is paid in USDC from your account." },
@@ -58,7 +60,8 @@ const TRACKS: Record<
   },
   judges: {
     label: "Judges",
-    photo: "/photos/creator-ringlight.webp",
+    video: "/video/guide-hoodie.mp4",
+    poster: "/video/guide-hoodie.jpg",
     pitch: "Settle disputes between brands and clippers in an area you know, and build a public record of good calls.",
     steps: [
       { title: "Apply", body: "Tell us the areas you know best, like music, gaming or beauty. Applications open with appointed judging." },
@@ -108,7 +111,7 @@ export default async function GuidePage({ searchParams }: { searchParams: Promis
 
         <section className="glass grid overflow-hidden rounded-[2rem] md:grid-cols-[1fr_1.1fr]">
           <div className="relative min-h-56">
-            <Image src={t.photo} alt="" fill sizes="(min-width: 768px) 28rem, 100vw" className="object-cover" priority />
+            <LoopVideo key={t.video} src={t.video} poster={t.poster} className="absolute inset-0 size-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent md:bg-gradient-to-r md:from-transparent md:to-black/10" />
           </div>
           <div className="flex flex-col justify-center p-6 sm:p-8">

@@ -18,6 +18,7 @@ import type { Address, Campaign, Clip } from "@/lib/types";
 import { parseUsd } from "@/lib/units";
 import { useLive } from "@/lib/live";
 import { BrandSetup } from "@/components/brand/BrandSetup";
+import { LoopVideo } from "@/components/ui/LoopVideo";
 
 function busy(s: string) {
   return s === "signing" || s === "pending";
@@ -235,14 +236,17 @@ function BrandOverview({ campaigns }: { campaigns: Campaign[] }) {
 function LaunchCampaignPanel() {
   return (
     <section className="glass overflow-hidden rounded-[2rem]">
-      <div className="bg-[radial-gradient(circle_at_85%_0%,rgb(139_116_255/0.28),transparent_34%),#17182a] px-7 py-10 text-white sm:px-10">
-        <p className="text-xs font-semibold tracking-[0.16em] text-white/55 uppercase">Your first campaign</p>
+      <div className="relative isolate overflow-hidden px-7 py-12 text-white sm:px-10">
+        {/* friends watching Shorts together: what a campaign buys */}
+        <LoopVideo src="/video/brand-friends.mp4" poster="/video/brand-friends.jpg" className="absolute inset-0 -z-10 size-full object-cover object-[70%_40%]" />
+        <div aria-hidden className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgb(13_12_34/0.92)_0%,rgb(13_12_34/0.7)_50%,rgb(40_28_110/0.35)_100%)]" />
+        <p className="text-xs font-semibold tracking-[0.16em] text-white/60 uppercase">Your first campaign</p>
         <h2 className="mt-3 max-w-xl text-3xl font-bold">A better brief brings better clips.</h2>
         <p className="mt-3 max-w-lg text-sm text-white/70">Set a clear source, a rate clippers understand, and rules that stop low-quality traffic before it drains your budget.</p>
         <LinkButton href="/brand/new" variant="secondary" className="mt-6 !border-white/20 !bg-white !text-[#17182a]">Build your campaign →</LinkButton>
       </div>
       <div className="grid gap-3 p-5 sm:grid-cols-3 sm:p-6">
-        {[["01", "Bring the source", "A video and a brief creators can act on."], ["02", "Set guardrails", "Like floor, velocity cap and a hold window."], ["03", "Fund escrow", "USDC only moves after verified views."]].map(([step, title, body]) => <div key={step} className="rounded-2xl bg-surface-2 p-4"><span className="font-mono text-xs text-accent">{step}</span><h3 className="mt-3 font-semibold">{title}</h3><p className="mt-1 text-xs leading-relaxed text-muted">{body}</p></div>)}
+        {[["01", "Bring the source", "A video and a brief creators can act on."], ["02", "Set guardrails", "Like floor, velocity cap and a hold window."], ["03", "Fund escrow", "USDC only moves after verified views."]].map(([step, title, body]) => <div key={step} className="rounded-2xl bg-white/40 p-4 dark:bg-white/[0.04]"><span className="font-mono text-xs text-accent">{step}</span><h3 className="mt-3 font-semibold">{title}</h3><p className="mt-1 text-xs leading-relaxed text-muted">{body}</p></div>)}
       </div>
     </section>
   );
