@@ -30,18 +30,10 @@ export function Header() {
 
   return (
     <header className="sticky top-3 z-30 px-3 sm:top-4">
-      <div
-        className={cn(
-          "mx-auto flex h-14 max-w-6xl items-center justify-between gap-2 rounded-full border pr-2 pl-4 backdrop-blur-xl transition-[background-color,box-shadow,border-color] duration-300 sm:pl-5",
-          scrolled
-            ? "border-white/80 bg-white/85 shadow-[0_10px_30px_-12px_rgb(20_50_110/0.35)] dark:border-white/10 dark:bg-[#141830]/85"
-            : "border-white/50 bg-white/55 shadow-[0_4px_20px_-12px_rgb(20_50_110/0.25)] dark:border-white/10 dark:bg-[#141830]/45",
-        )}
-      >
-        <Link href="/" aria-label="Cliprail home" className="shrink-0">
-          <Logo />
-        </Link>
-        <nav aria-label="Main" className="flex items-center gap-0.5 text-sm">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-2 rounded-full border border-white/70 bg-white/80 pr-2 pl-5 dark:border-white/10 dark:bg-surface/70 shadow-[var(--shadow-soft)] backdrop-blur-xl">
+        <Link href="/" aria-label="Cliprail home"><Logo /></Link>
+        <nav className="flex items-center gap-1 text-sm">
+          <Link href="/#how-it-works" className="hidden rounded-full px-3 py-2 text-muted hover:bg-surface-2 hover:text-fg lg:block">How it works</Link>
           {/* On phones the bottom TabBar carries the navigation */}
           {LINKS.map((l) => {
             const on = l.match(path);

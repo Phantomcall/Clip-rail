@@ -37,30 +37,25 @@ export default async function ProfilePage({ params }: { params: Promise<{ addres
   const progress = next ? Math.min(100, Math.round((profile.paidViews / next.views) * 100)) : 100;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 pt-10 pb-16 sm:pt-16">
-      {/* identity card */}
-      <section className="glass overflow-hidden rounded-[2rem]">
-        <div className="relative h-28 bg-[radial-gradient(circle_at_15%_30%,rgb(139_116_255/0.55),transparent_45%),radial-gradient(circle_at_85%_70%,rgb(80_199_255/0.45),transparent_50%),linear-gradient(120deg,#3b2a9a,#1b2c6b)] sm:h-36" />
-        <div className="relative px-6 pb-6 sm:px-8">
-          <div className="-mt-12 flex flex-wrap items-end justify-between gap-4 sm:-mt-14">
-            <div className="flex items-end gap-4">
-              <span className="grid size-24 place-items-center rounded-3xl border-4 border-white bg-gradient-to-br from-accent to-[#50c7ff] font-display text-4xl font-bold text-white shadow-[var(--shadow-float)] dark:border-[#141830]">
-                {initial}
-              </span>
-              <div className="pt-14 sm:pt-16">
-                <h1 className="flex flex-wrap items-center gap-2 text-2xl font-bold sm:text-3xl">
-                  {name.primary} <TierBadge tier={profile.tier} />
-                </h1>
-                <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
-                  <AddressChip address={address} />
-                  {days > 0 && <span>clipping for {days} {days === 1 ? "day" : "days"}</span>}
-                </div>
-              </div>
-            </div>
-            <Link href="/leaderboard" className="glass rounded-full px-4 py-2 text-sm font-semibold hover:text-accent">
-              See the leaderboard →
-            </Link>
-          </div>
+    <>
+    <PageHeader
+      eyebrow={
+        <>
+          <AddressChip address={address} />
+          {days > 0 && <span>clipping for {days} {days === 1 ? "day" : "days"}</span>}
+        </>
+      }
+      title={
+        <span className="flex flex-wrap items-center gap-3">
+          <span>{profile.handle ? (profile.handle.startsWith("@") ? profile.handle : `@${profile.handle}`) : "@clipper"}</span> <TierBadge tier={profile.tier} />
+        </span>
+      }
+      width="max-w-4xl"
+    />
+    <div className="mx-auto max-w-4xl px-4 py-10">
+      <div className="max-w-2xl rounded-2xl border border-line bg-surface/80 p-4 text-sm text-muted shadow-[var(--shadow-soft)]">
+        <span className="font-semibold text-fg">A portable creator record.</span> Every number here comes from paid, verified views on Monad. Nobody can write to this record except the Cliprail escrow when it pays out.
+      </div>
 
           <p className="mt-5 flex items-start gap-2 text-sm text-muted">
             <span className="mt-0.5 text-money">

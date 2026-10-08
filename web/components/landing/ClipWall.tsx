@@ -60,41 +60,26 @@ export function ClipWall() {
   const rowB = [6, 7, 8, 9, 10, 11];
   return (
     <section className="overflow-hidden py-20">
-      <div className="mx-auto grid max-w-6xl items-end gap-8 px-4 lg:grid-cols-[1fr_22rem]">
-        <div>
-          <p className="eyebrow">A live proof feed</p>
-          <h2 className="mt-3 text-4xl font-bold sm:text-5xl">Real clips. Real payouts.</h2>
-          <p className="mt-3 max-w-xl text-muted">
-            Every Short on Cliprail carries its clipper&apos;s code. The oracle reads its views, the vault reserves what it earned, and the payout
-            lands after the hold.
-          </p>
+      <div className="mx-auto max-w-6xl px-4">
+        <div className="flex flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-left">
+          <div>
+            <p className="eyebrow">A live proof feed</p>
+            <h2 className="mt-3 text-4xl font-bold sm:text-5xl">Real clips. Real payouts.</h2>
+          </div>
+          <div className="rounded-2xl border border-line bg-surface px-4 py-3 text-left shadow-[var(--shadow-soft)]">
+            <div className="flex items-center gap-2 text-xs font-semibold"><span className="size-2 rounded-full bg-money" /> Oracle verified</div>
+            <p className="mt-1 text-xs text-muted">Views, rules and payout receipts are public.</p>
+          </div>
         </div>
-        <ul className="glass rounded-2xl p-2" aria-label="Recent events (sample)">
-          {FEED.map(([who, what, amount]) => (
-            <li key={who + what} className="flex items-center gap-3 rounded-xl px-3 py-2 text-xs">
-              <span className="size-1.5 shrink-0 rounded-full bg-money" />
-              <span className="min-w-0 flex-1 truncate">
-                <span className="font-semibold">{who}</span> <span className="text-muted">{what}</span>
-              </span>
-              <span className={`tabular font-semibold ${amount.startsWith("+") ? "text-money" : "text-accent"}`}>{amount}</span>
-            </li>
-          ))}
-        </ul>
       </div>
-
-      <div className="relative mt-12 flex flex-col gap-4 [mask-image:linear-gradient(90deg,transparent,black_8%,black_92%,transparent)]">
-        <div className="flex w-max animate-marquee gap-4 [animation-duration:70s] hover:[animation-play-state:paused]">
-          {[...rowA, ...rowA, ...rowA, ...rowA].map((i, k) => (
-            <ShortCard key={k} i={i} />
-          ))}
-        </div>
-        <div className="flex w-max animate-marquee gap-4 [animation-direction:reverse] [animation-duration:90s] hover:[animation-play-state:paused]">
-          {[...rowB, ...rowB, ...rowB, ...rowB].map((i, k) => (
-            <ShortCard key={k} i={i} />
+      <div className="relative mt-10 [mask-image:linear-gradient(90deg,transparent,black_10%,black_90%,transparent)]">
+        <div className="flex w-max animate-marquee gap-4">
+          {row.map(([c, h, v], i) => (
+            <ShortThumb key={i} caption={c} hue={h} views={v} paid={i % 3 === 0 ? `+$${(v / 1000).toFixed(2)}` : undefined} className="w-36 sm:w-44" />
           ))}
         </div>
       </div>
-      <p className="mx-auto mt-6 max-w-md px-4 text-center text-xs text-muted">Sample clips and payouts, showing what clippers and brands see on Cliprail.</p>
+      <p className="mx-auto mt-6 max-w-md px-4 text-center text-sm text-muted">Every moving card is a sample of what clippers and brands see: a Short, verified views, and the amount reserved for payout.</p>
     </section>
   );
 }
