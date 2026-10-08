@@ -8,6 +8,7 @@ import { ReceiptRow } from "@/components/ui/ReceiptRow";
 import { getClipper, getClipsByClipper, getReceiptsByClipper, now } from "@/lib/data";
 import { compact, count, usd } from "@/lib/format";
 import { displayName } from "@/lib/names";
+import { EditProfileButton, ProfileAvatar, ProfileName } from "@/components/site/ProfileIdentity";
 import type { Tier } from "@/lib/types";
 
 const NEXT_TIER: Record<Tier, { views: number; label: string } | null> = {
@@ -29,8 +30,6 @@ export default async function ProfilePage({ params }: { params: Promise<{ addres
   const [profile, clips, receipts] = await Promise.all([getClipper(address), getClipsByClipper(address), getReceiptsByClipper(address)]);
   const NOW = now();
   const days = profile.firstSeen ? Math.max(1, Math.round((NOW - profile.firstSeen) / 86400)) : 0;
-  const name = displayName(address, profile.handle);
-  const initial = (name.hasName ? name.primary.slice(1, 2) : address.slice(2, 3)).toUpperCase();
   const outcomes = profile.clipsPaid + profile.rejections;
   const cleanRate = outcomes > 0 ? Math.round(((outcomes - profile.rejections) / outcomes) * 100) : 100;
   const next = NEXT_TIER[profile.tier];
@@ -44,12 +43,10 @@ export default async function ProfilePage({ params }: { params: Promise<{ addres
         <div className="relative px-6 pb-6 sm:px-8">
           <div className="-mt-12 flex flex-wrap items-end justify-between gap-4 sm:-mt-14">
             <div className="flex items-end gap-4">
-              <span className="grid size-24 place-items-center rounded-3xl border-4 border-white bg-gradient-to-br from-accent to-[#50c7ff] font-display text-4xl font-bold text-white shadow-[var(--shadow-float)] dark:border-[#141830]">
-                {initial}
-              </span>
+              <ProfileAvatar address={address} handle={profile.handle} />
               <div className="pt-14 sm:pt-16">
                 <h1 className="flex flex-wrap items-center gap-2 text-2xl font-bold sm:text-3xl">
-                  {name.primary} <TierBadge tier={profile.tier} />
+                  <ProfileName address={address} handle={profile.handle} /> <TierBadge tier={profile.tier} />
                 </h1>
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
                   <AddressChip address={address} />
@@ -57,9 +54,12 @@ export default async function ProfilePage({ params }: { params: Promise<{ addres
                 </div>
               </div>
             </div>
-            <Link href="/leaderboard" className="glass rounded-full px-4 py-2 text-sm font-semibold hover:text-accent">
-              See the leaderboard →
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              <EditProfileButton address={address} />
+              <Link href="/leaderboard" className="glass rounded-full px-4 py-2 text-sm font-semibold hover:text-accent">
+                See the leaderboard →
+              </Link>
+            </div>
           </div>
 
           <p className="mt-5 flex items-start gap-2 text-sm text-muted">
