@@ -1,3 +1,4 @@
+import Link from "next/link";
 const qa = [
   ["Do I need a crypto wallet?", "No. You sign up with Face ID or your fingerprint (a passkey). Your Cliprail account is created for you. No app, no seed phrase."],
   ["How do I get paid?", "Verified earnings wait for the campaign's hold window (usually 24 hours), then USDC is sent to your account automatically. Send it to any exchange that supports USDC on Monad, with no fee."],
@@ -9,9 +10,15 @@ const qa = [
 
 export function Faq() {
   return (
-    <section className="mx-auto max-w-3xl px-4 py-16">
-      <h2 className="text-center text-4xl font-bold">Questions</h2>
-      <div className="mt-8 divide-y divide-line rounded-3xl border border-line bg-surface px-5 shadow-[var(--shadow-soft)]">
+    <section className="mx-auto max-w-5xl px-4 py-20">
+      <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr] lg:items-start">
+        <div>
+          <p className="eyebrow">No fine print</p>
+          <h2 className="mt-3 text-4xl font-bold">Questions, answered.</h2>
+          <p className="mt-4 max-w-sm text-muted">The important parts of Cliprail should be clear before you make a clip or fund a campaign.</p>
+          <Link href="/#how-it-works" className="mt-6 inline-flex items-center gap-2 rounded-full bg-accent-soft px-4 py-2 text-sm font-semibold text-accent hover:bg-accent hover:text-white">See how it works <span>→</span></Link>
+        </div>
+      <div className="divide-y divide-line rounded-3xl border border-line bg-surface px-5 shadow-[var(--shadow-soft)]">
         {qa.map(([q, a]) => (
           <details key={q} className="group py-4">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium">
@@ -21,6 +28,7 @@ export function Faq() {
             <p className="mt-2 pr-8 text-sm text-muted">{a}</p>
           </details>
         ))}
+      </div>
       </div>
     </section>
   );

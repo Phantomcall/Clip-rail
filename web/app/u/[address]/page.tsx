@@ -28,15 +28,15 @@ export default async function ProfilePage({ params }: { params: Promise<{ addres
       }
       title={
         <span className="flex flex-wrap items-center gap-3">
-          {profile.handle ?? "Clipper"} <TierBadge tier={profile.tier} />
+          <span>{profile.handle ? (profile.handle.startsWith("@") ? profile.handle : `@${profile.handle}`) : "@clipper"}</span> <TierBadge tier={profile.tier} />
         </span>
       }
       width="max-w-4xl"
     />
     <div className="mx-auto max-w-4xl px-4 py-10">
-      <p className="max-w-2xl text-sm text-muted">
-        Every number here comes from paid, verified views on Monad. Nobody can write to this record except the Cliprail escrow when it pays out.
-      </p>
+      <div className="max-w-2xl rounded-2xl border border-line bg-surface/80 p-4 text-sm text-muted shadow-[var(--shadow-soft)]">
+        <span className="font-semibold text-fg">A portable creator record.</span> Every number here comes from paid, verified views on Monad. Nobody can write to this record except the Cliprail escrow when it pays out.
+      </div>
 
       <div className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile label="Paid views" value={count(profile.paidViews)} />
