@@ -67,7 +67,7 @@ Envio HyperIndex ◀── events (receipts, payouts, flags) ── Next.js app 
 
 ## Contracts
 
-**Monad testnet (10143), v1** (deployed at block 68749763). Source of truth: `packages/abi/addresses.json`. Source verification on MonadVision: pending.
+**Monad testnet (10143), v1** (deployed at block 68749763). Source of truth: `packages/abi/addresses.json`.
 
 | Contract | Address |
 |---|---|
@@ -78,15 +78,35 @@ Envio HyperIndex ◀── events (receipts, payouts, flags) ── Next.js app 
 
 The v0 vault (`0xf9B2…Af45`) is retired: its release and close were stubs, so it can no longer pay out.
 
-_Mainnet (143) addresses, function table and invariants: added by Isaac (I-8.3)._
+Mainnet deployment evidence is intentionally not listed until it is independently verified. The testnet v0 vault
+(`0xf9B2…Af45`) is retired: its release and close were stubs, so it can no longer pay out.
 
 ## Oracle (Chainlink CRE)
 
-_Flow, consensus approach, quota maths, simulator vs deployed, evidence: added by David (D-8.3)._
+The CRE workflow pages the vault's active clips, fetches YouTube metadata in batches of 50, and produces a canonical
+report of rounded view and like counts. Nodes must agree on that entire report before it is written onchain. Rounding
+absorbs small timing differences between YouTube API calls; a disagreement writes nothing and is retried next round.
+
+- Claim-code ownership, public visibility, publish time and unavailable videos are checked before a report is built.
+- Views are rounded down to 50 and likes to 5. Active clips with unchanged counts are skipped; pending clips are always
+  reported so they can activate or expire.
+- The workflow caps reports at 35 entries under the measured v1 gas plan. Status changes are prioritised before the
+  largest view gains.
+- A successful forwarder transaction alone is not treated as proof: the workflow verifies that `lastRound()` advanced,
+  because the testnet mock forwarder can swallow a vault revert.
+
+Run `pnpm --filter @cliprail/cre-oracle test` for pure workflow logic tests. A broadcast additionally needs the CRE
+credentials, an oracle key and a funded network wallet; those values are never stored in this repository.
 
 ## Accounts and gasless design
 
-_Mera account layer, relayer design, supported browsers: added by David (D-8.3)._
+Cliprail uses a Mera passkey to create a deterministic signing account without a seed phrase or browser extension. The
+derived key lives only in memory; passkey metadata is stored locally so a returning user can unlock the same account.
+
+Clippers sign EIP-712 messages for clip registration, payout-address changes and USDC send-outs. The relayer checks and
+submits those messages, so clippers do not need MON for gas. Brands fund a campaign from their own account. Production
+passkey support is designed for iPhone Safari and Chrome with Google Password Manager; unsupported PRF/passkey setups
+receive an explicit browser guidance message.
 
 ## Indexer (Envio)
 
@@ -100,11 +120,19 @@ screen: the campaign feed and pages, clipper dashboard, brand console, profiles,
   5 s while open. Clip titles come from YouTube's public oEmbed; money and view counts only ever come from the chain.
 - **Tests** (`indexer/test/`) replay simulated event sequences through Envio's test indexer: the capped-payout worked
   example and a flag → reject → release → payout lifecycle.
-- **Testnet v0** defaults: start block `68486852` (the Reputation deploy; the vault followed 4 blocks later).
+- **Testnet v1** defaults: start block `68749763` (the Reputation deploy; the vault followed 10 blocks later).
 
 ## Fraud model and limits
 
-_Rules, what they stop, what they don't, security notes: added by Isaac (I-7.3)._
+The protocol is deliberately rule-based rather than claiming to identify every bot. A report must find the clipper's
+claim code in the Short description. The vault only pays views that increase, respects the campaign's velocity cap,
+requires its like-ratio floor, and never lets a clip exceed its per-clip cap or the campaign exceed its escrow.
+
+Earnings stay in a hold window before release. A brand may flag a clip once while there are earnings still in hold;
+matured earnings are released first. An unresolved flag auto-accepts after its deadline, and a rejected amount returns
+to the campaign budget. Brand reject history is indexed and shown before a clipper joins a campaign. This limits common
+fraud and dispute paths, but does not prove that all organic-looking attention is human; oracle, YouTube availability
+and relayer operations remain explicit trust assumptions.
 
 ## Live campaign results
 

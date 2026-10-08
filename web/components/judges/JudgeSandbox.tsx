@@ -29,6 +29,7 @@ export function JudgeSandbox() {
   const { address } = useAuth();
   const fund = useSandboxFund();
   const toast = useToast();
+  const sandboxReady = Boolean(process.env.NEXT_PUBLIC_OPS_URL);
   const funded = fund.status === "success";
 
   return (
@@ -39,8 +40,10 @@ export function JudgeSandbox() {
       </Step>
 
       <Step n={2} title="Get sandbox funds" done={funded}>
-        <p className="text-sm text-muted">We send your new account 0.1 testnet MON and 1,000 test USDC so you can try the brand side too.</p>
-        {address && !funded && (
+        <p className="text-sm text-muted">When the testnet relayer is online, it sends your new account 0.1 testnet MON and 1,000 test USDC so you can try the brand side too.</p>
+        {!sandboxReady ? (
+          <p className="rounded-[var(--radius-control)] bg-surface-2 px-3 py-2 text-xs text-muted">Sandbox funding is being connected to the testnet relayer. You can still inspect the demo campaign and the contracts below.</p>
+        ) : address && !funded && (
           <Button
             className="self-start"
             loading={fund.status === "signing" || fund.status === "pending"}
@@ -58,21 +61,21 @@ export function JudgeSandbox() {
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="rounded-[var(--radius-control)] border border-line p-3">
             <div className="text-sm font-semibold">As a clipper</div>
-            <p className="mt-1 text-xs text-muted">Join the demo campaign with our pre-registered Short and watch verified earnings arrive (the testnet oracle runs every 1–2 minutes).</p>
-            <LinkButton href="/clip/new?c=1" variant="secondary" className="mt-3 min-h-9 w-full text-xs">Join demo campaign</LinkButton>
+            <p className="mt-1 text-xs text-muted">{sandboxReady ? "Join the demo campaign with our pre-registered Short and watch verified earnings arrive." : "Demo registration opens when sandbox funding and the gasless relayer are online."}</p>
+            {sandboxReady ? <LinkButton href="/clip/new?c=1" variant="secondary" className="mt-3 min-h-9 w-full text-xs">Join demo campaign</LinkButton> : <span className="mt-3 block rounded-[var(--radius-control)] bg-surface-2 px-3 py-2 text-center text-xs font-semibold text-muted">Demo registration unavailable</span>}
           </div>
           <div className="rounded-[var(--radius-control)] border border-line p-3">
             <div className="text-sm font-semibold">As a brand</div>
-            <p className="mt-1 text-xs text-muted">Launch a campaign with test USDC and a 5-minute hold window, then flag or accept clips.</p>
-            <LinkButton href="/brand/new" variant="secondary" className="mt-3 min-h-9 w-full text-xs">Launch a test campaign</LinkButton>
+            <p className="mt-1 text-xs text-muted">{sandboxReady ? "Launch a campaign with test USDC and a 5-minute hold window, then flag or accept clips." : "Campaign creation is available once your account has test funds from the relayer."}</p>
+            {sandboxReady ? <LinkButton href="/brand/new" variant="secondary" className="mt-3 min-h-9 w-full text-xs">Launch a test campaign</LinkButton> : <span className="mt-3 block rounded-[var(--radius-control)] bg-surface-2 px-3 py-2 text-center text-xs font-semibold text-muted">Test funds required</span>}
           </div>
         </div>
       </Step>
 
       <Card>
-        <h2 className="font-semibold">Proof on mainnet</h2>
+        <h2 className="font-semibold">Proof on {NETWORK}</h2>
         <ul className="mt-3 flex flex-col gap-2 text-sm">
-          <li>Live campaign: <Link href="/campaigns/1" className="text-accent-hover hover:underline">real clippers, real payouts</Link></li>
+          <li>Campaign #1: <Link href="/campaigns/1" className="text-accent-hover hover:underline">view the campaign and its onchain rules</Link></li>
           <li>
             Vault contract ({NETWORK}):{" "}
             {ADDR.vault ? <a href={addressUrl(ADDR.vault)} target="_blank" rel="noreferrer" className="font-mono break-all text-accent-hover hover:underline">{ADDR.vault}</a> : <span className="text-muted">deploying soon</span>}

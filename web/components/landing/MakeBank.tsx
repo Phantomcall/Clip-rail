@@ -77,7 +77,7 @@ const BAND_PHOTO = "/photos/band-ocean.webp";
 /** "How it works": each step as a real UI card, over a full-width darkened photo. */
 export function MakeBank() {
   return (
-    <section className="relative isolate -mt-56 overflow-hidden text-white">
+    <section id="how-it-works" className="relative isolate -mt-56 overflow-hidden text-white">
       {/* Full-bleed photo backdrop, darkened for readable text, fading in and out at the edges so it blends with
           the sections above and below in every theme */}
       <div aria-hidden className="absolute inset-0 -z-10 [mask-image:linear-gradient(180deg,black,black_calc(100%-9rem),transparent)]">

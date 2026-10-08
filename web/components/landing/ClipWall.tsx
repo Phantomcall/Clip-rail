@@ -9,9 +9,19 @@ const clips = [
 export function ClipWall() {
   const row = [...clips, ...clips];
   return (
-    <section className="overflow-hidden py-16">
-      <p className="eyebrow text-center">Paid this week</p>
-      <h2 className="mt-3 text-center text-4xl font-bold sm:text-5xl">Real clips. Real payouts.</h2>
+    <section className="overflow-hidden py-20">
+      <div className="mx-auto max-w-6xl px-4">
+        <div className="flex flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-left">
+          <div>
+            <p className="eyebrow">A live proof feed</p>
+            <h2 className="mt-3 text-4xl font-bold sm:text-5xl">Real clips. Real payouts.</h2>
+          </div>
+          <div className="rounded-2xl border border-line bg-surface px-4 py-3 text-left shadow-[var(--shadow-soft)]">
+            <div className="flex items-center gap-2 text-xs font-semibold"><span className="size-2 rounded-full bg-money" /> Oracle verified</div>
+            <p className="mt-1 text-xs text-muted">Views, rules and payout receipts are public.</p>
+          </div>
+        </div>
+      </div>
       <div className="relative mt-10 [mask-image:linear-gradient(90deg,transparent,black_10%,black_90%,transparent)]">
         <div className="flex w-max animate-marquee gap-4">
           {row.map(([c, h, v], i) => (
@@ -19,6 +29,7 @@ export function ClipWall() {
           ))}
         </div>
       </div>
+      <p className="mx-auto mt-6 max-w-md px-4 text-center text-sm text-muted">Every moving card is a sample of what clippers and brands see: a Short, verified views, and the amount reserved for payout.</p>
     </section>
   );
 }
