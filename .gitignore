@@ -25,3 +25,5 @@ contracts/broadcast/
 next-env.d.ts
 # CRE CLI build artifacts
 .cre_build_tmp.js
+# Wrangler local secrets
+.dev.vars
