@@ -42,7 +42,7 @@ export function JudgeSandbox() {
       <Step n={2} title="Get sandbox funds" done={funded}>
         <p className="text-sm text-muted">When the testnet relayer is online, it sends your new account 0.1 testnet MON and 1,000 test USDC so you can try the brand side too.</p>
         {!sandboxReady ? (
-          <p className="rounded-[var(--radius-control)] bg-surface-2 px-3 py-2 text-xs text-muted">Sandbox funding is being connected to the testnet relayer. You can still inspect the campaign and marketplace preview below.</p>
+          <p className="rounded-[var(--radius-control)] bg-surface-2 px-3 py-2 text-xs text-muted">Sandbox funding is being connected to the testnet relayer. You can still inspect the demo campaign and the contracts below.</p>
         ) : address && !funded && (
           <Button
             className="self-start"
