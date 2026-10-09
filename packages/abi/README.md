@@ -1,12 +1,12 @@
 # packages/abi
 
-ABIs exported from `contracts/` and `addresses.json` per chain id (10143 testnet, 143 mainnet). Owner: Isaac.
+ABIs exported from `contracts/` and `addresses.json` per chain id. Cliprail runs on Monad testnet (10143) only. Owner: Isaac.
 
 | File | Use |
 |---|---|
 | `abis.ts` | `campaignVaultAbi`, `campaignVaultLensAbi`, `creatorReputationAbi`, `mockUsdcAbi` as `const`, for viem (`import { campaignVaultAbi } from "@cliprail/abi"`) |
 | `CampaignVault.json`, `CampaignVaultLens.json`, `CreatorReputation.json`, `MockUSDC.json` | Plain ABI JSON for Envio's contract import |
-| `addresses.json` | Deployed addresses per chain id; mainnet `vault` / `reputation` / `lens` are null until the mainnet deploy (H9) |
+| `addresses.json` | Deployed addresses per chain id. The mainnet (143) entries only hold the public token and forwarder addresses: no Cliprail contracts are deployed there. |
 
 The whole interface in plain terms (functions by caller, events, report rules, EIP-712, claim code, and how v1 differs
 from PRD §5): `INTERFACES.md`.

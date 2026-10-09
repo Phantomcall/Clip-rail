@@ -67,8 +67,8 @@ pnpm run deploy                                  # testnet → https://cliprail-
 curl https://cliprail-ops-testnet.<account>.workers.dev/health
 ```
 
-Mainnet (I-4.2): the same with `--env mainnet` (`kv namespace create RATE --env mainnet`, `secret put … --env
-mainnet`, `pnpm run deploy:mainnet`) once `addresses.json` has the mainnet vault and lens.
+Mainnet: not used. Cliprail runs on testnet only; the `env.mainnet` block in `wrangler.toml` is kept for
+reference and must not be deployed (it has no KV, secrets or relayer address).
 
 Logs: `npx wrangler tail` (each keeper run logs one summary line).
 

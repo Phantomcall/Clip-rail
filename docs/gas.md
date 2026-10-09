@@ -5,7 +5,7 @@ v1 deploy, with reports sent through the real Chainlink MockKeystoneForwarder (`
 Numbers are `gasUsed` for the **whole transaction**, so the forwarder's own overhead is included. Every report was
 checked to have landed: `lastRound()` went up.
 
-**Monad charges the gas limit, not the gas used.** Over-provisioning costs real MON on mainnet, so use the formulas
+**Monad charges the gas limit, not the gas used.** Over-provisioning wastes MON (on testnet it comes from faucets, and we have no budget for more), so use the formulas
 below instead of a large flat limit. Never rely on `eth_estimateGas` for reports: the mock forwarder catches the
 vault's failure, so the estimate finds a limit at which the *outer* transaction succeeds while the vault ran out of
 gas.
