@@ -6,9 +6,12 @@ import { useEffect, useRef, useState } from "react";
 import { formatEther } from "viem";
 import { Button } from "@/components/ui/Button";
 import { CopyButton } from "@/components/ui/CopyButton";
+import { UserAvatar } from "@/components/ui/UserAvatar";
+import { ProfileEditor } from "@/components/auth/ProfileEditor";
 import { useAuth } from "@/lib/auth";
 import { useBalances } from "@/lib/balances";
 import { shortAddress, usd } from "@/lib/format";
+import { normalizeUsername, usernameError } from "@/lib/names";
 
 function LockIcon() {
   return (
@@ -25,7 +28,8 @@ const fmtMon = (wei: bigint) => {
 
 /** Signed in (or locked): the account pill and its menu. */
 function AccountMenu() {
-  const { address, handle, status, isMock, signOut, getAccount } = useAuth();
+  const { address, handle, avatar, status, isMock, signOut, getAccount } = useAuth();
+  const [editing, setEditing] = useState(false);
   const balances = useBalances();
   const [open, setOpen] = useState(false);
   const [unlockError, setUnlockError] = useState<string | null>(null);
@@ -50,20 +54,24 @@ function AccountMenu() {
 
   return (
     <div ref={ref} className="relative">
+      <ProfileEditor open={editing} onOpenChange={setEditing} />
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex min-h-9 items-center gap-2 rounded-full border border-line bg-surface-2 px-3 text-sm font-semibold"
+        className="flex min-h-9 items-center gap-2 rounded-full border border-line bg-surface-2 py-1 pr-3 pl-1 text-sm font-semibold"
       >
-        {locked ? (
-          <span className="text-holding" title="Locked: your passkey unlocks it on your next action">
-            <LockIcon />
-          </span>
-        ) : (
-          <span aria-hidden className={`size-2 rounded-full ${status === "signing-in" ? "animate-pulse bg-holding" : "bg-money"}`} />
-        )}
+        <span className="relative">
+          <UserAvatar src={avatar} name={handle ?? address} size={28} />
+          {locked ? (
+            <span className="absolute -right-1 -bottom-1 grid size-4 place-items-center rounded-full bg-surface text-holding" title="Locked: your passkey unlocks it on your next action">
+              <LockIcon />
+            </span>
+          ) : (
+            <span aria-hidden className={`absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full border-2 border-surface ${status === "signing-in" ? "animate-pulse bg-holding" : "bg-money"}`} />
+          )}
+        </span>
         <span className="hidden sm:inline">{handle ? `@${handle}` : shortAddress(address)}</span>
         <span className="font-mono sm:hidden">{shortAddress(address)}</span>
       </button>
@@ -71,13 +79,25 @@ function AccountMenu() {
       {open && (
         <div role="menu" className="absolute top-11 right-0 z-50 w-72 overflow-hidden rounded-2xl border border-line bg-surface text-sm shadow-[var(--shadow-float)]">
           <div className="border-b border-line p-4">
-            <div className="flex items-center justify-between gap-2">
-              <div className="min-w-0">
+            <div className="flex items-center gap-3">
+              <UserAvatar src={avatar} name={handle ?? address} size={44} />
+              <div className="min-w-0 flex-1">
                 <div className="truncate font-semibold">{handle ? `@${handle}` : "Your account"}</div>
-                <div className="font-mono text-xs text-muted">{shortAddress(address)}</div>
+                <div className="flex items-center gap-1 font-mono text-xs text-muted">
+                  {shortAddress(address)} <CopyButton text={address} label="Copy" className="px-1.5 py-0.5" />
+                </div>
               </div>
-              <CopyButton text={address} label="Copy address" />
             </div>
+            <button
+              type="button"
+              onClick={() => {
+                close();
+                setEditing(true);
+              }}
+              className="mt-3 w-full rounded-xl border border-line px-3 py-2 text-xs font-semibold hover:border-accent hover:text-accent"
+            >
+              {handle ? "Edit profile" : "Choose a username and photo"}
+            </button>
 
             {!isMock && (
               <div className="tabular mt-3 grid grid-cols-2 gap-2">
@@ -93,6 +113,11 @@ function AccountMenu() {
                     {balances.data ? fmtMon(balances.data.mon) : balances.isError ? "–" : "…"}
                   </div>
                 </div>
+                {!!balances.data?.testUsdc && (
+                  <p className="col-span-2 rounded-xl bg-surface-2 px-2.5 py-2 text-xs text-muted">
+                    <b className="text-fg">{usd(Number(balances.data.testUsdc))}</b> test USDC from the sandbox
+                  </p>
+                )}
               </div>
             )}
             {isMock && <p className="mt-2 text-xs text-muted">Demo account (mock auth). No real balances.</p>}
@@ -153,6 +178,7 @@ export function SignInButton() {
   const { address, status, error, signIn, signUp } = useAuth();
   const [open, setOpen] = useState(false);
   const [handle, setHandle] = useState("");
+  const nameError = usernameError(handle);
   // Errors from an earlier attempt shouldn't greet you when the modal opens again.
   const [hiddenError, setHiddenError] = useState<string | null>(null);
   const shownError = error && error !== hiddenError ? error : null;
@@ -191,21 +217,34 @@ export function SignInButton() {
           <form
             onSubmit={async (e) => {
               e.preventDefault();
-              if (await signUp(handle.trim().replace(/^@/, "") || "clipper")) setOpen(false);
+              if (usernameError(handle)) return;
+              if (await signUp(normalizeUsername(handle))) setOpen(false);
             }}
             className="flex flex-col gap-3"
           >
-            <label className="text-xs font-medium text-muted" htmlFor="handle">Pick a name (shown on your public profile)</label>
-            <input
-              id="handle"
-              value={handle}
-              onChange={(e) => setHandle(e.target.value)}
-              placeholder="@yourname"
-              autoComplete="username webauthn"
-              maxLength={32}
-              className="min-h-11 rounded-[var(--radius-control)] border border-line bg-surface-2 px-3 text-sm outline-none focus:border-accent"
-            />
-            <Button type="submit" variant="secondary" loading={busy}>Create account with passkey</Button>
+            <label className="text-xs font-medium text-muted" htmlFor="handle">Pick a username (shown on your public profile)</label>
+            <div className="relative">
+              <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted">@</span>
+              <input
+                id="handle"
+                value={handle}
+                onChange={(e) => setHandle(normalizeUsername(e.target.value))}
+                placeholder="yourname"
+                autoComplete="username webauthn"
+                autoCapitalize="none"
+                spellCheck={false}
+                maxLength={20}
+                aria-invalid={!!(handle && nameError)}
+                aria-describedby="handle-hint"
+                className={`min-h-11 w-full rounded-[var(--radius-control)] border bg-surface-2 pr-3 pl-7 text-sm outline-none focus:border-accent ${handle && nameError ? "border-danger" : "border-line"}`}
+              />
+            </div>
+            <p id="handle-hint" className={`-mt-1 text-xs ${handle && nameError ? "text-danger" : "text-muted"}`}>
+              {handle && nameError ? nameError : handle ? `You'll be @${handle}` : "3–20 letters, numbers, dots or underscores."}
+            </p>
+            <Button type="submit" variant="secondary" loading={busy} disabled={!!nameError}>
+              Create account with passkey
+            </Button>
           </form>
 
           {shownError && (

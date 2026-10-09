@@ -1,4 +1,6 @@
+import Link from "next/link";
 import Image from "next/image";
+import { LoopVideo } from "@/components/ui/LoopVideo";
 import { Avatar } from "@/components/ui/Avatar";
 import { ShortsIcon, VerifiedIcon } from "@/components/ui/Icons";
 
@@ -72,17 +74,18 @@ const steps = [
   { n: "03", title: "Get paid", body: "An oracle checks your real views every few minutes. After a 24-hour hold, USDC lands in your account.", ui: <BalanceMini />, photo: "/photos/step-paid.webp", alt: "Clipper delighted at a payout on her phone" },
 ];
 
-const BAND_PHOTO = "/photos/band-ocean.webp";
-
 /** "How it works": each step as a real UI card, over a full-width darkened photo. */
 export function MakeBank() {
   return (
     <section id="how-it-works" className="relative isolate -mt-56 overflow-hidden text-white">
       {/* Full-bleed photo backdrop, darkened for readable text, fading in and out at the edges so it blends with
           the sections above and below in every theme */}
-      <div aria-hidden className="absolute inset-0 -z-10 [mask-image:linear-gradient(180deg,black,black_calc(100%-9rem),transparent)]">
-        <Image src={BAND_PHOTO} alt="" fill sizes="100vw" className="object-cover" />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgb(11_63_156/0.45)_0%,rgb(12_45_115/0.4)_30%,rgb(10_25_70/0.75)_75%,rgb(8_15_40/0.9)_100%)] transition-[background] duration-[1400ms] dark:bg-[linear-gradient(180deg,rgb(8_21_48/0.6)_0%,rgb(8_21_48/0.45)_30%,rgb(8_14_34/0.78)_75%,rgb(8_11_24/0.9)_100%)]" />
+      <div aria-hidden className="absolute inset-0 -z-10 ">
+        {/* a clipper checking her phone: a landscape cut of a vertical clip, mirrored so she sits on the right */}
+        <LoopVideo src="/video/band-texting2.mp4" poster="/video/band-texting2.jpg" className="absolute inset-0 size-full object-cover object-[50%_40%]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgb(11_63_156/0.3)_0%,rgb(12_45_115/0.22)_30%,rgb(10_25_70/0.7)_75%,rgb(8_15_40/0.9)_100%)] transition-[background] duration-[1400ms] dark:bg-[linear-gradient(180deg,rgb(8_21_48/0.55)_0%,rgb(8_21_48/0.38)_30%,rgb(8_14_34/0.78)_75%,rgb(8_11_24/0.9)_100%)]" />
+        {/* blend the bottom straight into the ambient sky's first colour, so there's no grey fog between them */}
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-[#d6e7fa] dark:to-[#0c1834]" />
       </div>
       <div className="mx-auto max-w-6xl px-5 pt-80 pb-40 sm:px-10">
         <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold tracking-wider text-white/60 uppercase">How it works</span>
@@ -90,6 +93,9 @@ export function MakeBank() {
         <p className="mt-3 max-w-xl text-white/60">
           The money exists before you post, the views are checked by a decentralized oracle, and the payout is a transaction you can open.
         </p>
+        <Link href="/guide" className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-white/85 underline-offset-4 hover:text-white hover:underline">
+          Read the full guide for clippers, brands and judges →
+        </Link>
         <div className="mt-12 grid gap-10 md:grid-cols-3">
           {steps.map((s) => (
             <div key={s.n}>

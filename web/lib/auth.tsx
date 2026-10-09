@@ -19,6 +19,7 @@ import {
   signInWithPasskey,
   signUpWithPasskey,
   type StoredAccount,
+  updateAccount,
   type UnlockedAccount,
 } from "@/lib/mera";
 import { MOCK_BRAND, MOCK_CLIPPER } from "@/mocks/data";
@@ -27,8 +28,12 @@ type Status = "signed-out" | "signing-in" | "locked" | "signed-in";
 
 interface AuthValue {
   address: Address | null;
-  /** The name picked at sign-up, if known on this device. */
+  /** The username, if one is set on this device. */
   handle: string | null;
+  /** Profile photo (data URL), if set. */
+  avatar: string | null;
+  /** Change the username and/or photo. `avatar: null` removes the photo. */
+  updateProfile: (p: { handle?: string; avatar?: string | null }) => void;
   status: Status;
   /** Last user-facing auth error; null after a quiet cancel or a success. */
   error: string | null;
@@ -87,9 +92,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 function MeraAuthProvider({ children }: { children: React.ReactNode }) {
   const activeId = useSyncExternalStore(subscribeActive, readActiveId, () => null);
+  // bumped after a profile edit so the stored account is read again
+  const [rev, setRev] = useState(0);
   const known = useMemo<StoredAccount | null>(
     () => (activeId ? (loadAccounts().find((a) => a.credentialId === activeId) ?? null) : null),
-    [activeId],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- rev forces a re-read of localStorage
+    [activeId, rev],
   );
   /** True while a signing session is in memory. */
   const [live, setLive] = useState(false);
@@ -193,12 +201,24 @@ function MeraAuthProvider({ children }: { children: React.ReactNode }) {
   }, [adopt, known]);
 
   const address = known?.address ?? null;
-  const handle = known?.handle ?? null;
+  const handle = known?.handle || null;
+  const avatar = known?.avatar ?? null;
+  const updateProfile = useCallback(
+    (p: { handle?: string; avatar?: string | null }) => {
+      if (!known) return;
+      updateAccount(known.credentialId, {
+        ...(p.handle !== undefined ? { handle: p.handle } : {}),
+        ...(p.avatar !== undefined ? { avatar: p.avatar ?? undefined } : {}),
+      });
+      setRev((r) => r + 1);
+    },
+    [known],
+  );
   const status: Status = busy ? "signing-in" : live && known ? "signed-in" : known ? "locked" : "signed-out";
 
   const value = useMemo<AuthValue>(
-    () => ({ address, handle, status, error, isMock: false, signUp, signIn, signOut, getAccount }),
-    [address, handle, status, error, signUp, signIn, signOut, getAccount],
+    () => ({ address, handle, avatar, updateProfile, status, error, isMock: false, signUp, signIn, signOut, getAccount }),
+    [address, handle, avatar, updateProfile, status, error, signUp, signIn, signOut, getAccount],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -208,6 +228,7 @@ function MockAuthProvider({ preset, children }: { preset: "clipper" | "brand"; c
   const [address, setAddress] = useState<Address | null>(preset === "brand" ? MOCK_BRAND : MOCK_CLIPPER);
   const [status, setStatus] = useState<Status>("signed-in");
   const [as, setAs] = useState<"clipper" | "brand">(preset);
+  const [mockProfile, setMockProfile] = useState<{ handle?: string; avatar?: string | null }>({});
 
   const fakeSign = useCallback(async () => {
     setStatus("signing-in");
@@ -220,7 +241,9 @@ function MockAuthProvider({ preset, children }: { preset: "clipper" | "brand"; c
   const value = useMemo<AuthValue>(
     () => ({
       address,
-      handle: address ? (as === "brand" ? "orbit.wallet" : "tobi.cuts") : null,
+      handle: address ? (mockProfile.handle ?? (as === "brand" ? "orbit.wallet" : "tobi.cuts")) : null,
+      avatar: address ? (mockProfile.avatar ?? null) : null,
+      updateProfile: (p) => setMockProfile((m) => ({ ...m, ...p })),
       status,
       error: null,
       isMock: true,
@@ -238,7 +261,7 @@ function MockAuthProvider({ preset, children }: { preset: "clipper" | "brand"; c
         if (address) setAddress(who === "brand" ? MOCK_BRAND : MOCK_CLIPPER);
       },
     }),
-    [address, status, fakeSign, as],
+    [address, status, fakeSign, as, mockProfile],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

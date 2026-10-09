@@ -1,10 +1,11 @@
 import { LiveRefresh } from "@/lib/live";
 import Link from "next/link";
 import { PageHeader } from "@/components/site/PageHeader";
+import { displayName } from "@/lib/names";
 import { TierBadge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { getCampaigns, getLeaderboard } from "@/lib/data";
-import { compact, count, shortAddress, usd } from "@/lib/format";
+import { compact, count, usd } from "@/lib/format";
 
 export const metadata = { title: "Leaderboard · Cliprail" };
 
@@ -27,7 +28,7 @@ export default async function LeaderboardPage() {
                   <span className={`tabular w-6 text-center text-sm font-bold ${i < 3 ? "text-holding" : "text-muted"}`}>{i + 1}</span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="truncate font-semibold">{c.handle ?? shortAddress(c.id)}</span>
+                      <span className="truncate font-semibold">{displayName(c.id, c.handle).primary}</span>
                       <TierBadge tier={c.tier} />
                     </div>
                     <div className="tabular text-xs text-muted">{c.clipsPaid} clips paid · {c.brands} brands</div>

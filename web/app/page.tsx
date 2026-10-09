@@ -8,6 +8,7 @@ import { Faq } from "@/components/landing/Faq";
 import { FinalCta } from "@/components/landing/FinalCta";
 import { Hero } from "@/components/landing/Hero";
 import { SkyBackdrop } from "@/components/landing/SkyBackdrop";
+import { AmbientSky } from "@/components/site/AmbientSky";
 import { MakeBank } from "@/components/landing/MakeBank";
 import { StatStrip } from "@/components/landing/StatStrip";
 import { TrustBar } from "@/components/landing/TrustBar";
@@ -42,13 +43,18 @@ export default async function Home() {
       </section>
       </div>
 
+      {/* everything below the hero keeps a quiet version of the sky behind it */}
       <MakeBank />
-      <ForClippers />
-      <BriefFlow />
-      <Fairness />
-      <ClipWall />
-      <Faq />
-      <FinalCta />
+      {/* MakeBank's photo blends into the ambient sky's first colour, so the sky starts right where it ends */}
+      <div className="relative isolate flow-root">
+        <AmbientSky />
+        <ForClippers />
+        <BriefFlow />
+        <Fairness />
+        <ClipWall />
+        <Faq />
+        <FinalCta />
+      </div>
     </>
   );
 }

@@ -1,51 +1,7 @@
 import Image from "next/image";
 import { LinkButton } from "@/components/ui/Button";
+import { LoopVideo } from "@/components/ui/LoopVideo";
 import { CheckCircle } from "@/components/ui/Icons";
-
-/**
- * The claim-code screen drawn into the blank phone in clipper-phone.webp. Position, size and tilt are measured from the
- * photo's white screen (center 31.8% / 71.0%, 20.7% wide, 0.45 aspect, about -3.5deg), so they only hold for that crop.
- * Sizes inside use container-query units, so the screen scales with the photo.
- */
-function PhoneScreen() {
-  return (
-    <div
-      aria-hidden
-      className="force-light absolute overflow-hidden bg-white text-fg [container-type:inline-size]"
-      style={{
-        left: "31.8%",
-        top: "71%",
-        width: "20.7%",
-        aspectRatio: "0.45",
-        transform: "translate(-50%, -50%) rotate(-3.5deg)",
-        borderRadius: "11%/5%",
-      }}
-    >
-      <div className="flex h-full flex-col px-[9cqw] pt-[16cqw] pb-[8cqw]">
-        <div className="flex items-center gap-[3cqw] text-[8cqw] font-bold">
-          <span className="size-[8cqw] rounded-[2cqw] bg-accent" />
-          Cliprail
-        </div>
-        <div className="mt-[10cqw] text-[6.5cqw] font-medium tracking-wide text-muted uppercase">Your claim code</div>
-        <div className="mt-[2cqw] font-mono text-[9.5cqw] leading-tight font-bold">
-          CR-3FA9B21C
-          <br />
-          7D02E4A1
-        </div>
-        <div className="mt-[6cqw] flex items-center gap-[2cqw] rounded-full bg-money/12 px-[4cqw] py-[2.5cqw] text-[6.5cqw] font-semibold text-money">
-          <CheckCircle className="size-[7cqw]" /> Found in description
-        </div>
-        <div className="mt-auto rounded-[5cqw] bg-surface-2 p-[5cqw]">
-          <div className="text-[6cqw] text-muted">Earned</div>
-          <div className="tabular font-display text-[15cqw] leading-none font-bold">$12.00</div>
-          <div className="mt-[3cqw] h-[2.5cqw] overflow-hidden rounded-full bg-line">
-            <div className="h-full w-3/5 rounded-full bg-money" />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 const CREATORS = [
   { src: "/photos/creator-viral.webp", caption: "Your clip takes off", alt: "Woman reacting with surprise as phones show her clip" },
@@ -88,15 +44,9 @@ export function ForClippers() {
         </div>
 
         <div className="relative mx-auto w-full max-w-[26rem]">
-          <div className="relative aspect-[900/1476] overflow-hidden rounded-[28px] shadow-[0_30px_80px_-30px_rgb(18_18_22/0.45)]">
-            <Image
-              src="/photos/clipper-phone.webp"
-              alt="Clipper holding up her phone with her Cliprail claim code on screen"
-              fill
-              sizes="(min-width: 1024px) 26rem, 90vw"
-              className="object-cover"
-            />
-            <PhoneScreen />
+          <div className="relative aspect-[9/16] overflow-hidden rounded-[28px] shadow-[0_30px_80px_-30px_rgb(18_18_22/0.45)]">
+            {/* the claim-code screen is tracked into the real phone frame by frame (see the commit for how it was made) */}
+            <LoopVideo src="/video/clipper-scroll.mp4" poster="/video/clipper-scroll.jpg" className="absolute inset-0 size-full object-cover" />
           </div>
           <div className="force-light absolute -right-3 bottom-10 hidden items-center gap-2 rounded-full bg-white px-3.5 py-2 text-xs font-semibold shadow-[var(--shadow-float)] sm:flex">
             <span className="size-2 rounded-full bg-money" /> +$12.00 paid · 2 min ago

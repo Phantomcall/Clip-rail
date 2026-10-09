@@ -29,6 +29,8 @@ export function rpId(): string {
 export interface StoredAccount extends PasskeyCredentialMetadata {
   address: Address;
   handle: string;
+  /** Profile photo as a small data URL (set by the user; never part of the passkey). */
+  avatar?: string;
   lastUsed: number;
 }
 
@@ -56,6 +58,15 @@ function saveAccount(account: StoredAccount) {
   } catch {
     // Private mode or blocked storage: sign-in still works through the discoverable passkey picker.
   }
+}
+
+/** Edit the stored profile (username, photo) of an account on this device. */
+export function updateAccount(credentialId: string, patch: Partial<Pick<StoredAccount, "handle" | "avatar">>) {
+  const acct = loadAccounts().find((a) => a.credentialId === credentialId);
+  if (!acct) return;
+  const next = { ...acct, ...patch };
+  if (patch.avatar === undefined && "avatar" in patch) delete next.avatar;
+  saveAccount(next);
 }
 
 /** The most recently used account on this device, if any. */
@@ -98,10 +109,10 @@ function unlocked(session: Secp256k1SigningSession, credentialId: string, handle
 
 /** Creates a new passkey and the account derived from it. One or two biometric prompts. */
 export async function signUpWithPasskey(handle: string): Promise<UnlockedAccount> {
-  const name = handle.replace(/^@/, "") || "clipper";
+  const name = handle.replace(/^@/, "");
   const created = await createPasskeyWithPrfOutput({
     rp: { id: rpId(), name: RP_NAME },
-    user: { name, displayName: `${name} · Cliprail` },
+    user: { name: name || "cliprail", displayName: name ? `${name} · Cliprail` : "Cliprail account" },
   });
   return unlocked(sessionFromPrf(created.prfOutput), created.credentialId, name, created.transports);
 }
@@ -116,7 +127,7 @@ export async function signInWithPasskey(credential?: StoredAccount): Promise<Unl
     ...(credential ? { credential: { credentialId: credential.credentialId, transports: credential.transports } } : {}),
   });
   const known = loadAccounts().find((a) => a.credentialId === result.credentialId);
-  return unlocked(sessionFromPrf(result.prfOutput), result.credentialId, known?.handle ?? "clipper", known?.transports);
+  return unlocked(sessionFromPrf(result.prfOutput), result.credentialId, known?.handle ?? "", known?.transports);
 }
 
 // ---------- errors ----------

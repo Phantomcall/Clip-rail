@@ -12,8 +12,8 @@ Built for **Monad Metropolis** · Track 03 (Social, Attention & Culture).
 |---|---|
 | Demo video | _link (≤ 3 min), added Oct 12_ |
 | Live app | _link_ |
-| Judge sandbox | _link_/judges (testnet, no wallet or gas needed) |
-| Live mainnet campaign | _link_ |
+| Judge sandbox | _link_/try (testnet, no wallet or gas needed) |
+| Live testnet campaign | _link_ |
 
 ## The problem
 
@@ -51,7 +51,7 @@ Envio HyperIndex ◀── events (receipts, payouts, flags) ── Next.js app 
 - Sub-second finality makes many small accruals and payouts per oracle round practical.
 - Cheap transactions let us pay clippers per verified view instead of batching monthly.
 - Mera passkeys give clippers a real account with no app, seed phrase or extension.
-- Chainlink CRE supports Monad mainnet, so verification runs through a decentralized oracle network.
+- Chainlink CRE supports Monad, so view verification is a CRE workflow a decentralized oracle network can run.
 
 ## Repo
 
@@ -78,8 +78,8 @@ Envio HyperIndex ◀── events (receipts, payouts, flags) ── Next.js app 
 
 The v0 vault (`0xf9B2…Af45`) is retired: its release and close were stubs, so it can no longer pay out.
 
-Mainnet deployment evidence is intentionally not listed until it is independently verified. The testnet v0 vault
-(`0xf9B2…Af45`) is retired: its release and close were stubs, so it can no longer pay out.
+Cliprail runs on Monad testnet only: with Monad charging the full gas limit, the oracle and keeper would cost more
+mainnet MON than we have (decision log in `docs/security.md`).
 
 ## Oracle (Chainlink CRE)
 

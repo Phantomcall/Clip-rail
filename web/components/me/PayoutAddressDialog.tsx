@@ -38,7 +38,7 @@ export function PayoutAddressDialog() {
               toast({ tone: "success", title: "Payout address saved", txHash: hash });
               setOpen(false);
               tx.reset();
-            } else toast({ tone: "error", title: "Couldn't save the address." });
+            } else toast({ tone: "error", title: `Couldn't save the address. ${tx.lastError() ?? ""}` });
           }}
         >
           Save

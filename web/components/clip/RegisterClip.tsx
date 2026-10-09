@@ -65,7 +65,7 @@ export function RegisterClip({ campaign }: { campaign: Campaign }) {
     if (!preview) return;
     const hash = await tx.run(campaign.id, preview.videoId);
     if (hash) toast({ tone: "success", title: "Clip registered", txHash: hash });
-    else toast({ tone: "error", title: "Registration failed. Try again." });
+    else toast({ tone: "error", title: `Registration failed. ${tx.lastError() ?? "Try again."}` });
   };
 
   if (tx.status === "success" && tx.txHash) {

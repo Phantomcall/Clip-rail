@@ -101,7 +101,7 @@ jobs:
       - name: ABI in packages/abi matches the contracts
         run: |
           ./scripts/export-abi.sh
-          git diff --exit-code -- ../packages/abi || { echo "::error::packages/abi is stale. Run contracts/scripts/export-abi.sh and commit."; exit 1; }
+          git diff --exit-code -- ../packages/abi ../indexer/abis || { echo "::error::packages/abi or indexer/abis is stale. Run contracts/scripts/export-abi.sh and commit."; exit 1; }
 
   slither:
     name: slither (fail on medium or higher)

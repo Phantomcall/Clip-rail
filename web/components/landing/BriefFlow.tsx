@@ -50,7 +50,7 @@ export function BriefFlow() {
           ))}
         </ol>
 
-        <div className="dots relative grid place-items-center rounded-[28px] border border-line bg-surface-2/60 px-4 py-14">
+        <div className="glass dots relative grid place-items-center rounded-[28px] px-4 py-14">
           <span className="absolute top-6 left-6 rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-semibold shadow-[var(--shadow-soft)]">🔒 Locked in escrow</span>
           <span className="absolute top-8 right-6 rounded-full border border-line bg-surface px-3 py-1.5 text-xs text-muted shadow-[var(--shadow-soft)]">YouTube Shorts</span>
           <div className="w-full max-w-sm rounded-2xl border border-line bg-surface p-5 shadow-[var(--shadow-float)]">

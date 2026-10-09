@@ -52,6 +52,10 @@
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-8px); }
   }
+  @keyframes shorts-progress {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
   @keyframes marquee {
     from { transform: translateX(0); }
     to { transform: translateX(-50%); }
@@ -163,7 +167,7 @@
 /* Inner pages sit on a blue sky in day mode, so text placed straight on the sky turns white (like the landing hero).
    Anything on a card or panel surface gets the normal light-theme text colours back. */
 [data-theme="light"] main:has(> .cr-page-sky) { --color-fg: #ffffff; --color-muted: rgb(255 255 255 / 0.78); color: var(--color-fg); }
-[data-theme="light"] main:has(> .cr-page-sky) :where(.bg-surface, .bg-surface-2, .bg-white, [class*="bg-surface-2/"], [class*="bg-white/9"], [class*="bg-white/8"]) {
+[data-theme="light"] main:has(> .cr-page-sky) :where(.glass, .bg-surface, .bg-surface-2, .bg-white, [class*="bg-surface-2/"], [class*="bg-white/9"], [class*="bg-white/8"]) {
   --color-fg: #121216; --color-muted: #6b6a75; color: var(--color-fg);
 }
 /* the page fades out with its own overlay (PageSky), so the backdrop's built-in bottom fades are off here */
@@ -175,6 +179,19 @@
 /* while the theme animates, let page colours ease too (the sky has its own transitions) */
 .theme-anim :where(body *:not(.cr-sky, .cr-sky *)) {
   transition: background-color 1.2s ease, border-color 1.2s ease, color 1.2s ease, fill 1.2s ease !important;
+}
+
+/* Frosted card that matches the floating navbar: the default box for anything that isn't carrying an image. */
+@utility glass {
+  background: rgb(255 255 255 / 0.72);
+  border: 1px solid rgb(255 255 255 / 0.85);
+  box-shadow: 0 1px 2px rgb(20 40 90 / 0.04), 0 12px 32px -14px rgb(20 50 110 / 0.18);
+  backdrop-filter: blur(16px) saturate(1.2);
+  [data-theme="dark"] & {
+    background: rgb(24 28 52 / 0.58);
+    border-color: rgb(255 255 255 / 0.09);
+    box-shadow: 0 12px 32px -14px rgb(0 0 0 / 0.5);
+  }
 }
 
 @utility tabular {
