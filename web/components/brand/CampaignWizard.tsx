@@ -12,6 +12,7 @@ import { TxLink } from "@/components/ui/TxLink";
 import { useToast } from "@/components/ui/Toast";
 import { useCreateCampaign, type CampaignParams } from "@/lib/actions";
 import { useBalances } from "@/lib/balances";
+import { saveBrief } from "@/lib/briefs";
 import { count, duration, usd, viewsBuyable } from "@/lib/format";
 import { ADDR, NETWORK, USDC } from "@/lib/network";
 import { parseUsd } from "@/lib/units";
@@ -149,7 +150,10 @@ export function CampaignWizard({ demo = false }: { demo?: boolean }) {
       return;
     }
     const hash = await tx.run(toParams(form, brief, pay.token));
-    if (hash) toast({ tone: "success", title: "Campaign funded", txHash: hash });
+    if (hash) {
+      toast({ tone: "success", title: "Campaign funded", txHash: hash });
+      void saveBrief(hash, brief); // a mock hash has no receipt, so this quietly does nothing
+    }
     else toast({ tone: "error", title: `Funding failed: ${tx.lastError() ?? "try again"}. Nothing was charged.` });
   };
 
