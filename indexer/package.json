@@ -4,11 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "codegen": "sh scripts/with-env.sh envio codegen",
-    "dev": "sh scripts/with-env.sh envio dev",
-    "start": "sh scripts/with-env.sh envio start",
+    "codegen": "envio codegen",
+    "dev": "envio dev",
+    "start": "envio start",
     "typecheck": "pnpm codegen && tsc --noEmit",
-    "test": "pnpm codegen && sh scripts/with-env.sh vitest run"
+    "test": "pnpm codegen && vitest run"
   },
   "dependencies": {
     "envio": "3.12.1",

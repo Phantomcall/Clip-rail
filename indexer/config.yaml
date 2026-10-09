@@ -1,8 +1,8 @@
 # yaml-language-server: $schema=./node_modules/envio/evm.schema.json
 # Cliprail indexer (playbook P-2.4). Mirrors CampaignVault + CreatorReputation into the entities in schema.graphql.
-# Addresses and start blocks come from env (set them from packages/abi/addresses.json after Isaac's deploy):
-#   ENVIO_VAULT_10143, ENVIO_REPUTATION_10143, ENVIO_START_BLOCK_10143
-# Mainnet (143) is added in the production deployment (P-7.1).
+# Defaults are testnet v1 (packages/abi/addresses.json); override with ENVIO_VAULT_10143, ENVIO_REPUTATION_10143 and
+# ENVIO_START_BLOCK_10143 for a redeploy. ABIs live in ./abis (Envio Cloud only sees this folder), written by
+# contracts/scripts/export-abi.sh next to packages/abi. Start block = the Reputation deploy; the vault followed 10 later.
 name: cliprail-indexer
 description: Cliprail campaigns, clips, view receipts and payouts on Monad
 field_selection:
@@ -10,7 +10,7 @@ field_selection:
     - hash
 contracts:
   - name: CampaignVault
-    abi_file_path: ../packages/abi/CampaignVault.json
+    abi_file_path: ./abis/CampaignVault.json
     events:
       - event: CampaignCreated
       - event: CampaignToppedUp
@@ -27,14 +27,14 @@ contracts:
       - event: Released
       - event: ReleaseFailed
   - name: CreatorReputation
-    abi_file_path: ../packages/abi/CreatorReputation.json
+    abi_file_path: ./abis/CreatorReputation.json
     events:
       - event: ReputationUpdated
 chains:
   - id: 10143
-    start_block: ${ENVIO_START_BLOCK_10143}
+    start_block: ${ENVIO_START_BLOCK_10143:-68749763}
     contracts:
       - name: CampaignVault
-        address: "${ENVIO_VAULT_10143}"
+        address: "${ENVIO_VAULT_10143:-0x6D7A51c58EB07Ab7bb1B0468A9be02fE9001BcAf}"
       - name: CreatorReputation
-        address: "${ENVIO_REPUTATION_10143}"
+        address: "${ENVIO_REPUTATION_10143:-0x5c38812Ec071dEcd89aB2c433f3ddB94E1731913}"

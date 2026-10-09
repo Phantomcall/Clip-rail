@@ -2,6 +2,7 @@
 # Copies ABIs from contracts/out into packages/abi (I-0.5, I-1.7). Run from anywhere.
 #   packages/abi/<Name>.json  plain ABI JSON (Envio's contract import reads these)
 #   packages/abi/abis.ts      the same ABIs `as const`, so viem types every call
+#   indexer/abis/<Name>.json  copies for the indexer (Envio Cloud can't read outside indexer/)
 set -euo pipefail
 here="$(cd "$(dirname "$0")/.." && pwd)"
 dest="$here/../packages/abi"
@@ -16,4 +17,6 @@ for pair in CampaignVault:campaignVaultAbi CampaignVaultLens:campaignVaultLensAb
   { echo; echo "export const $var = $(jq '.abi' "out/$name.sol/$name.json") as const;"; } >> "$ts"
   echo "wrote packages/abi/$name.json"
 done
+for name in CampaignVault CreatorReputation; do cp "$dest/$name.json" "$here/../indexer/abis/$name.json"; done
+echo "wrote indexer/abis/{CampaignVault,CreatorReputation}.json"
 echo "wrote packages/abi/abis.ts"
