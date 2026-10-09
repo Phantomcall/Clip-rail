@@ -12,7 +12,7 @@ Built for **Monad Metropolis** · Track 03 (Social, Attention & Culture).
 |---|---|
 | Demo video | _link (≤ 3 min), added Oct 12_ |
 | Live app | _link_ |
-| Judge sandbox | _link_/judges (testnet, no wallet or gas needed) |
+| Judge sandbox | _link_/try (testnet, no wallet or gas needed) |
 | Live mainnet campaign | _link_ |
 
 ## The problem

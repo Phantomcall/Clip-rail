@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { LoopVideo } from "@/components/ui/LoopVideo";
 import { PageHeader } from "@/components/site/PageHeader";
 import { LinkButton } from "@/components/ui/Button";
@@ -27,6 +28,22 @@ export default function JudgesPage() {
       </PageHeader>
 
       <div className="mx-auto flex max-w-5xl flex-col gap-10 px-4 py-10">
+        {/* hackathon judges land here from "/judges": send them to the 5-minute sandbox first */}
+        <Link
+          href="/try"
+          className="glass flex flex-wrap items-center justify-between gap-3 rounded-2xl px-5 py-4 transition hover:-translate-y-0.5"
+        >
+          <span className="flex items-center gap-3">
+            <span className="relative flex size-2.5">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-money/60" />
+              <span className="relative inline-flex size-2.5 rounded-full bg-money" />
+            </span>
+            <span className="text-sm">
+              <b>Judging the Monad Metropolis hackathon?</b> <span className="text-muted">Try Cliprail end to end in under 5 minutes, no wallet or gas.</span>
+            </span>
+          </span>
+          <span className="text-sm font-semibold text-accent dark:text-[#c9bfff]">Open the sandbox →</span>
+        </Link>
         {/* how a dispute works */}
         <section className="grid gap-4 md:grid-cols-3">
           {STEPS.map((s) => (
