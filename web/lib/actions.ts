@@ -4,11 +4,11 @@
  * Transaction hooks (playbook D-3.3, D-5.1, D-5.2). Each returns { run, status, txHash, error, reset }.
  *
  * Real: useCreateCampaign, useRegisterClip, useSendOut, useSetPayout (D-3.3).
- * Still mock (later tasks): useFlag, useResolve, useTopUp, useClose (D-5.1), useSandboxFund (D-6.3).
+ * Real (D-5.1): useFlag, useResolve, useTopUp, useClose. Still mock: useSandboxFund (needs the ops /sandbox/fund, D-6.3).
  * Every hook falls back to the mock under NEXT_PUBLIC_MOCK_AUTH so screen work needs no chain.
  */
 import { useCallback, useState } from "react";
-import { encodeFunctionData, toHex, type Hex, type LocalAccount } from "viem";
+import { encodeFunctionData, keccak256, toBytes, toHex, type Hex, type LocalAccount } from "viem";
 import { cliprailDomain, registerClipTypes, setPayoutTypes, transferWithAuthorizationTypes } from "@cliprail/shared";
 import { erc20Abi, vaultAbi } from "@/lib/abi";
 import { useAuth } from "@/lib/auth";
@@ -226,11 +226,54 @@ export const useRegisterClip = () => useTx(registerClip);
 export const useSendOut = () => useTx(sendOut);
 export const useSetPayout = () => useTx(setPayout);
 
+// ---------- D-5.1: brand flows (brand pays gas) ----------
+
+/** Dry-run a vault call first so a revert comes back with the contract's own error name, then send it. */
+async function vaultWrite(account: LocalAccount, functionName: "flag" | "resolve" | "topUp" | "closeCampaign", args: readonly unknown[]) {
+  const vault = vaultAddress();
+  await publicClient().simulateContract({ account, address: vault, abi: vaultAbi, functionName, args } as never);
+  return sendTx(account, { to: vault, data: encodeFunctionData({ abi: vaultAbi, functionName, args } as never) });
+}
+
+/** Flag a clip during its hold. The reason is hashed on chain (keccak256 of the text). */
+const flagClip: Exec<[clipId: string, reason: string]> = async ({ account, pending }, clipId, reason) => {
+  pending();
+  return vaultWrite(account, "flag", [BigInt(clipId), keccak256(toBytes(reason))]);
+};
+
+/** Resolve your own flag before its deadline: reject returns the held earnings to the budget. */
+const resolveFlag: Exec<[clipId: string, reject: boolean]> = async ({ account, pending }, clipId, reject) => {
+  pending();
+  return vaultWrite(account, "resolve", [BigInt(clipId), reject]);
+};
+
+/** Add budget: approve the campaign's token if needed, then topUp. */
+const topUpCampaign: Exec<[campaignId: string, amountUnits: bigint]> = async ({ account, address, pending }, campaignId, amount) => {
+  const vault = vaultAddress();
+  const c = (await publicClient().readContract({ address: vault, abi: vaultAbi, functionName: "getCampaign", args: [BigInt(campaignId)] })) as {
+    params: { token: Address };
+  };
+  const token = c.params.token;
+  const allowance = await publicClient().readContract({ address: token, abi: erc20Abi, functionName: "allowance", args: [address, vault] });
+  pending();
+  if (allowance < amount) {
+    await sendTx(account, { to: token, data: encodeFunctionData({ abi: erc20Abi, functionName: "approve", args: [vault, amount] }) });
+  }
+  return vaultWrite(account, "topUp", [BigInt(campaignId), amount]);
+};
+
+/** Close the campaign: everything not yet earned is refunded to the brand. */
+const closeCampaign: Exec<[campaignId: string]> = async ({ account, pending }, campaignId) => {
+  pending();
+  return vaultWrite(account, "closeCampaign", [BigInt(campaignId)]);
+};
+
+export const useFlag = () => useTx(flagClip);
+export const useResolve = () => useTx(resolveFlag);
+export const useTopUp = () => useTx(topUpCampaign);
+export const useClose = () => useTx(closeCampaign);
+
 // ---------- still mock ----------
 
-export const useFlag = () => useTx<[clipId: string, reason: string]>();
-export const useResolve = () => useTx<[clipId: string, reject: boolean]>();
-export const useTopUp = () => useTx<[campaignId: string, amountUnits: bigint]>();
-export const useClose = () => useTx<[campaignId: string]>();
 /** testnet only: POST /sandbox/fund (0.1 MON + 1,000 MockUSDC). */
 export const useSandboxFund = () => useTx<[]>();
