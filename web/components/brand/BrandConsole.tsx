@@ -17,6 +17,7 @@ import { count, duration, percent, timeLeft, usd } from "@/lib/format";
 import type { Address, Campaign, Clip } from "@/lib/types";
 import { parseUsd } from "@/lib/units";
 import { useLive } from "@/lib/live";
+import { EXPLAIN_TONE, explainClip } from "@/lib/explain";
 import { BrandSetup } from "@/components/brand/BrandSetup";
 import { LoopVideo } from "@/components/ui/LoopVideo";
 
@@ -194,6 +195,10 @@ function CampaignPanel({ campaign }: { campaign: Campaign }) {
                   <StatusBadge status={c.status} />
                   {likeFloorHit(c) && <span className="rounded-full bg-danger/10 px-2 py-0.5 text-[11px] text-danger">below like floor</span>}
                 </div>
+                {(() => {
+                  const why = explainClip(c, campaign);
+                  return why && c.status !== "Pending" ? <p className={`mt-1 text-xs ${EXPLAIN_TONE[why.tone]}`}>{why.text}</p> : null;
+                })()}
                 <div className="tabular mt-1 text-xs text-muted">
                   {c.clipperHandle} · {count(c.lastViews)} views · {count(c.likes)} likes · {usd(c.accrued)} earned · {usd(c.released)} paid
                 </div>

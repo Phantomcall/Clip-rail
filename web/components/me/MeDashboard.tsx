@@ -13,15 +13,27 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ReceiptRow } from "@/components/ui/ReceiptRow";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { StatTile } from "@/components/ui/StatTile";
-import { earningsSummary, getClipper, getClipsByClipper, getReceiptsByClipper, now } from "@/lib/data";
+import { earningsSummary, getCampaigns, getClipper, getClipsByClipper, getReceiptsByClipper, now } from "@/lib/data";
 import { count, duration, usd } from "@/lib/format";
-import type { Address } from "@/lib/types";
+import type { Address, Campaign, Clip } from "@/lib/types";
+import { EXPLAIN_TONE, explainClip } from "@/lib/explain";
 import { useLive } from "@/lib/live";
+
+/** Why the vault did what it did with this clip, in plain English (rules-based, from the same numbers it used). */
+function Why({ clip, campaign }: { clip: Clip; campaign?: Campaign }) {
+  const e = explainClip(clip, campaign);
+  if (!e) return null;
+  return (
+    <p className={`mt-1 text-xs ${EXPLAIN_TONE[e.tone]}`}>
+      {e.text} <span className="text-muted">· rules decided</span>
+    </p>
+  );
+}
 
 export function MeDashboard({ address }: { address: Address }) {
   const { data, loading, error } = useLive(["me", address], async () => {
-    const [clips, receipts, profile] = await Promise.all([getClipsByClipper(address), getReceiptsByClipper(address), getClipper(address)]);
-    return { clips, receipts, profile };
+    const [clips, receipts, profile, campaigns] = await Promise.all([getClipsByClipper(address), getReceiptsByClipper(address), getClipper(address), getCampaigns()]);
+    return { clips, receipts, profile, campaigns: new Map(campaigns.map((c) => [c.id, c])) };
   });
   const NOW = now();
 
@@ -34,7 +46,7 @@ export function MeDashboard({ address }: { address: Address }) {
   }
   if (error || !data) return <EmptyState title={`Couldn't load your earnings. ${error ?? ""}`} />;
 
-  const { clips, receipts, profile } = data;
+  const { clips, receipts, profile, campaigns } = data;
   const e = earningsSummary(clips);
   const nextUnlock = receipts.filter((r) => !r.released && r.unlockAt > NOW).sort((a, b) => a.unlockAt - b.unlockAt)[0];
 
@@ -82,8 +94,7 @@ export function MeDashboard({ address }: { address: Address }) {
                     {c.status === "Active" && <LiveViews videoId={c.videoId} code={claimCode(BigInt(c.campaignId), address)} verified={c.lastViews} />}
                     <Link href={`/campaigns/${c.campaignId}`} className="hover:text-fg">campaign →</Link>
                   </div>
-                  {c.status === "Pending" && <p className="mt-1 text-xs text-info">Waiting for the oracle to find your claim code in the description.</p>}
-                  {c.status === "Flagged" && <p className="mt-1 text-xs text-danger">The brand flagged this clip. Payouts are paused until they decide (or the window runs out).</p>}
+                  <Why clip={c} campaign={campaigns.get(c.campaignId)} />
                 </div>
                 <div className="tabular flex gap-4 text-sm sm:text-right">
                   <span>{usd(c.accrued)} <span className="text-xs text-muted">earned</span></span>
