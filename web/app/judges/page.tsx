@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { LoopVideo } from "@/components/ui/LoopVideo";
 import { PageHeader } from "@/components/site/PageHeader";
 import { LinkButton } from "@/components/ui/Button";
 import { CheckCircle } from "@/components/ui/Icons";
@@ -42,7 +42,7 @@ export default function JudgesPage() {
         <section className="grid gap-4 lg:grid-cols-2">
           <div className="glass overflow-hidden rounded-[2rem]">
             <div className="relative h-44">
-              <Image src="/photos/judges-brands.webp" alt="" fill sizes="(min-width: 1024px) 30rem, 100vw" className="object-cover" />
+              <LoopVideo src="/video/judges-brands.mp4" poster="/video/judges-brands.jpg" className="absolute inset-0 size-full object-cover object-[25%_28%]" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               <span className="absolute bottom-4 left-5 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-ink">For brands</span>
             </div>
@@ -60,7 +60,7 @@ export default function JudgesPage() {
 
           <div className="glass overflow-hidden rounded-[2rem]">
             <div className="relative h-44">
-              <Image src="/photos/judges-reviewer.webp" alt="" fill sizes="(min-width: 1024px) 30rem, 100vw" className="object-cover" />
+              <LoopVideo src="/video/judges-reviewer.mp4" poster="/video/judges-reviewer.jpg" className="absolute inset-0 size-full object-cover object-[45%_22%]" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               <span className="absolute bottom-4 left-5 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-ink">For judges</span>
             </div>

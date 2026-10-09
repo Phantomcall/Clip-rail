@@ -38,8 +38,8 @@ const TRACKS: Record<
   },
   brands: {
     label: "Brands",
-    video: "/video/guide-podcast.mp4",
-    poster: "/video/guide-podcast.jpg",
+    video: "/video/guide-brand.mp4",
+    poster: "/video/guide-brand.jpg",
     pitch: "Fund a brief once and pay only for views that pass your rules. Whatever isn't earned comes back to you.",
     steps: [
       { title: "Sign in and add USDC", body: "Sign in with a passkey. Your campaign budget is paid in USDC from your account." },
@@ -60,8 +60,8 @@ const TRACKS: Record<
   },
   judges: {
     label: "Judges",
-    video: "/video/guide-hoodie.mp4",
-    poster: "/video/guide-hoodie.jpg",
+    video: "/video/guide-judge.mp4",
+    poster: "/video/guide-judge.jpg",
     pitch: "Settle disputes between brands and clippers in an area you know, and build a public record of good calls.",
     steps: [
       { title: "Apply", body: "Tell us the areas you know best, like music, gaming or beauty. Applications open with appointed judging." },
