@@ -81,14 +81,8 @@ export function MakeBank() {
       {/* Full-bleed photo backdrop, darkened for readable text, fading in and out at the edges so it blends with
           the sections above and below in every theme */}
       <div aria-hidden className="absolute inset-0 -z-10 ">
-        {/* sky base matching the clip's own sky, so the vertical clip on the right fades into it seamlessly */}
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,#5d84c9_0%,#7fb0e3_45%,#9cc6ea_100%)]" />
-        {/* a clipper checking her phone (vertical clip), anchored right, fading into the sky on its left */}
-        <LoopVideo
-          src="/video/band-phone.mp4"
-          poster="/video/band-phone.jpg"
-          className="absolute top-0 right-0 h-[72%] w-full object-cover object-[50%_64%] [mask-image:linear-gradient(90deg,transparent_0%,black_30%),linear-gradient(180deg,black_70%,transparent)] [mask-composite:intersect] md:w-[62%] md:[mask-image:linear-gradient(90deg,transparent_0%,black_38%),linear-gradient(180deg,black_70%,transparent)] xl:w-[50%]"
-        />
+        {/* a clipper checking her phone: a landscape cut of a vertical clip, mirrored so she sits on the right */}
+        <LoopVideo src="/video/band-texting.mp4" poster="/video/band-texting.jpg" className="absolute inset-0 size-full object-cover object-[50%_40%]" />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgb(11_63_156/0.3)_0%,rgb(12_45_115/0.22)_30%,rgb(10_25_70/0.7)_75%,rgb(8_15_40/0.9)_100%)] transition-[background] duration-[1400ms] dark:bg-[linear-gradient(180deg,rgb(8_21_48/0.55)_0%,rgb(8_21_48/0.38)_30%,rgb(8_14_34/0.78)_75%,rgb(8_11_24/0.9)_100%)]" />
         {/* blend the bottom straight into the ambient sky's first colour, so there's no grey fog between them */}
         <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-[#d6e7fa] dark:to-[#0c1834]" />
