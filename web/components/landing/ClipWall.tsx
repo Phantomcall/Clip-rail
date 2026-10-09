@@ -45,7 +45,7 @@ function ShortCard({ i }: { i: number }) {
           <span className="tabular font-semibold">▶ {compact(c.views)}</span>
         </div>
         {c.paid && (
-          <span className="tabular mt-2 inline-flex items-center gap-1 rounded-full bg-money px-2 py-0.5 text-[10px] font-bold text-white">
+          <span className="tabular mt-2 inline-flex items-center gap-1 rounded-full bg-money px-2 py-0.5 text-[10px] font-bold text-white dark:text-[#04311a]">
             <CheckCircle className="size-3" /> {c.paid} paid
           </span>
         )}

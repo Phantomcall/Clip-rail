@@ -106,7 +106,7 @@ export function Fairness() {
             aria-selected={i === k}
             onClick={() => setK(i)}
             className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-              i === k ? "bg-accent text-accent-fg shadow-[var(--shadow-soft)]" : "glass text-muted hover:text-fg"
+              i === k ? "bg-accent-solid text-accent-fg shadow-[var(--shadow-soft)]" : "glass text-muted hover:text-fg"
             }`}
           >
             {sc.label}

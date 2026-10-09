@@ -22,7 +22,7 @@ export function ForClippers() {
     <section className="mx-auto max-w-6xl px-4 py-20">
       <div className="grid items-center gap-12 lg:grid-cols-[1fr_26rem]">
         <div>
-          <span className="rounded-full bg-accent-soft px-3 py-1 text-[11px] font-semibold tracking-wider text-accent uppercase">For clippers</span>
+          <span className="rounded-full bg-accent-soft px-3 py-1 text-[11px] font-semibold tracking-wider text-accent-solid-hover uppercase dark:text-[#c9bfff]">For clippers</span>
           <h2 className="mt-4 max-w-lg text-4xl font-bold sm:text-5xl">Your phone is the whole studio.</h2>
           <p className="mt-3 max-w-lg text-muted">
             Grab a campaign, cut the best moment, put your code in the description. The oracle does the counting and the escrow does the

@@ -30,7 +30,7 @@ export default async function CampaignsPage() {
       {closed.length > 0 && (
         <>
           <h2 className="mt-12 text-sm font-semibold uppercase tracking-wide text-muted">Closed</h2>
-          <div className="mt-4 grid gap-4 opacity-70 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {closed.map((c) => (
               <CampaignCard key={c.id} campaign={c} now={NOW} />
             ))}

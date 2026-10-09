@@ -73,7 +73,7 @@ export function TabBar() {
             key={t.href}
             href={t.href}
             aria-current={on ? "page" : undefined}
-            className={`flex flex-col items-center gap-0.5 rounded-2xl py-1.5 text-[9.5px] font-semibold transition ${on ? "bg-accent-soft text-accent dark:bg-accent/20" : "text-muted"}`}
+            className={`flex flex-col items-center gap-0.5 rounded-2xl py-1.5 text-[9.5px] font-semibold transition ${on ? "bg-accent-soft text-accent-solid-hover dark:bg-accent/20 dark:text-accent" : "text-muted"}`}
           >
             <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
               {t.icon}

@@ -22,7 +22,7 @@ export function BriefFlow() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-20">
       <div className="text-center">
-        <span className="rounded-full bg-accent-soft px-3 py-1 text-[11px] font-semibold tracking-wider text-accent uppercase">For brands</span>
+        <span className="rounded-full bg-accent-soft px-3 py-1 text-[11px] font-semibold tracking-wider text-accent-solid-hover uppercase dark:text-[#c9bfff]">For brands</span>
         <h2 className="mt-4 text-4xl font-bold sm:text-5xl">
           Brief to payout, <span className="text-accent">in one flow</span>
         </h2>
@@ -83,7 +83,7 @@ export function BriefFlow() {
               <span>~{clips} clips</span>
               <span>~{compact(views)} verified views</span>
             </div>
-            <div className="mt-5 rounded-full bg-accent py-2.5 text-center text-sm font-semibold text-white">Fund {usd(budget * 1_000_000, { cents: false })} →</div>
+            <div className="mt-5 rounded-full bg-accent-solid py-2.5 text-center text-sm font-semibold text-white">Fund {usd(budget * 1_000_000, { cents: false })} →</div>
           </div>
           <span className="absolute bottom-6 left-8 rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-medium shadow-[var(--shadow-soft)]">$1,500 / 1M views</span>
           <span className="absolute right-6 bottom-6 flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-semibold shadow-[var(--shadow-soft)]">

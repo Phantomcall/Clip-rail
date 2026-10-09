@@ -8,7 +8,7 @@ export function Stepper({ steps, current }: { steps: string[]; current: number }
           <span
             className={cn(
               "flex size-6 items-center justify-center rounded-full border font-semibold",
-              i < current && "border-accent bg-accent text-accent-fg",
+              i < current && "border-accent-solid bg-accent-solid text-accent-fg",
               i === current && "border-accent text-accent-hover",
               i > current && "border-line text-muted",
             )}

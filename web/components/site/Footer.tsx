@@ -10,14 +10,14 @@ export function Footer() {
           <p className="mt-3 max-w-xs text-sm">Get paid for every verified view. Settled on Monad, verified by Chainlink CRE.</p>
         </div>
         <div className="flex flex-col text-sm">
-          <span className="eyebrow mb-1 !text-white/40">Clippers</span>
+          <span className="eyebrow mb-1 !text-white/55">Clippers</span>
           <Link href="/guide" className="py-1.5 hover:text-white">How it works</Link>
           <Link href="/campaigns" className="py-1.5 hover:text-white">Campaigns</Link>
           <Link href="/me" className="py-1.5 hover:text-white">My earnings</Link>
           <Link href="/leaderboard" className="py-1.5 hover:text-white">Leaderboard</Link>
         </div>
         <div className="flex flex-col text-sm">
-          <span className="eyebrow mb-1 !text-white/40">Brands</span>
+          <span className="eyebrow mb-1 !text-white/55">Brands</span>
           <Link href="/brand/new" className="py-1.5 hover:text-white">Launch a campaign</Link>
           <Link href="/brand" className="py-1.5 hover:text-white">Brand console</Link>
           <Link href="/judges" className="py-1.5 hover:text-white">For judges</Link>
@@ -25,7 +25,7 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t border-white/10">
-        <div className="mx-auto flex max-w-6xl justify-between px-4 py-4 text-xs text-white/40">
+        <div className="mx-auto flex max-w-6xl justify-between px-4 py-4 text-xs text-white/55">
           <span>© 2026 Cliprail</span>
           <span>Built for Monad Metropolis</span>
         </div>
