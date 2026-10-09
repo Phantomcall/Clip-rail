@@ -40,7 +40,7 @@ export function JudgeSandbox() {
       </Step>
 
       <Step n={2} title="Get sandbox funds" done={funded}>
-        <p className="text-sm text-muted">When the testnet relayer is online, it sends your new account 0.1 testnet MON and 1,000 test USDC so you can try the brand side too.</p>
+        <p className="text-sm text-muted">The testnet relayer sends your new account 0.1 testnet MON and 1,000 test USDC so you can try the brand side too. It takes a few seconds.</p>
         {!sandboxReady ? (
           <p className="rounded-[var(--radius-control)] bg-surface-2 px-3 py-2 text-xs text-muted">Sandbox funding is being connected to the testnet relayer. You can still inspect the demo campaign and the contracts below.</p>
         ) : address && !funded && (
@@ -49,7 +49,7 @@ export function JudgeSandbox() {
             loading={fund.status === "signing" || fund.status === "pending"}
             onClick={async () => {
               const h = await fund.run();
-              toast(h ? { tone: "success", title: "Sandbox funded", txHash: h } : { tone: "error", title: "Funding failed. Try again in a minute." });
+              toast(h ? { tone: "success", title: "Sandbox funded", txHash: h } : { tone: "error", title: fund.lastError() ?? "Funding failed. Try again in a minute." });
             }}
           >
             Fund my sandbox

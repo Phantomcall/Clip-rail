@@ -18,7 +18,8 @@ export async function postRelay(path: string, body: Record<string, string>): Pro
     throw new Error("Couldn't reach the relayer. Check your connection and try again.");
   }
   const json = (await res.json().catch(() => ({}))) as { txHash?: Hex; error?: string };
-  if (res.status === 429) throw new Error("Too many requests. Wait a minute and try again.");
+  // the per-minute limiter only says "Too many requests"; other 429s (the sandbox's daily limits) explain themselves
+  if (res.status === 429 && (!json.error || json.error === "Too many requests")) throw new Error("Too many requests. Wait a minute and try again.");
   if (!res.ok || !json.txHash) throw new Error(json.error ?? `The relayer refused the request (${res.status}).`);
   return json.txHash;
 }

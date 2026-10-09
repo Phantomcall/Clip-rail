@@ -4,7 +4,7 @@
  * Transaction hooks (playbook D-3.3, D-5.1, D-5.2). Each returns { run, status, txHash, error, reset }.
  *
  * Real: useCreateCampaign, useRegisterClip, useSendOut, useSetPayout (D-3.3).
- * Real (D-5.1): useFlag, useResolve, useTopUp, useClose. Still mock: useSandboxFund (needs the ops /sandbox/fund, D-6.3).
+ * Real (D-5.1): useFlag, useResolve, useTopUp, useClose. Testnet only: useSandboxFund (ops /sandbox/fund, I-6.3).
  * Every hook falls back to the mock under NEXT_PUBLIC_MOCK_AUTH so screen work needs no chain.
  */
 import { useCallback, useRef, useState } from "react";
@@ -58,7 +58,8 @@ const fakeExec: Exec<unknown[]> = async ({ pending }) => {
   return fakeHash();
 };
 
-function useTx<A extends unknown[]>(exec?: Exec<A>) {
+/** `signs: false` for actions that only need the address: no passkey prompt on a return visit. */
+function useTx<A extends unknown[]>(exec?: Exec<A>, { signs = true } = {}) {
   const { getAccount, address, isMock } = useAuth();
   const [status, setStatus] = useState<TxStatus>("idle");
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
@@ -78,7 +79,8 @@ function useTx<A extends unknown[]>(exec?: Exec<A>) {
           hash = await fakeExec({ pending } as TxCtx, ...args);
         } else {
           if (!address) throw new Error("Sign in first.");
-          hash = await exec({ account: await getAccount(), address, pending }, ...args);
+          const account = signs ? await getAccount() : (undefined as never); // never read when signs is false
+          hash = await exec({ account, address, pending }, ...args);
         }
         setTxHash(hash);
         setStatus("success");
@@ -90,7 +92,7 @@ function useTx<A extends unknown[]>(exec?: Exec<A>) {
         return null;
       }
     },
-    [exec, isMock, address, getAccount],
+    [exec, signs, isMock, address, getAccount],
   );
 
   const reset = useCallback(() => {
@@ -279,7 +281,10 @@ export const useResolve = () => useTx(resolveFlag);
 export const useTopUp = () => useTx(topUpCampaign);
 export const useClose = () => useTx(closeCampaign);
 
-// ---------- still mock ----------
+/** testnet only: POST /sandbox/fund sends 0.1 MON, then mints 1,000 MockUSDC; returns the mint. Signs nothing. */
+const sandboxFund: Exec<[]> = async ({ address, pending }) => {
+  pending();
+  return waitFor(await postRelay("/sandbox/fund", { address }));
+};
 
-/** testnet only: POST /sandbox/fund (0.1 MON + 1,000 MockUSDC). */
-export const useSandboxFund = () => useTx<[]>();
+export const useSandboxFund = () => useTx(sandboxFund, { signs: false });
