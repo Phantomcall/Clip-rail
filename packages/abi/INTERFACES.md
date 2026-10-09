@@ -61,7 +61,7 @@ struct SetPayout    { address clipper; address payout; uint256 nonce; uint256 de
 | Anyone (keeper) | `expirePending(clipId)` | Rejects a Pending clip after `pendingTimeout` |
 | Anyone (keeper) | `sweep(clipIds[])` | Ends watched clips of closed or finished campaigns |
 | Forwarder | `onReport(metadata, report)` | Oracle reports (see below) |
-| Owner | `setTokenAllowed`, `setReportTransmitter`, `setGuardian`, `setPaused(false)` | Mainnet owner = 24 h timelock |
+| Owner | `setTokenAllowed`, `setReportTransmitter`, `setGuardian`, `setPaused(false)` | Testnet: the deployer wallet |
 | Owner or guardian | `setPaused(true)` | Pauses create, register and reports; payouts, closes and flags keep working |
 
 ### Views
@@ -73,7 +73,7 @@ struct SetPayout    { address clipper; address payout; uint256 nonce; uint256 de
 
 Constants: `FLAG_OWNERSHIP_OK = 1`, `FLAG_UNAVAILABLE = 2`, `MAX_HOLD_SECS = 7 days`, `MAX_ROUND_GAP = 1000`,
 `UNAVAILABLE_STRIKES = 3`, `MAX_PENDING_PER_CLIPPER = 3`, `MAX_TRANCHES_PER_RELEASE = 200`. Testnet v1:
-`pendingTimeout = 600` s, `resolveWindow = 1800` s (mainnet: 48 h each).
+`pendingTimeout = 600` s, `resolveWindow = 1800` s (the deploy script would use 48 h each for real funds).
 
 ### Events (Envio mirrors these)
 ```
@@ -86,8 +86,8 @@ Flagged(clipId, brand, reasonHash, deadline) · Resolved(clipId, rejected, retur
 Released(clipId, clipper, amount) · ReleaseFailed(clipId, to, amount)
 PayoutAddressSet(clipper, payout) · TokenAllowed(token, allowed) · ReportTransmitterSet(transmitter) · GuardianSet(guardian)
 ```
-`Resolved(rejected = false)` doesn't say whether the clip went back to Active or Ended: read `getClip` (the mainnet
-build adds it to the event).
+`Resolved(rejected = false)` doesn't say whether the clip went back to Active or Ended: read `getClip` (the next
+contract build adds it to the event).
 
 ### Errors
 `TokenNotAllowed` · `InvalidParams` · `NotBrand` · `CampaignNotActive` · `CampaignEnded` · `InvalidVideoId` ·
