@@ -33,7 +33,8 @@ plainly, and never imply mainnet or real money.
 | 2:05–2:35 | **S5 Try it yourself** | Desktop: `/judges` banner → `/try` → Fund my sandbox → toast with the transaction → "Launch a test campaign" prefilled with a 5-minute hold | "Judges can try both sides in five minutes. The sandbox funds a fresh account with test MON and test USDC, and a prefilled campaign pays out within minutes." |
 | 2:35–3:00 | **S6 Proof and what's next** | Landing live totals → leaderboard → a clipper's `/u/` profile with receipts → end card: app URL, repo, "Built on Monad testnet" | "Every number here comes from the chain, indexed by Envio, and a clipper's record is theirs to keep. Next: more platforms, a mainnet launch with real budgets, and payouts straight to local currency." |
 
-About 420 words of voiceover: read it at a calm pace and it lands near 2:55. If it runs long, cut S5 to its last sentence.
+About 235 words of voiceover: about 1:50 of speech at a calm 130 words a minute, which leaves room to let the screens
+play between lines. If the cut runs past 3:00, shorten S5 to its last sentence.
 
 ## Voiceover script (read straight through)
 > Clippers cut the moments that go viral. Then they wait weeks to get paid, and brands pay for views that were never real.
