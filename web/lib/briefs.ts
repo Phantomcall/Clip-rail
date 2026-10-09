@@ -24,7 +24,8 @@ export async function getBrief(campaignId: string): Promise<Brief> {
       // fall through to the fallback
     }
   }
-  return { brandName: "Brand", title: `Campaign #${campaignId}`, brief: "Brief coming soon.", sourceVideoId: "" };
+  // no stored brief yet: pages fall back to the brand address and hide the brief and source video
+  return { brandName: "", title: `Campaign #${campaignId}`, brief: "", sourceVideoId: "" };
 }
 
 /** After funding: send the exact brief JSON that was hashed. Best effort; the campaign is live either way. */
