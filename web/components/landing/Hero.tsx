@@ -20,7 +20,7 @@ export function Hero({ totals }: { totals: Totals }) {
       <div className="relative mx-auto max-w-6xl px-4 text-center">
         <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/15 px-3 py-1 text-white/90 dark:border-white/10 dark:bg-white/5 dark:text-white/80 text-xs font-medium shadow-[var(--shadow-soft)] backdrop-blur">
           <span className="size-1.5 animate-pulse rounded-full bg-money" />
-          Live on Monad · views verified by Chainlink
+          Live on Monad testnet · views verified by Chainlink
         </span>
         <p className="eyebrow mt-6 !text-white/70 dark:!text-white/60">Clip · Post · Get paid</p>
         <h1 className="mx-auto mt-3 max-w-4xl text-[2.6rem] leading-[1.02] font-bold text-white drop-shadow-[0_2px_24px_rgb(5_30_80/0.25)] sm:text-7xl">

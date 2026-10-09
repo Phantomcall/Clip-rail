@@ -91,7 +91,7 @@ export function MakeBank() {
         <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold tracking-wider text-white/60 uppercase">How it works</span>
         <h2 className="mt-5 text-4xl font-bold sm:text-5xl">Get views. Get paid.</h2>
         <p className="mt-3 max-w-xl text-white/60">
-          The money exists before you post, the views are checked by a decentralized oracle, and the payout is a transaction you can open.
+          The money exists before you post, the views are checked by a Chainlink CRE oracle, and the payout is a transaction you can open.
         </p>
         <Link href="/guide" className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-white/85 underline-offset-4 hover:text-white hover:underline">
           Read the full guide for clippers, brands and judges →
