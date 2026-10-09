@@ -13,7 +13,7 @@ export function CopyButton({ text, label = "Copy", className }: { text: string; 
         setCopied(true);
         setTimeout(() => setCopied(false), 1500);
       }}
-      className={cn("rounded-md px-2 py-1 text-xs font-semibold text-muted hover:bg-surface-2 hover:text-fg", className)}
+      className={cn("relative rounded-md px-2 py-1 text-xs font-semibold text-muted after:absolute after:-inset-1.5 hover:bg-surface-2 hover:text-fg", className)}
       aria-live="polite"
     >
       {copied ? "Copied" : label}

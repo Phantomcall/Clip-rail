@@ -177,15 +177,12 @@ export function PhoneShorts() {
           </div>
 
           {/* which Short is showing */}
-          <div className="absolute top-1/2 right-1.5 flex -translate-y-1/2 flex-col gap-1.5">
+          <div className="absolute top-1/2 right-0 flex -translate-y-1/2 flex-col">
             {SLIDES.map((s, n) => (
-              <button
-                key={s.handle}
-                type="button"
-                aria-label={`Show ${s.handle}'s Short`}
-                onClick={() => setI(n)}
-                className={`w-1 rounded-full bg-white transition-all ${n === i ? "h-5 opacity-100" : "h-2 opacity-40"}`}
-              />
+              // the bar stays thin; the button around it is a finger-sized target
+              <button key={s.handle} type="button" aria-label={`Show ${s.handle}'s Short`} onClick={() => setI(n)} className="grid w-6 place-items-center py-1">
+                <span className={`w-1 rounded-full bg-white transition-all ${n === i ? "h-5 opacity-100" : "h-2 opacity-40"}`} />
+              </button>
             ))}
           </div>
         </div>

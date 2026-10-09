@@ -68,7 +68,7 @@ export function BrandSetup({ hasCampaign }: { hasCampaign: boolean }) {
           {STEPS.map((s, i) => {
             const d = isDone(s.key);
             return (
-              <li key={s.key} className="flex items-start gap-3 rounded-2xl px-2 py-2.5 transition hover:bg-white/40 dark:hover:bg-white/[0.04]">
+              <li key={s.key} className="flex flex-wrap items-start gap-x-3 gap-y-1 rounded-2xl px-2 py-2.5 transition hover:bg-white/40 dark:hover:bg-white/[0.04]">
                 <button
                   type="button"
                   onClick={() => !auto[s.key] && toggle(s.key)}
@@ -80,12 +80,12 @@ export function BrandSetup({ hasCampaign }: { hasCampaign: boolean }) {
                 >
                   {d ? <CheckCircle className="size-3.5" /> : i + 1}
                 </button>
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 basis-48">
                   <p className={cn("text-sm font-semibold", d && "text-muted line-through decoration-1")}>{s.title}</p>
                   <p className="text-xs text-muted">{s.why}</p>
                 </div>
                 {s.href && !d && (
-                  <Link href={s.href} className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold text-accent hover:bg-accent-soft dark:text-[#c9bfff]">
+                  <Link href={s.href} className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold text-accent max-sm:ml-6 hover:bg-accent-soft dark:text-[#c9bfff]">
                     {s.cta} →
                   </Link>
                 )}
