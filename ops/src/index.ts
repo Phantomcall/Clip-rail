@@ -5,6 +5,7 @@
  *   POST /relay/register         gasless clip registration (RegisterClip signature)
  *   POST /relay/payout-address   gasless payout-address change (SetPayout signature)
  *   POST /relay/transfer         gasless USDC send-out (EIP-3009 signature)
+ *   POST /sandbox/fund           testnet only: 0.1 MON + 1,000 MockUSDC for a judge's fresh account
  *   cron, every 5 minutes        keeper: release, autoResolve, expirePending, sweep
  */
 import { BaseError, formatEther, type Hex } from "viem";
@@ -14,6 +15,7 @@ import { runKeeper } from "./keeper";
 import { CLAIM_CODE, originAllowed, toPreview } from "./logic";
 import { fetchVideo } from "./preview";
 import { relayPayoutAddress, relayRegister, relayTransfer, type RelayContext } from "./relay";
+import { sandboxFund } from "./sandbox";
 import { YT_ID } from "@cliprail/shared";
 
 function corsHeaders(req: Request, env: Env): Record<string, string> {
@@ -111,6 +113,20 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
     }
     const txHash = await relay({ env, dep, c: clients(env), ctx, nowMs: Date.now() }, body);
     console.log(`${url.pathname} sent ${txHash}`);
+    return json({ txHash }, 200, cors);
+  }
+
+  if (req.method === "POST" && url.pathname === "/sandbox/fund" && env.NETWORK === "testnet") {
+    if (!(await env.RELAY_LIMIT.limit({ key: ip })).success) return json({ error: "Too many requests" }, 429, cors);
+    const text = await req.text();
+    if (text.length > MAX_BODY) return json({ error: "Body too large." }, 413, cors);
+    let body: unknown;
+    try {
+      body = JSON.parse(text);
+    } catch {
+      return json({ error: "Body must be JSON." }, 400, cors);
+    }
+    const txHash = await sandboxFund(env, clients(env), ip, body, Date.now());
     return json({ txHash }, 200, cors);
   }
 

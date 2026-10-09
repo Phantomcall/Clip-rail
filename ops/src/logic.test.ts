@@ -229,3 +229,23 @@ test("@noble/curves is pinned to viem's version, so the window-4 setting in chai
   const viemPkg = JSON.parse(readFileSync(new URL("../node_modules/viem/package.json", import.meta.url), "utf8"));
   assert.equal(ours, viemPkg.dependencies["@noble/curves"]);
 });
+
+test("sandbox body: one valid address", async () => {
+  const { sandboxBody } = await import("./logic.ts");
+  assert.equal(sandboxBody.parse({ address: clipper }).address, "0xC7e501C18846080439131E31Ad5D4b56f7bcA0F0");
+  assert.equal(sandboxBody.safeParse({ address: "0x12" }).success, false);
+  assert.equal(sandboxBody.safeParse({}).success, false);
+});
+
+test("Monad reserve balance: when a MON transfer needs an 'emptying' slot", async () => {
+  const { needsEmptyingSlot, noInflight, MONAD_USER_RESERVE } = await import("./logic.ts");
+  const e = 10n ** 18n;
+  const tenth = e / 10n, gas = e / 20n;
+  assert.equal(MONAD_USER_RESERVE, 10n * e);
+  assert.equal(needsEmptyingSlot(4n * e, tenth, gas), true); // the relayer today (~4.8 MON)
+  assert.equal(needsEmptyingSlot(10n * e, tenth, gas), true); // 10 MON is not enough: it would end below 10
+  assert.equal(needsEmptyingSlot(10n * e + tenth + gas, tenth, gas), false);
+  assert.equal(noInflight(13, 13, 13), true);
+  assert.equal(noInflight(13, 12, 13), false); // a relayer tx was mined in the last 3 blocks
+  assert.equal(noInflight(13, 13, 14), false); // one is pending
+});
