@@ -105,8 +105,8 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export async function sendWithRetry(
   c: Clients,
   tx: { to: Address; data: Hex; gas: bigint; value?: bigint },
+  attempts = 4,
 ): Promise<Hex> {
-  const attempts = 4;
   for (let attempt = 1; ; attempt++) {
     try {
       const { nonce, ...fees } = await nonceAndFees(c);

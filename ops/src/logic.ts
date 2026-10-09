@@ -58,6 +58,20 @@ export const transferBody = z.object({
 /** POST /sandbox/fund: the judge's fresh account. */
 export const sandboxBody = z.object({ address });
 
+/**
+ * Monad's reserve balance: a transaction that sends MON as value reverts if the sender ends below 10 MON, unless it
+ * is the sender's first transaction in the last 3 blocks. Above this, a transfer needs no special handling.
+ */
+export const MONAD_USER_RESERVE = 10n * 10n ** 18n;
+export function needsEmptyingSlot(senderBalance: bigint, value: bigint, gasCost: bigint): boolean {
+  return senderBalance < MONAD_USER_RESERVE + value + gasCost;
+}
+
+/** No transaction from the sender mined in the last 3 blocks and none pending: the next one is "emptying". */
+export function noInflight(nonceNow: number, nonce3BlocksAgo: number, noncePending: number): boolean {
+  return nonceNow === nonce3BlocksAgo && noncePending === nonceNow;
+}
+
 export type RegisterBody = z.infer<typeof registerBody>;
 export type PayoutBody = z.infer<typeof payoutBody>;
 export type TransferBody = z.infer<typeof transferBody>;
