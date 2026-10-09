@@ -81,10 +81,25 @@ The v0 vault (`0xf9B2…Af45`) is retired: its release and close were stubs, so 
 Cliprail runs on Monad testnet only: with Monad charging the full gas limit, the oracle and keeper would cost more
 mainnet MON than we have (decision log in `docs/security.md`).
 
+### Evidence on testnet
+
+| What | Proof |
+|---|---|
+| First oracle report: three clips activated through Chainlink's forwarder (round 1) | [`0x20fb1dfd…cffe`](https://testnet.monadvision.com/tx/0x20fb1dfde6ba91aadd4a2f5fc65e400236de7fb7e9d0b7621147358a476ecffe) |
+| First verified-view receipt: +50 views, $0.05 reserved for clip 3 (round 2) | [`0x61e3eb1b…fd95`](https://testnet.monadvision.com/tx/0x61e3eb1ba107e938235b81f9509f5f4c3ee53bc3f67bdc3514c2b4d2a585fd95) |
+| First payout after the hold: $0.05 released to the clipper | [`0xf3467543…aa4b`](https://testnet.monadvision.com/tx/0xf34675435d6f0cad1d9b4cb00206f4bf02fdb9897b27cee1487348fc6d1eaa4b) |
+| Indexer (Envio HyperIndex, public GraphQL) | `https://indexer.dev.hyperindex.xyz/238202f/v1/graphql` |
+| Ops Worker (relayer, keeper, sandbox) | [`/health`](https://cliprail-ops-testnet.cliprail-ops.workers.dev/health) |
+| Full regression against the deployed contracts | `contracts/script/Smoke.s.sol` (20 checks, `SMOKE PASS`) |
+| Live campaign | _link and totals, added Oct 12_ |
+
 ## Oracle (Chainlink CRE)
 
 The CRE workflow pages the vault's active clips, fetches YouTube metadata in batches of 50, and produces a canonical
-report of rounded view and like counts. Nodes must agree on that entire report before it is written onchain. Rounding
+report of rounded view and like counts. Nodes must agree on that entire report before it is written onchain.
+On testnet the workflow runs in Chainlink's CRE simulator and broadcasts through Chainlink's mock forwarder from the
+vault's pinned oracle wallet; the KeystoneForwarder path with DON signatures is wired for when CRE deploy access is
+approved (`docs/security.md`). Rounding
 absorbs small timing differences between YouTube API calls; a disagreement writes nothing and is retried next round.
 
 - Claim-code ownership, public visibility, publish time and unavailable videos are checked before a report is built.
