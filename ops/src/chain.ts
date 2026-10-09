@@ -88,7 +88,7 @@ export async function nonceAndFees(c: Clients): Promise<{ nonce: number } & Fees
 /** Signs locally and sends the raw transaction: exactly one RPC call, and every field is ours. */
 export async function signAndSend(
   c: Clients,
-  tx: { to: Address; data: Hex; gas: bigint; nonce: number } & Fees,
+  tx: { to: Address; data: Hex; gas: bigint; nonce: number; value?: bigint } & Fees,
 ): Promise<Hex> {
   const serializedTransaction = await c.signer().signTransaction({ ...tx, chainId: c.chain.id, type: "eip1559" });
   return c.publicClient.sendRawTransaction({ serializedTransaction });
@@ -102,7 +102,10 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
  * error is retried with a fresh nonce after a short random wait (by then the other transaction has usually landed).
  * Re-sending the same signed transaction is harmless: Monad returns its hash again.
  */
-export async function sendWithRetry(c: Clients, tx: { to: Address; data: Hex; gas: bigint }): Promise<Hex> {
+export async function sendWithRetry(
+  c: Clients,
+  tx: { to: Address; data: Hex; gas: bigint; value?: bigint },
+): Promise<Hex> {
   const attempts = 4;
   for (let attempt = 1; ; attempt++) {
     try {

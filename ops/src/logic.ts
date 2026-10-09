@@ -55,6 +55,9 @@ export const transferBody = z.object({
   sig,
 });
 
+/** POST /sandbox/fund: the judge's fresh account. */
+export const sandboxBody = z.object({ address });
+
 export type RegisterBody = z.infer<typeof registerBody>;
 export type PayoutBody = z.infer<typeof payoutBody>;
 export type TransferBody = z.infer<typeof transferBody>;

@@ -229,3 +229,10 @@ test("@noble/curves is pinned to viem's version, so the window-4 setting in chai
   const viemPkg = JSON.parse(readFileSync(new URL("../node_modules/viem/package.json", import.meta.url), "utf8"));
   assert.equal(ours, viemPkg.dependencies["@noble/curves"]);
 });
+
+test("sandbox body: one valid address", async () => {
+  const { sandboxBody } = await import("./logic.ts");
+  assert.equal(sandboxBody.parse({ address: clipper }).address, "0xC7e501C18846080439131E31Ad5D4b56f7bcA0F0");
+  assert.equal(sandboxBody.safeParse({ address: "0x12" }).success, false);
+  assert.equal(sandboxBody.safeParse({}).success, false);
+});
