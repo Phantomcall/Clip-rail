@@ -46,7 +46,7 @@ export function ForClippers() {
         <div className="relative mx-auto w-full max-w-[26rem]">
           <div className="relative aspect-[9/16] overflow-hidden rounded-[28px] shadow-[0_30px_80px_-30px_rgb(18_18_22/0.45)]">
             {/* the claim-code screen is tracked into the real phone frame by frame (see the commit for how it was made) */}
-            <LoopVideo src="/video/clipper-phone2.mp4" poster="/video/clipper-phone2.jpg" className="absolute inset-0 size-full object-cover" />
+            <LoopVideo src="/video/clipper-scroll.mp4" poster="/video/clipper-scroll.jpg" className="absolute inset-0 size-full object-cover" />
           </div>
           <div className="force-light absolute -right-3 bottom-10 hidden items-center gap-2 rounded-full bg-white px-3.5 py-2 text-xs font-semibold shadow-[var(--shadow-float)] sm:flex">
             <span className="size-2 rounded-full bg-money" /> +$12.00 paid · 2 min ago
