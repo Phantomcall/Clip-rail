@@ -11,12 +11,15 @@ import { Stepper } from "@/components/ui/Stepper";
 import { TxLink } from "@/components/ui/TxLink";
 import { useToast } from "@/components/ui/Toast";
 import { useCreateCampaign, type CampaignParams } from "@/lib/actions";
+import { useBalances } from "@/lib/balances";
 import { count, duration, usd, viewsBuyable } from "@/lib/format";
-import { USDC } from "@/lib/network";
+import { ADDR, NETWORK, USDC } from "@/lib/network";
 import { parseUsd } from "@/lib/units";
 
 const STEPS = ["Source & brief", "Rates & caps", "Fraud rules", "Review & fund"];
-const HOLD_OPTIONS = [3600, 6 * 3600, 86400, 2 * 86400, 3 * 86400];
+// testnet adds a 5-minute hold, so a judge sees a payout during the demo
+const HOLD_OPTIONS = [...(NETWORK === "testnet" ? [300] : []), 3600, 6 * 3600, 86400, 2 * 86400, 3 * 86400];
+const MOCK_USDC = ADDR.mockUsdc as `0x${string}` | null;
 
 interface Form {
   brandName: string;
@@ -46,6 +49,19 @@ const DEFAULTS: Form = {
   holdSecs: 86400,
   days: "14",
   minTier: 0,
+};
+
+/** /brand/new?demo=1 from the judge sandbox: a small test campaign that pays out within minutes. */
+const DEMO: Form = {
+  ...DEFAULTS,
+  brandName: "Sandbox brand",
+  title: "Judge test campaign",
+  sourceUrl: "https://youtube.com/shorts/GJcHrS4vWbc", // a team test Short; any public video works
+  brief: "Testing Cliprail end to end: any short vertical cut works. Put your claim code in the description.",
+  budget: "100",
+  minLikePct: "0",
+  holdSecs: 300,
+  days: "2",
 };
 
 type Errors = Partial<Record<keyof Form, string>>;
@@ -78,10 +94,10 @@ function validate(f: Form, step: number): Errors {
   return e;
 }
 
-function toParams(f: Form, brief: string): CampaignParams {
+function toParams(f: Form, brief: string, token: `0x${string}`): CampaignParams {
   const nowSec = Math.floor(Date.now() / 1000);
   return {
-    token: USDC,
+    token,
     budget: parseUsd(f.budget)!,
     cpm: parseUsd(f.cpm)!,
     maxPerClip: parseUsd(f.maxPerClip)!,
@@ -95,9 +111,10 @@ function toParams(f: Form, brief: string): CampaignParams {
   };
 }
 
-export function CampaignWizard() {
+export function CampaignWizard({ demo = false }: { demo?: boolean }) {
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState<Form>(DEFAULTS);
+  const [form, setForm] = useState<Form>(demo ? DEMO : DEFAULTS);
+  const balances = useBalances();
   const [errors, setErrors] = useState<Errors>({});
   const tx = useCreateCampaign();
   const toast = useToast();
@@ -111,6 +128,14 @@ export function CampaignWizard() {
     return { views: viewsBuyable(budget, cpm), minClips: cap > 0 ? Math.ceil(budget / cap) : 0, budget, cpm, cap };
   }, [form.budget, form.cpm, form.maxPerClip]);
 
+  // Testnet: pay with the sandbox's MockUSDC when that's what the account holds (both tokens are allowed by the vault).
+  const pay = useMemo(() => {
+    const b = balances.data;
+    const sandbox = !!MOCK_USDC && !!b && b.testUsdc > b.usdc;
+    return { token: sandbox ? MOCK_USDC! : USDC, label: sandbox ? "Test USDC (sandbox)" : "USDC", balance: b ? (sandbox ? b.testUsdc : b.usdc) : null };
+  }, [balances.data]);
+  const short = pay.balance !== null && BigInt(calc.budget) > pay.balance;
+
   const next = () => {
     const e = validate(form, step);
     setErrors(e);
@@ -119,7 +144,11 @@ export function CampaignWizard() {
 
   const fund = async () => {
     const brief = JSON.stringify({ brandName: form.brandName, title: form.title, sourceVideoId: parseVideoId(form.sourceUrl), brief: form.brief });
-    const hash = await tx.run(toParams(form, brief));
+    if (short) {
+      toast({ tone: "error", title: `You have ${usd(Number(pay.balance))} ${pay.label}. Lower the budget or add funds.` });
+      return;
+    }
+    const hash = await tx.run(toParams(form, brief, pay.token));
     if (hash) toast({ tone: "success", title: "Campaign funded", txHash: hash });
     else toast({ tone: "error", title: `Funding failed: ${tx.lastError() ?? "try again"}. Nothing was charged.` });
   };
@@ -224,6 +253,7 @@ export function CampaignWizard() {
               ["Hold window", duration(form.holdSecs)],
               ["Runs for", `${form.days} days`],
               ["Who can join", form.minTier === 0 ? "Everyone" : `Tier ${form.minTier}+`],
+              ["Pays with", pay.balance === null ? pay.label : `${pay.label} · ${usd(Number(pay.balance))} available`],
             ].map(([k, v]) => (
               <div key={k} className="flex justify-between gap-4 border-b border-line pb-2">
                 <dt className="text-muted">{k}</dt>
@@ -231,8 +261,13 @@ export function CampaignWizard() {
               </div>
             ))}
             <p className="text-xs text-muted sm:col-span-2">
-              These rules are fixed once funded. Funding asks you to approve {usd(calc.budget)} USDC, then locks it in the Cliprail escrow.
+              These rules are fixed once funded. Funding asks you to approve {usd(calc.budget)} {pay.label}, then locks it in the Cliprail escrow.
             </p>
+            {short && (
+              <p className="rounded-[var(--radius-control)] bg-danger/10 px-3 py-2 text-xs font-semibold text-danger sm:col-span-2">
+                The budget is more than your {pay.label} balance. Go back and lower it, or add funds.
+              </p>
+            )}
           </dl>
         )}
 

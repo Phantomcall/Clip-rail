@@ -113,6 +113,11 @@ function AccountMenu() {
                     {balances.data ? fmtMon(balances.data.mon) : balances.isError ? "–" : "…"}
                   </div>
                 </div>
+                {!!balances.data?.testUsdc && (
+                  <p className="col-span-2 rounded-xl bg-surface-2 px-2.5 py-2 text-xs text-muted">
+                    <b className="text-fg">{usd(Number(balances.data.testUsdc))}</b> test USDC from the sandbox
+                  </p>
+                )}
               </div>
             )}
             {isMock && <p className="mt-2 text-xs text-muted">Demo account (mock auth). No real balances.</p>}

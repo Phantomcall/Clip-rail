@@ -67,7 +67,7 @@ export function JudgeSandbox() {
           <div className="rounded-[var(--radius-control)] border border-line p-3">
             <div className="text-sm font-semibold">As a brand</div>
             <p className="mt-1 text-xs text-muted">{sandboxReady ? "Launch a campaign with test USDC and a 5-minute hold window, then flag or accept clips." : "Campaign creation is available once your account has test funds from the relayer."}</p>
-            {sandboxReady ? <LinkButton href="/brand/new" variant="secondary" className="mt-3 min-h-9 w-full text-xs">Launch a test campaign</LinkButton> : <span className="mt-3 block rounded-[var(--radius-control)] bg-surface-2 px-3 py-2 text-center text-xs font-semibold text-muted">Test funds required</span>}
+            {sandboxReady ? <LinkButton href="/brand/new?demo=1" variant="secondary" className="mt-3 min-h-9 w-full text-xs">Launch a test campaign</LinkButton> : <span className="mt-3 block rounded-[var(--radius-control)] bg-surface-2 px-3 py-2 text-center text-xs font-semibold text-muted">Test funds required</span>}
           </div>
         </div>
       </Step>
