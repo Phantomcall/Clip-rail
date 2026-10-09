@@ -63,7 +63,7 @@ export function ClipWall() {
       <div className="mx-auto grid max-w-6xl items-end gap-8 px-4 lg:grid-cols-[1fr_22rem]">
         <div>
           <p className="eyebrow">A live proof feed</p>
-          <h2 className="mt-3 text-4xl font-bold sm:text-5xl">Real clips. Real payouts.</h2>
+          <h2 className="mt-3 text-[2rem] font-bold sm:text-5xl">Real clips. Real payouts.</h2>
           <p className="mt-3 max-w-xl text-muted">
             Every Short on Cliprail carries its clipper&apos;s code. The oracle reads its views, the vault reserves what it earned, and the payout
             lands after the hold.

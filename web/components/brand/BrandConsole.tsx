@@ -51,7 +51,7 @@ function FlagDialog({ clip }: { clip: Clip }) {
               toast({ tone: "success", title: "Clip flagged", txHash: h });
               setOpen(false);
               tx.reset();
-            } else toast({ tone: "error", title: "Couldn't flag the clip." });
+            } else toast({ tone: "error", title: `Couldn't flag the clip. ${tx.lastError() ?? ""}` });
           }}
         >
           Flag clip
@@ -68,7 +68,7 @@ function ResolveButtons({ clip }: { clip: Clip }) {
   const go = async (reject: boolean) => {
     setWhich(reject ? "reject" : "accept");
     const h = await tx.run(clip.id, reject);
-    toast(h ? { tone: "success", title: reject ? "Clip rejected. Its unpaid earnings went back to your budget." : "Clip accepted", txHash: h } : { tone: "error", title: "Couldn't resolve the flag." });
+    toast(h ? { tone: "success", title: reject ? "Clip rejected. Its unpaid earnings went back to your budget." : "Clip accepted", txHash: h } : { tone: "error", title: `Couldn't resolve the flag. ${tx.lastError() ?? ""}` });
     setWhich(null);
     tx.reset();
   };
@@ -101,7 +101,7 @@ function TopUpDialog({ campaign }: { campaign: Campaign }) {
               toast({ tone: "success", title: `Added ${usd(Number(units))}`, txHash: h });
               setOpen(false);
               tx.reset();
-            } else toast({ tone: "error", title: "Top up failed." });
+            } else toast({ tone: "error", title: `Top up failed. ${tx.lastError() ?? ""}` });
           }}
         >
           Add to escrow
@@ -137,7 +137,7 @@ function CloseDialog({ campaign }: { campaign: Campaign }) {
               toast({ tone: "success", title: `Campaign closed, ${usd(refund)} refunded`, txHash: h });
               setOpen(false);
               tx.reset();
-            } else toast({ tone: "error", title: "Couldn't close the campaign." });
+            } else toast({ tone: "error", title: `Couldn't close the campaign. ${tx.lastError() ?? ""}` });
           }}
         >
           Close and refund {usd(refund)}

@@ -7,7 +7,7 @@
  * Real (D-5.1): useFlag, useResolve, useTopUp, useClose. Still mock: useSandboxFund (needs the ops /sandbox/fund, D-6.3).
  * Every hook falls back to the mock under NEXT_PUBLIC_MOCK_AUTH so screen work needs no chain.
  */
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { encodeFunctionData, keccak256, toBytes, toHex, type Hex, type LocalAccount } from "viem";
 import { cliprailDomain, registerClipTypes, setPayoutTypes, transferWithAuthorizationTypes } from "@cliprail/shared";
 import { erc20Abi, vaultAbi } from "@/lib/abi";
@@ -63,6 +63,8 @@ function useTx<A extends unknown[]>(exec?: Exec<A>) {
   const [status, setStatus] = useState<TxStatus>("idle");
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // the latest failure, readable right after `await run()` (state updates land a render later)
+  const lastErr = useRef<string | null>(null);
 
   const run = useCallback(
     async (...args: A) => {
@@ -82,7 +84,8 @@ function useTx<A extends unknown[]>(exec?: Exec<A>) {
         setStatus("success");
         return hash;
       } catch (e) {
-        setError(txErrorMessage(e));
+        lastErr.current = txErrorMessage(e);
+        setError(lastErr.current);
         setStatus("error");
         return null;
       }
@@ -96,7 +99,10 @@ function useTx<A extends unknown[]>(exec?: Exec<A>) {
     setError(null);
   }, []);
 
-  return { run, status, txHash, error, reset };
+  /** Why the last run failed, in plain English (or null). */
+  const lastError = useCallback(() => lastErr.current, []);
+
+  return { run, status, txHash, error, reset, lastError };
 }
 
 function vaultAddress(): Address {

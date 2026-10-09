@@ -34,6 +34,12 @@ const TABS: Tab[] = [
     icon: <path {...stroke} d="M5 20v-6h4v6M10 20V9h4v11M15 20v-9h4v9M3 20h18" />,
   },
   {
+    href: "/judges",
+    label: "Judges",
+    match: (p) => p.startsWith("/judges"),
+    icon: <path {...stroke} d="M12 4v16M6 20h12M5 8h14M5 8l-2.5 6a3 3 0 0 0 5 0zM19 8l-2.5 6a3 3 0 0 0 5 0z" />,
+  },
+  {
     href: "/me",
     label: "Earnings",
     match: (p) => p.startsWith("/me"),
@@ -58,7 +64,7 @@ export function TabBar() {
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 grid grid-cols-5 rounded-[1.4rem] border border-white/70 bg-white/85 p-1 shadow-[0_10px_40px_-10px_rgb(18_18_22/0.35)] backdrop-blur-xl sm:hidden dark:border-white/10 dark:bg-surface/80"
+      className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 grid grid-cols-6 rounded-[1.4rem] border border-white/70 bg-white/85 p-1 shadow-[0_10px_40px_-10px_rgb(18_18_22/0.35)] backdrop-blur-xl sm:hidden dark:border-white/10 dark:bg-surface/80"
     >
       {TABS.map((t) => {
         const on = t.match(path);
@@ -67,7 +73,7 @@ export function TabBar() {
             key={t.href}
             href={t.href}
             aria-current={on ? "page" : undefined}
-            className={`flex flex-col items-center gap-0.5 rounded-2xl py-1.5 text-[10px] font-semibold transition ${on ? "bg-accent-soft text-accent dark:bg-accent/20" : "text-muted"}`}
+            className={`flex flex-col items-center gap-0.5 rounded-2xl py-1.5 text-[9.5px] font-semibold transition ${on ? "bg-accent-soft text-accent dark:bg-accent/20" : "text-muted"}`}
           >
             <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
               {t.icon}

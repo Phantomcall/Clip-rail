@@ -100,7 +100,7 @@ export default async function GuidePage({ searchParams }: { searchParams: Promis
               scroll={false}
               aria-current={k === track ? "page" : undefined}
               className={cn(
-                "rounded-full px-4 py-2 text-sm font-semibold transition",
+                "rounded-full px-3 py-2 text-xs font-semibold whitespace-nowrap transition sm:px-4 sm:text-sm",
                 k === track ? "bg-accent text-accent-fg shadow-[var(--shadow-soft)]" : "text-muted hover:text-fg",
               )}
             >

@@ -34,7 +34,7 @@ export function SendOutDialog({ balance }: { balance: number }) {
       setTo("");
       setAmount("");
       tx.reset();
-    } else toast({ tone: "error", title: "Send failed. Your USDC is still in your account." });
+    } else toast({ tone: "error", title: `Send failed: ${tx.lastError() ?? "try again"}. Your USDC is still in your account.` });
   };
 
   return (

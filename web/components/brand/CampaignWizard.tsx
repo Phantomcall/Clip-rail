@@ -121,7 +121,7 @@ export function CampaignWizard() {
     const brief = JSON.stringify({ brandName: form.brandName, title: form.title, sourceVideoId: parseVideoId(form.sourceUrl), brief: form.brief });
     const hash = await tx.run(toParams(form, brief));
     if (hash) toast({ tone: "success", title: "Campaign funded", txHash: hash });
-    else toast({ tone: "error", title: "Funding failed. Nothing was charged." });
+    else toast({ tone: "error", title: `Funding failed: ${tx.lastError() ?? "try again"}. Nothing was charged.` });
   };
 
   if (tx.status === "success" && tx.txHash) {
