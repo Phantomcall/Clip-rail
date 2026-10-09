@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Avatar } from "@/components/ui/Avatar";
 import { TierBadge } from "@/components/ui/Badge";
-import { ShortsIcon, VerifiedIcon } from "@/components/ui/Icons";
+import { ShortsIcon } from "@/components/ui/Icons";
 import { compact, duration, timeLeft, usd } from "@/lib/format";
 import type { Campaign } from "@/lib/types";
 
@@ -20,7 +20,6 @@ export function CampaignCard({ campaign: c, now }: { campaign: Campaign; now: nu
         <div className="min-w-0">
           <div className="flex items-center gap-1 font-semibold">
             <span className="truncate">{c.brandName}</span>
-            <VerifiedIcon />
             {c.minTier > 0 && <TierBadge tier={c.minTier} />}
           </div>
           <div className="text-xs text-muted">

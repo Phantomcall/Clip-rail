@@ -9,7 +9,7 @@ import { BudgetMeter } from "@/components/ui/BudgetMeter";
 import { LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Tip } from "@/components/ui/Tip";
-import { count, duration, percent, timeLeft, usd, viewsBuyable } from "@/lib/format";
+import { count, duration, percent, timeLeft, usd, viewsBuyable, shortAddress } from "@/lib/format";
 import { getBrandStats, getCampaign, getClipsForCampaign, now } from "@/lib/data";
 
 const YT_ID = /^[A-Za-z0-9_-]{11}$/;
@@ -37,7 +37,8 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
     <PageHeader
       eyebrow={
         <>
-          <span>{c.brandName}</span>
+          {/* without a brief the name is the short address; don't show it twice */}
+          {c.brandName !== shortAddress(c.brand) && <span>{c.brandName}</span>}
           <AddressChip address={c.brand} />
           <StatusBadge status={c.status} />
         </>
@@ -46,10 +47,11 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
     />
     <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 lg:grid-cols-[1fr_22rem] lg:grid-rows-[auto_1fr]">
       <div className="min-w-0 lg:col-start-1 lg:row-start-1">
-        <p className="text-muted">{c.brief}</p>
+        {c.brief && <p className="text-muted">{c.brief}</p>}
 
-        <div className="mt-6 aspect-video overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface">
-          {YT_ID.test(c.sourceVideoId) ? (
+        {/* the source video, when the brand's brief names one */}
+        {YT_ID.test(c.sourceVideoId) && (
+          <div className="mt-6 aspect-video overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface">
             <iframe
               className="size-full"
               src={`https://www.youtube-nocookie.com/embed/${c.sourceVideoId}`}
@@ -58,15 +60,8 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
               allow="encrypted-media; picture-in-picture"
               allowFullScreen
             />
-          ) : (
-            <div className="grid size-full place-items-center bg-gradient-to-br from-accent/20 to-surface text-center">
-              <div>
-                <span aria-hidden className="mx-auto grid size-14 place-items-center rounded-full bg-accent text-xl text-accent-fg">▶</span>
-                <p className="mt-3 text-sm text-muted">Source video</p>
-              </div>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       <aside className="lg:sticky lg:top-20 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start">

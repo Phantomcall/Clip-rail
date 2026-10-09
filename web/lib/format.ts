@@ -4,11 +4,13 @@ const UNIT = 10 ** USDC_DECIMALS;
 
 export function usd(units: number, opts: { cents?: boolean } = {}) {
   const value = units / UNIT;
+  // cents: false drops cents for big round numbers, but never turns $0.05 into "$0"
+  const digits = opts.cents === false && (value >= 100 || Number.isInteger(value)) ? 0 : 2;
   return value.toLocaleString("en-US", {
     style: "currency",
     currency: "USD",
-    minimumFractionDigits: opts.cents === false ? 0 : 2,
-    maximumFractionDigits: opts.cents === false ? 0 : 2,
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
   });
 }
 

@@ -9,7 +9,7 @@ Record on your phone, face to camera, good light, phone vertical or landscape (c
 | 2 | The bot problem | Brands pay for views that aren't real. One marketer found almost all of their paid views were bots. Both sides lose. |
 | 3 | The fix in one line | "We made the view count pay, and the payment is the proof." Budget locked before you post; real views verified; you're paid in a day. |
 | 4 | Escrow explained | The brand's money is locked in a smart contract before anyone clips, so the budget can't vanish after you post. |
-| 5 | How views are verified | A Chainlink oracle network checks your Short's real views and your claim code, then the contract pays per 1,000 verified views. |
+| 5 | How views are verified | A Chainlink oracle checks your Short's real views and your claim code, then the contract pays per 1,000 verified views. |
 | 6 | Bots earn nothing | Like-ratio floor, velocity cap, per-clip cap, brand flag window. Fake views don't pay. |
 | 7 | No crypto knowledge needed | Sign up with Face ID. No wallet app, no seed phrase, no gas. |
 | 8 | Your reputation is yours | Every paid view builds a record nobody can fake or delete, and it unlocks better campaigns. |

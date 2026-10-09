@@ -1,6 +1,7 @@
 # Clipper guide (P-4.3): pin this in the WhatsApp group
 
-**Cliprail pays you $1 for every 1,000 verified views on your YouTube Shorts.** Paid in USDC, automatically, about 24 hours after the views are verified.
+**Cliprail pays you per 1,000 verified views on your YouTube Shorts**, automatically, once the hold window ends.
+This is a **test pilot on Monad testnet**: you're paid in test USDC, which has no cash value[; REWARD].
 
 ## Before you start
 - Use **iPhone Safari** or **Chrome on Android**. On a laptop, use Chrome and save the passkey to Google Password Manager.
@@ -20,11 +21,12 @@
 - **Keep likes visible.** Hidden likes count as zero, and clips with too few likes for their views don't earn.
 - **Post after the campaign starts.** Older videos can't earn.
 - **One channel per person.** Bought views earn nothing and can get your clips rejected.
-- Each clip can earn up to the campaign's per-clip cap ($20 on our launch campaign).
+- Each clip can earn up to the campaign's per-clip cap (shown on the campaign page).
 
 ## Getting paid
-- Earnings show as **Verified**, then **Holding** for the hold window (24 h), then **Paid**.
-- Paid USDC sits in your Cliprail account. Tap **Send USDC** to move it to an exchange that supports USDC on the **Monad** network. No fee to you.
+- Earnings show as **Verified**, then **Holding** for the campaign's hold window, then **Paid**.
+- Paid test USDC sits in your Cliprail account, and every payout counts toward your public clipper record (`/u/<your address>`).
+- It's test USDC on a test network: it can't be sent to an exchange or cashed out.
 
 ## Help
 Ask in this group. Include your claim code and your Short's link.

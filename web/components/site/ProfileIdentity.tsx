@@ -27,7 +27,9 @@ export function ProfileAvatar({ address, handle }: { address: string; handle?: s
 
 export function ProfileName({ address, handle }: { address: string; handle?: string | null }) {
   const id = useIdentity(address, handle);
-  return <>{displayName(address, id.handle).primary}</>;
+  const name = displayName(address, id.handle);
+  // a bare address reads better in mono (0 vs O)
+  return name.hasName ? <>{name.primary}</> : <span className="font-mono text-[0.85em]">{name.primary}</span>;
 }
 
 export function EditProfileButton({ address }: { address: string }) {

@@ -4,6 +4,7 @@
  * without it, mocks. Pages don't know the difference.
  */
 import { getBrief } from "@/lib/briefs";
+import { shortAddress } from "@/lib/format";
 import { gql, hasIndexer, num } from "@/lib/graphql";
 import { ytMeta } from "@/lib/ytmeta";
 import * as Q from "@/lib/queries";
@@ -22,7 +23,7 @@ async function toCampaign(r: Row): Promise<Campaign> {
   return {
     id: r.id,
     brand: r.brand as Address,
-    brandName: brief.brandName,
+    brandName: brief.brandName || shortAddress(r.brand as string),
     title: brief.title,
     brief: brief.brief,
     sourceVideoId: brief.sourceVideoId,
