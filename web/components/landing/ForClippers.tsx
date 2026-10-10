@@ -3,6 +3,7 @@ import { LinkButton } from "@/components/ui/Button";
 import { LoopVideo } from "@/components/ui/LoopVideo";
 import { CheckCircle } from "@/components/ui/Icons";
 import { Reveal } from "@/components/ui/Reveal";
+import { CreatorCarousel } from "@/components/landing/CreatorCarousel";
 
 const CREATORS = [
   { src: "/photos/creator-viral.webp", caption: "Your clip takes off", alt: "Woman reacting with surprise as phones show her clip" },
@@ -91,7 +92,9 @@ export function ForClippers() {
         </div>
       </div>
 
-      <div className="mt-14 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      {/* phones and tablets: a stacked carousel; desktop: the four in a row */}
+      <CreatorCarousel items={CREATORS} className="mt-12 overflow-x-clip py-2 lg:hidden" />
+      <div className="mt-14 hidden grid-cols-4 gap-4 lg:grid">
         {CREATORS.map((c) => (
           <figure key={c.src} className="group relative aspect-[4/5] overflow-hidden rounded-3xl">
             <Image src={c.src} alt={c.alt} fill sizes="(min-width: 1024px) 18rem, 45vw" className="object-cover transition duration-700 group-hover:scale-105" />
