@@ -1,6 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
+import { CloseIcon } from "@/components/ui/Icons";
 
 /** Controlled dialog for actions (send, flag, top up…). The body gets `close()` to call after success. */
 export function ActionDialog({
@@ -27,7 +28,7 @@ export function ActionDialog({
           <Dialog.Title className="text-lg font-semibold">{title}</Dialog.Title>
           {description && <Dialog.Description className="mt-1 text-sm text-muted">{description}</Dialog.Description>}
           <div className="mt-5">{children}</div>
-          <Dialog.Close className="absolute top-4 right-4 rounded-md px-2 text-muted transition-[color,transform] duration-200 ease-out-soft hover:rotate-90 hover:text-fg" aria-label="Close">✕</Dialog.Close>
+          <Dialog.Close className="absolute top-3.5 right-3.5 grid size-8 place-items-center rounded-full text-muted transition-[color,transform,background-color] duration-200 ease-out-soft hover:rotate-90 hover:bg-surface-2 hover:text-fg" aria-label="Close"><CloseIcon /></Dialog.Close>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

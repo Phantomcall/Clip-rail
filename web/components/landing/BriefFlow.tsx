@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { compact, usd } from "@/lib/format";
+import { LockIcon, CheckIcon } from "@/components/ui/Icons";
 
 const STEPS = [
   { title: "Launch a campaign in minutes", body: "Set the budget, the rate per 1M views and the rules. The budget is locked in escrow, so clippers know it's real." },
@@ -51,7 +52,7 @@ export function BriefFlow() {
         </ol>
 
         <div className="glass dots relative grid place-items-center rounded-[28px] px-4 py-14">
-          <span className="absolute top-6 left-6 rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-semibold shadow-[var(--shadow-soft)]">🔒 Locked in escrow</span>
+          <span className="absolute top-6 left-6 inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-semibold shadow-[var(--shadow-soft)]"><LockIcon className="size-3.5 text-money" />Locked in escrow</span>
           <span className="absolute top-8 right-6 rounded-full border border-line bg-surface px-3 py-1.5 text-xs text-muted shadow-[var(--shadow-soft)]">YouTube Shorts</span>
           <div className="w-full max-w-sm rounded-2xl border border-line bg-surface p-5 shadow-[var(--shadow-float)]">
             <div className="flex items-center justify-between">
@@ -87,7 +88,7 @@ export function BriefFlow() {
           </div>
           <span className="absolute bottom-6 left-8 rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-medium shadow-[var(--shadow-soft)]">$1,500 / 1M views</span>
           <span className="absolute right-6 bottom-6 flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-semibold shadow-[var(--shadow-soft)]">
-            <span className="grid size-4 place-items-center rounded-full bg-money text-[9px] text-white">✓</span> Live in 4 steps
+            <span className="grid size-4 place-items-center rounded-full bg-money text-white dark:text-[#04311a]"><CheckIcon className="size-3" /></span> Live in 4 steps
           </span>
         </div>
       </div>

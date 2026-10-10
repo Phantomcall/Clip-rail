@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { LoopVideo } from "@/components/ui/LoopVideo";
 import { Avatar } from "@/components/ui/Avatar";
-import { ShortsIcon, VerifiedIcon } from "@/components/ui/Icons";
+import { ShortsIcon, VerifiedIcon, CheckIcon } from "@/components/ui/Icons";
 import { Arrow } from "@/components/ui/Arrow";
 
 /** A real photo of the step, with the step's UI card floating over its lower half. */
@@ -48,8 +48,8 @@ function RegisterMini() {
       </div>
       <div className="mt-3 rounded-lg border border-line px-2.5 py-2 text-[11px] text-muted">youtube.com/shorts/Ab3dEf6hIj9</div>
       <ul className="mt-2 space-y-1 text-[11px]">
-        <li className="text-money">✓ Code found in description</li>
-        <li className="text-money">✓ Posted after the campaign started</li>
+        <li className="flex items-center gap-1 text-money"><CheckIcon className="size-3" /> Code found in description</li>
+        <li className="flex items-center gap-1 text-money"><CheckIcon className="size-3" /> Posted after the campaign started</li>
       </ul>
       <div className="mt-3 rounded-full bg-ink py-2 text-center text-xs font-semibold text-white">Register clip</div>
     </div>

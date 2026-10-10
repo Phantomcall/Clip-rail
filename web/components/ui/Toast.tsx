@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { createContext, useCallback, useContext, useState } from "react";
 import { cn } from "@/lib/cn";
 import { txUrl } from "@/lib/format";
+import { ExternalIcon } from "@/components/ui/Icons";
 
 type Tone = "success" | "error" | "info";
 interface Toast {
@@ -47,7 +48,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               <div className="font-semibold">{t.title}</div>
               {t.txHash && (
                 <a href={txUrl(t.txHash)} target="_blank" rel="noreferrer" className="text-xs text-accent-hover hover:underline">
-                  View transaction ↗
+                  View transaction <ExternalIcon className="inline size-3" />
                 </a>
               )}
             </motion.div>

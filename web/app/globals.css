@@ -257,11 +257,12 @@
 
 /* Pin light tokens inside "screenshot" cards that must look the same in both themes. */
 /* How it works band (MakeBank). Its base starts at the sky's colour where the sky above fades out (#a5c9ed by
-   day, #133762 at night), deepens behind the steps and lands on the ambient sky's first colour below (#d6e7fa,
+   day, #133762 at night), deepens behind the steps and lands on the ambient sky's first colour below (#bcd3ef,
    #0c1834). The day ramps go through saturated blues, so the band never passes through grey. */
 .cr-band-day {
-  background: linear-gradient(180deg, #a5c9ed 0, #6c9be0 7rem, #3463b6 15rem, #17357a 24rem, #0b1840 34rem,
-    #0b1840 calc(100% - 24rem), #1c3f8c calc(100% - 15rem), #4a7fcf calc(100% - 9rem), #9dc2ef calc(100% - 3.5rem), #d6e7fa 100%);
+  /* the light ends are kept short and soft, so neither join glows */
+  background: linear-gradient(180deg, #a5c9ed 0, #5d8ad3 4rem, #2c55a8 10rem, #15306f 18rem, #0b1840 28rem,
+    #0b1840 calc(100% - 22rem), #17336f calc(100% - 14rem), #2f5ba6 calc(100% - 8rem), #7ea5dc calc(100% - 3rem), #bcd3ef 100%);
 }
 .cr-band-night {
   background: linear-gradient(180deg, #133762 0, #0f2a52 10rem, #0a1a3a 22rem, #080f26 34rem,

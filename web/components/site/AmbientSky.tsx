@@ -16,7 +16,7 @@ export function AmbientSky() {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
       {/* day */}
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,#d6e7fa_0%,#e6f0fb_22%,#eef4fb_55%,#f3f6f9_85%,var(--color-bg)_100%)] transition-opacity duration-[1400ms] dark:opacity-0" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,#bcd3ef_0%,#d6e5f6_18%,#e8f0fa_45%,#f1f5f9_80%,var(--color-bg)_100%)] transition-opacity duration-[1400ms] dark:opacity-0" />
       <div className="absolute inset-0 transition-opacity duration-[1400ms] dark:opacity-0">
         {CLOUDS.map((c) => (
           <div key={c} className={`absolute rounded-full bg-white/70 blur-3xl ${c}`} />

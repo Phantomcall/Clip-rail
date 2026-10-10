@@ -1,7 +1,7 @@
 "use client";
 
 import { SignInButton } from "@/components/auth/SignInButton";
-import { CheckCircle } from "@/components/ui/Icons";
+import { CheckCircle, KeyIcon } from "@/components/ui/Icons";
 import { useAuth } from "@/lib/auth";
 import type { Address } from "@/lib/types";
 
@@ -14,8 +14,8 @@ export function RequireAuth({ title, children }: { title: string; children: (add
     return (
       <div className="mx-auto max-w-md py-10 sm:py-16">
         <div className="rounded-[var(--radius-card)] border border-line bg-surface p-7 text-center shadow-[var(--shadow-float)] sm:p-9">
-          <span aria-hidden className="mx-auto grid size-14 place-items-center rounded-2xl bg-accent-soft text-2xl">
-            🔑
+          <span aria-hidden className="mx-auto grid size-14 place-items-center rounded-2xl bg-accent-soft text-accent-solid-hover dark:bg-accent/20 dark:text-[#c9bfff]">
+            <KeyIcon className="size-6" />
           </span>
           <h2 className="mt-4 text-2xl font-bold">{title}</h2>
           <p className="mt-1.5 text-sm text-muted">Sign in with your passkey to continue.</p>
