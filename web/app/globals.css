@@ -256,6 +256,29 @@
 }
 
 /* Pin light tokens inside "screenshot" cards that must look the same in both themes. */
+/* How it works band (MakeBank). Its base starts at the sky's colour where the sky above fades out (#a5c9ed by
+   day, #133762 at night), deepens behind the steps and lands on the ambient sky's first colour below (#d6e7fa,
+   #0c1834). The day ramps go through saturated blues, so the band never passes through grey. */
+.cr-band-day {
+  background: linear-gradient(180deg, #a5c9ed 0, #6c9be0 7rem, #3463b6 15rem, #17357a 24rem, #0b1840 34rem,
+    #0b1840 calc(100% - 24rem), #1c3f8c calc(100% - 15rem), #4a7fcf calc(100% - 9rem), #9dc2ef calc(100% - 3.5rem), #d6e7fa 100%);
+}
+.cr-band-night {
+  background: linear-gradient(180deg, #133762 0, #0f2a52 10rem, #0a1a3a 22rem, #080f26 34rem,
+    #080f26 calc(100% - 18rem), #0a1530 calc(100% - 8rem), #0c1834 100%);
+}
+/* The photo appears only once the campaign cards are past, and dissolves before the band ends. Phones: a short
+   fade, so the portrait clip's face (just below the last card) is at full strength. */
+.cr-band-media {
+  mask-image: linear-gradient(180deg, transparent 0, #000 8.5rem, #000 calc(100% - 22rem), transparent calc(100% - 6rem));
+}
+@media (min-width: 48rem) {
+  .cr-band-media {
+    mask-image: linear-gradient(180deg, transparent 0, transparent 9rem, rgb(0 0 0 / 0.55) 16rem, #000 24rem,
+      #000 calc(100% - 22rem), transparent calc(100% - 6rem));
+  }
+}
+
 /* Reveal (components/ui/Reveal.tsx): sections below the fold fade up once as they scroll into view. */
 [data-reveal="wait"] { opacity: 0; transform: translateY(18px); }
 [data-reveal="in"] { animation: var(--animate-reveal); }

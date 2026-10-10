@@ -81,20 +81,27 @@ export function MakeBank() {
     <section id="how-it-works" className="relative isolate -mt-56 overflow-hidden text-white">
       {/* Full-bleed photo backdrop, darkened for readable text, fading in and out at the edges so it blends with
           the sections above and below in every theme */}
-      <div aria-hidden className="absolute inset-0 -z-10 bg-[#0b1840] md:bg-transparent dark:bg-[#080d1e] md:dark:bg-transparent">
-        {/* tablet and desktop: a clipper checking her phone, a landscape cut mirrored so she sits on the right */}
-        <LoopVideo src="/video/band-texting2.mp4" poster="/video/band-texting2.jpg" className="absolute inset-0 hidden size-full object-cover object-[50%_40%] md:block" />
-        {/* phones: the band is ~2,500 px tall there, so a landscape clip stretched over it is blown up ~6x. Instead the
-            same clipper, filmed vertically, sits behind the heading at its natural 9:16 and fades into the navy the
-            step cards sit on. Hidden videos never load (LoopVideo waits until it's on screen). */}
-        <div className="absolute inset-x-0 top-0 aspect-[9/16] md:hidden">
-          <LoopVideo src="/video/band-portrait.mp4" poster="/video/band-portrait.jpg" className="size-full object-cover object-[40%_30%]" />
-          {/* her face stays clear above the heading; the text area below gets a deeper wash so it reads cleanly */}
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent from-35% via-[#0b1840]/60 via-60% to-[#0b1840] dark:via-[#080d1e]/60 dark:to-[#080d1e]" />
+      <div aria-hidden className="absolute inset-0 -z-10">
+        {/* The band's own sky: it starts at the exact colour of the sky above (which fades out over it), deepens to
+            navy behind the steps, then lightens back through blues into the ambient sky below, never through grey.
+            Day and night are separate layers that cross-fade with the theme, like the rest of the sky. */}
+        <div className="cr-band-day absolute inset-0 transition-opacity duration-[1400ms] dark:opacity-0" />
+        <div className="cr-band-night absolute inset-0 opacity-0 transition-opacity duration-[1400ms] dark:opacity-100" />
+        {/* the video fades in below the campaign cards and dissolves before the band ends (cr-band-media mask) */}
+        <div className="cr-band-media absolute inset-0">
+          {/* tablet and desktop: a clipper checking her phone, a landscape cut mirrored so she sits on the right */}
+          <LoopVideo src="/video/band-texting2.mp4" poster="/video/band-texting2.jpg" className="absolute inset-0 hidden size-full object-cover object-[50%_40%] md:block" />
+          {/* phones: the band is ~2,500 px tall there, so a landscape clip stretched over it is blown up ~6x. Instead the
+              same clipper, filmed vertically, sits behind the heading at its natural 9:16 and fades into the navy the
+              step cards sit on. Hidden videos never load (LoopVideo waits until it's on screen). */}
+          <div className="absolute inset-x-0 top-0 aspect-[9/16] md:hidden">
+            <LoopVideo src="/video/band-portrait.mp4" poster="/video/band-portrait.jpg" className="size-full object-cover object-[40%_30%]" />
+            {/* her face stays clear above the heading; the text area below gets a deeper wash so it reads cleanly */}
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent from-35% via-[#0b1840]/60 via-60% to-[#0b1840] dark:via-[#080f26]/60 dark:to-[#080f26]" />
+          </div>
+          {/* darken the photo so white text reads on it */}
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgb(11_40_110/0.35)_0%,rgb(10_30_85/0.3)_35%,rgb(8_20_60/0.7)_75%,rgb(8_15_40/0.85)_100%)] transition-[background] duration-[1400ms] dark:bg-[linear-gradient(180deg,rgb(8_21_48/0.55)_0%,rgb(8_21_48/0.4)_35%,rgb(8_14_34/0.78)_75%,rgb(8_11_24/0.9)_100%)]" />
         </div>
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgb(11_63_156/0.3)_0%,rgb(12_45_115/0.22)_30%,rgb(10_25_70/0.7)_75%,rgb(8_15_40/0.9)_100%)] transition-[background] duration-[1400ms] dark:bg-[linear-gradient(180deg,rgb(8_21_48/0.55)_0%,rgb(8_21_48/0.38)_30%,rgb(8_14_34/0.78)_75%,rgb(8_11_24/0.9)_100%)]" />
-        {/* blend the bottom straight into the ambient sky's first colour, so there's no grey fog between them */}
-        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-[#d6e7fa] dark:to-[#0c1834]" />
       </div>
       <div className="mx-auto max-w-6xl px-5 pt-80 pb-40 sm:px-10">
         <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold tracking-wider text-white/60 uppercase">How it works</span>
