@@ -7,6 +7,7 @@ import { SignInButton } from "@/components/auth/SignInButton";
 import { Logo } from "@/components/site/Logo";
 import { ThemeToggle } from "@/components/site/ThemeToggle";
 import { cn } from "@/lib/cn";
+import { ActivePill } from "@/components/ui/ActivePill";
 
 const LINKS = [
   { href: "/guide", label: "How it works", match: (p: string) => p.startsWith("/guide"), show: "lg:block" },
@@ -98,13 +99,14 @@ export function Header() {
                 href={l.href}
                 aria-current={on ? "page" : undefined}
                 className={cn(
-                  "hidden rounded-full px-3.5 py-2 font-medium transition-colors",
+                  "relative isolate hidden rounded-full px-3.5 py-2 font-medium transition-colors duration-200",
                   l.show,
                   on
-                    ? "bg-accent-soft text-accent-solid-hover dark:bg-white/10 dark:text-white"
+                    ? "text-accent-solid-hover dark:text-white"
                     : "text-fg/70 hover:bg-black/[0.04] hover:text-fg dark:text-white/65 dark:hover:bg-white/[0.06] dark:hover:text-white",
                 )}
               >
+                {on && <ActivePill id="nav-active" className="bg-accent-soft dark:bg-white/10" />}
                 {l.label}
               </Link>
             );

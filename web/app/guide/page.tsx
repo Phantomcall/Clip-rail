@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/site/PageHeader";
 import { LinkButton } from "@/components/ui/Button";
 import { CheckCircle } from "@/components/ui/Icons";
 import { cn } from "@/lib/cn";
+import { ActivePill } from "@/components/ui/ActivePill";
 
 export const metadata = { title: "How it works · Cliprail" };
 
@@ -100,10 +101,11 @@ export default async function GuidePage({ searchParams }: { searchParams: Promis
               scroll={false}
               aria-current={k === track ? "page" : undefined}
               className={cn(
-                "rounded-full px-3 py-2 text-xs font-semibold whitespace-nowrap transition sm:px-4 sm:text-sm",
-                k === track ? "bg-accent-solid text-accent-fg shadow-[var(--shadow-soft)]" : "text-muted hover:text-fg",
+                "relative isolate rounded-full px-3 py-2 text-xs font-semibold whitespace-nowrap transition-colors duration-200 sm:px-4 sm:text-sm",
+                k === track ? "text-accent-fg" : "text-muted hover:text-fg",
               )}
             >
+              {k === track && <ActivePill id="guide-track" className="bg-accent-solid shadow-[var(--shadow-soft)]" />}
               For {TRACKS[k].label.toLowerCase()}
             </Link>
           ))}

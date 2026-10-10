@@ -14,6 +14,8 @@ import { StatStrip } from "@/components/landing/StatStrip";
 import { TrustBar } from "@/components/landing/TrustBar";
 import { CampaignCard } from "@/components/site/CampaignCard";
 import { getCampaigns, getTotals, now } from "@/lib/data";
+import { Arrow } from "@/components/ui/Arrow";
+import { Reveal } from "@/components/ui/Reveal";
 
 export default async function Home() {
   const [campaigns, totals] = await Promise.all([getCampaigns(), getTotals()]);
@@ -35,11 +37,11 @@ export default async function Home() {
             <p className="eyebrow">Open now</p>
             <h2 className="mt-2 text-4xl font-bold">Live campaigns</h2>
           </div>
-          <Link href="/campaigns" className="shrink-0 whitespace-nowrap rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium shadow-[var(--shadow-soft)] hover:border-muted/50">See all →</Link>
+          <Link href="/campaigns" className="group shrink-0 whitespace-nowrap rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium shadow-[var(--shadow-soft)] transition-[border-color,box-shadow,transform] duration-200 ease-out-soft hover:-translate-y-px hover:border-muted/50 hover:shadow-[var(--shadow-float)]">See all <Arrow /></Link>
         </div>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Reveal className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {live.map((c) => <CampaignCard key={c.id} campaign={c} now={NOW} />)}
-        </div>
+        </Reveal>
       </section>
       </div>
 
@@ -48,12 +50,12 @@ export default async function Home() {
       {/* MakeBank's photo blends into the ambient sky's first colour, so the sky starts right where it ends */}
       <div className="relative isolate flow-root">
         <AmbientSky />
-        <ForClippers />
-        <BriefFlow />
-        <Fairness />
-        <ClipWall />
-        <Faq />
-        <FinalCta />
+        <Reveal><ForClippers /></Reveal>
+        <Reveal><BriefFlow /></Reveal>
+        <Reveal><Fairness /></Reveal>
+        <Reveal><ClipWall /></Reveal>
+        <Reveal><Faq /></Reveal>
+        <Reveal><FinalCta /></Reveal>
       </div>
     </>
   );

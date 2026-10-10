@@ -51,6 +51,34 @@
   --animate-drift: drift 90s linear infinite;
   --animate-twinkle: twinkle 3.5s ease-in-out infinite;
   --animate-shoot: shoot 9s ease-in infinite;
+
+  /* Interaction motion: one easing and three speeds everywhere (fast 120 ms, base 200 ms, slow 320 ms). */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-soft: cubic-bezier(0.4, 0, 1, 1);
+  --animate-pop-in: pop-in 200ms var(--ease-out-soft);
+  --animate-overlay-in: fade-in 240ms var(--ease-out-soft);
+  --animate-overlay-out: fade-out 160ms var(--ease-in-soft) forwards;
+  --animate-dialog-in: dialog-in 320ms var(--ease-out-soft);
+  --animate-dialog-out: dialog-out 160ms var(--ease-in-soft) forwards;
+  --animate-reveal: reveal 700ms var(--ease-out-soft) both;
+  @keyframes pop-in {
+    from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+  }
+  @keyframes fade-out {
+    to { opacity: 0; }
+  }
+  @keyframes dialog-in {
+    from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  }
+  @keyframes dialog-out {
+    to { opacity: 0; transform: translateY(6px) scale(0.98); }
+  }
+  @keyframes reveal {
+    from { opacity: 0; transform: translateY(18px); }
+  }
   @keyframes float {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-8px); }
@@ -228,6 +256,10 @@
 }
 
 /* Pin light tokens inside "screenshot" cards that must look the same in both themes. */
+/* Reveal (components/ui/Reveal.tsx): sections below the fold fade up once as they scroll into view. */
+[data-reveal="wait"] { opacity: 0; transform: translateY(18px); }
+[data-reveal="in"] { animation: var(--animate-reveal); }
+
 @utility force-light {
   --color-surface: #ffffff;
   --color-surface-2: #f1f0ea;

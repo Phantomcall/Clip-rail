@@ -3,6 +3,7 @@ import Image from "next/image";
 import { LoopVideo } from "@/components/ui/LoopVideo";
 import { Avatar } from "@/components/ui/Avatar";
 import { ShortsIcon, VerifiedIcon } from "@/components/ui/Icons";
+import { Arrow } from "@/components/ui/Arrow";
 
 /** A real photo of the step, with the step's UI card floating over its lower half. */
 function Frame({ photo, alt, children }: { photo: string; alt: string; children: React.ReactNode }) {
@@ -93,8 +94,8 @@ export function MakeBank() {
         <p className="mt-3 max-w-xl text-white/60">
           The money exists before you post, the views are checked by a Chainlink CRE oracle, and the payout is a transaction you can open.
         </p>
-        <Link href="/guide" className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-white/85 underline-offset-4 hover:text-white hover:underline">
-          Read the full guide for clippers, brands and judges →
+        <Link href="/guide" className="group mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-white/85 underline-offset-4 transition-colors duration-200 hover:text-white hover:underline">
+          Read the full guide for clippers, brands and judges <Arrow />
         </Link>
         <div className="mt-12 grid gap-10 md:grid-cols-3">
           {steps.map((s) => (

@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { usd } from "@/lib/format";
+import { ActivePill } from "@/components/ui/ActivePill";
 
 /*
  * "Bots earn nothing", as a walkthrough: pick a clip and watch the vault's rules decide what it earns. Numbers follow the
@@ -105,10 +106,11 @@ export function Fairness() {
             role="tab"
             aria-selected={i === k}
             onClick={() => setK(i)}
-            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-              i === k ? "bg-accent-solid text-accent-fg shadow-[var(--shadow-soft)]" : "glass text-muted hover:text-fg"
+            className={`relative isolate rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200 ${
+              i === k ? "text-accent-fg" : "glass text-muted hover:text-fg"
             }`}
           >
+            {i === k && <ActivePill id="fairness-scenario" className="bg-accent-solid shadow-[var(--shadow-soft)]" />}
             {sc.label}
           </button>
         ))}

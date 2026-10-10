@@ -1,5 +1,6 @@
 "use client";
 
+import { MenuPanel } from "@/components/ui/MenuPanel";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 export type ThemeMode = "auto" | "light" | "dark";
@@ -246,11 +247,7 @@ export function ThemeToggle() {
       >
         <BarIcon night={sky === "evening" || sky === "night"} />
       </button>
-      {open && (
-        <div
-          role="menu"
-          className="absolute top-11 right-0 z-50 w-64 rounded-2xl border border-line bg-surface p-1.5 shadow-[var(--shadow-float)]"
-        >
+      <MenuPanel open={open} className="absolute top-11 right-0 z-50 w-64 rounded-2xl border border-line bg-surface p-1.5 shadow-[var(--shadow-float)]">
           {OPTIONS.map(({ mode: m, label, hint, Icon }) => (
             <button
               key={m}
@@ -268,8 +265,7 @@ export function ThemeToggle() {
               {mode === m && <span className="size-1.5 rounded-full bg-accent" />}
             </button>
           ))}
-        </div>
-      )}
+      </MenuPanel>
     </div>
   );
 }
