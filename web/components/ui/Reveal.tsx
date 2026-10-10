@@ -7,7 +7,8 @@ import { useEffect, useRef } from "react";
  * page loads, and does nothing without JavaScript or under reduced motion, so content is never stuck invisible.
  * State lives in a data attribute (no re-render): wait → in. Styles in globals.css.
  */
-export function Reveal({ children, className }: { children: React.ReactNode; className?: string }) {
+/** `stagger`: the children come in one after another instead of the block as a whole. */
+export function Reveal({ children, className, stagger }: { children: React.ReactNode; className?: string; stagger?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -29,7 +30,7 @@ export function Reveal({ children, className }: { children: React.ReactNode; cla
   }, []);
 
   return (
-    <div ref={ref} className={className}>
+    <div ref={ref} className={stagger ? `cr-stagger ${className ?? ""}` : className}>
       {children}
     </div>
   );

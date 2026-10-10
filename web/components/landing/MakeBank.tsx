@@ -4,6 +4,7 @@ import { LoopVideo } from "@/components/ui/LoopVideo";
 import { Avatar } from "@/components/ui/Avatar";
 import { ShortsIcon, VerifiedIcon, CheckIcon } from "@/components/ui/Icons";
 import { Arrow } from "@/components/ui/Arrow";
+import { Reveal } from "@/components/ui/Reveal";
 
 /**
  * A real photo of the step with the step's UI card floating over its lower half. On phones the step's text sits
@@ -22,13 +23,14 @@ function Frame({ photo, alt, children, caption }: { photo: string; alt: string; 
   );
 }
 
+/** Number, title and text, centred; they rise in one after another as the step scrolls into view. */
 function StepText({ n, title, body }: { n: string; title: string; body: string }) {
   return (
-    <>
+    <Reveal stagger className="flex flex-col items-center text-center">
       <span className="rounded-md bg-white/10 px-2 py-1 font-mono text-[11px] text-white/60">{n}</span>
       <h3 className="mt-3 text-xl font-semibold">{title}</h3>
-      <p className="mt-1.5 text-sm text-white/60">{body}</p>
-    </>
+      <p className="mt-1.5 max-w-xs text-sm text-balance text-white/60">{body}</p>
+    </Reveal>
   );
 }
 
