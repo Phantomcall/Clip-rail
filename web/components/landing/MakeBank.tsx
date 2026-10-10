@@ -81,9 +81,17 @@ export function MakeBank() {
     <section id="how-it-works" className="relative isolate -mt-56 overflow-hidden text-white">
       {/* Full-bleed photo backdrop, darkened for readable text, fading in and out at the edges so it blends with
           the sections above and below in every theme */}
-      <div aria-hidden className="absolute inset-0 -z-10 ">
-        {/* a clipper checking her phone: a landscape cut of a vertical clip, mirrored so she sits on the right */}
-        <LoopVideo src="/video/band-texting2.mp4" poster="/video/band-texting2.jpg" className="absolute inset-0 size-full object-cover object-[50%_40%]" />
+      <div aria-hidden className="absolute inset-0 -z-10 bg-[#0b1840] md:bg-transparent dark:bg-[#080d1e] md:dark:bg-transparent">
+        {/* tablet and desktop: a clipper checking her phone, a landscape cut mirrored so she sits on the right */}
+        <LoopVideo src="/video/band-texting2.mp4" poster="/video/band-texting2.jpg" className="absolute inset-0 hidden size-full object-cover object-[50%_40%] md:block" />
+        {/* phones: the band is ~2,500 px tall there, so a landscape clip stretched over it is blown up ~6x. Instead the
+            same clipper, filmed vertically, sits behind the heading at its natural 9:16 and fades into the navy the
+            step cards sit on. Hidden videos never load (LoopVideo waits until it's on screen). */}
+        <div className="absolute inset-x-0 top-0 aspect-[9/16] md:hidden">
+          <LoopVideo src="/video/band-portrait.mp4" poster="/video/band-portrait.jpg" className="size-full object-cover object-[40%_30%]" />
+          {/* her face stays clear above the heading; the text area below gets a deeper wash so it reads cleanly */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent from-35% via-[#0b1840]/60 via-60% to-[#0b1840] dark:via-[#080d1e]/60 dark:to-[#080d1e]" />
+        </div>
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgb(11_63_156/0.3)_0%,rgb(12_45_115/0.22)_30%,rgb(10_25_70/0.7)_75%,rgb(8_15_40/0.9)_100%)] transition-[background] duration-[1400ms] dark:bg-[linear-gradient(180deg,rgb(8_21_48/0.55)_0%,rgb(8_21_48/0.38)_30%,rgb(8_14_34/0.78)_75%,rgb(8_11_24/0.9)_100%)]" />
         {/* blend the bottom straight into the ambient sky's first colour, so there's no grey fog between them */}
         <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-[#d6e7fa] dark:to-[#0c1834]" />
@@ -94,8 +102,8 @@ export function MakeBank() {
         <p className="mt-3 max-w-xl text-white/60">
           The money exists before you post, the views are checked by a Chainlink CRE oracle, and the payout is a transaction you can open.
         </p>
-        <Link href="/guide" className="group mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-white/85 underline-offset-4 transition-colors duration-200 hover:text-white hover:underline">
-          Read the full guide for clippers, brands and judges <Arrow />
+        <Link href="/guide" className="group mt-4 inline-block text-sm font-semibold text-white/85 underline-offset-4 transition-colors duration-200 hover:text-white hover:underline">
+          Read the full guide for clippers, brands and <span className="whitespace-nowrap">judges <Arrow /></span>
         </Link>
         <div className="mt-12 grid gap-10 md:grid-cols-3">
           {steps.map((s) => (
