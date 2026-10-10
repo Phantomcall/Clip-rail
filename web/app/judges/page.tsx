@@ -5,7 +5,10 @@ import { LinkButton } from "@/components/ui/Button";
 import { CheckCircle } from "@/components/ui/Icons";
 import { Arrow } from "@/components/ui/Arrow";
 
-export const metadata = { title: "Judges · Cliprail" };
+export const metadata = {
+  title: "Judges · Cliprail",
+  description: "When a brand disputes a clip, a judge makes the call, and every call builds a public track record.",
+};
 
 const STEPS = [
   { n: "01", title: "A brand flags a clip", body: "During the hold window, a brand can flag one clip it thinks broke the rules. The earnings still in hold freeze." },

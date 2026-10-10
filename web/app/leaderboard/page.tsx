@@ -7,7 +7,10 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { getCampaigns, getLeaderboard } from "@/lib/data";
 import { compact, count, usd } from "@/lib/format";
 
-export const metadata = { title: "Leaderboard · Cliprail" };
+export const metadata = {
+  title: "Leaderboard · Cliprail",
+  description: "Clippers ranked by paid, verified views. Bot views and rejected clips don\u2019t count.",
+};
 
 export default async function LeaderboardPage() {
   const [clippers, campaigns] = await Promise.all([getLeaderboard(20), getCampaigns()]);

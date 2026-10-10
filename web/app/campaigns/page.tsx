@@ -4,7 +4,10 @@ import { CampaignCard } from "@/components/site/CampaignCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { getCampaigns, now } from "@/lib/data";
 
-export const metadata = { title: "Campaigns · Cliprail" };
+export const metadata = {
+  title: "Campaigns · Cliprail",
+  description: "Funded clipping campaigns: every budget is locked in escrow before you clip. Pick one and get paid per verified view.",
+};
 
 export default async function CampaignsPage() {
   const campaigns = await getCampaigns();

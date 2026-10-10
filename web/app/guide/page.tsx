@@ -6,7 +6,10 @@ import { CheckCircle } from "@/components/ui/Icons";
 import { cn } from "@/lib/cn";
 import { ActivePill } from "@/components/ui/ActivePill";
 
-export const metadata = { title: "How it works · Cliprail" };
+export const metadata = {
+  title: "How it works · Cliprail",
+  description: "Step-by-step guides for clippers, brands and judges, and the rules that protect each side.",
+};
 
 type Track = "clippers" | "brands" | "judges";
 type Step = { title: string; body: string };
