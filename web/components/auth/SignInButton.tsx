@@ -195,7 +195,7 @@ export function SignInButton() {
       }}
     >
       <Dialog.Trigger asChild>
-        <Button className="min-h-9 px-3">Sign in</Button>
+        <Button className="min-h-9 px-4">Sign in</Button>
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" />

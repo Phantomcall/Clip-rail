@@ -171,6 +171,22 @@ function AutoIcon() {
   );
 }
 
+/** The navbar's button: a plain outline sun or moon for the sky on screen (the menu keeps the coloured icons). */
+function BarIcon({ night }: { night: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      {night ? (
+        <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" />
+      ) : (
+        <>
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" />
+        </>
+      )}
+    </svg>
+  );
+}
+
 const OPTIONS: { mode: ThemeMode; label: string; hint: (sky: Sky) => string; Icon: () => React.ReactElement }[] = [
   { mode: "auto", label: "Auto", hint: (sky) => `Follows the sun where you are · ${SKY_LABEL[sky]} now`, Icon: AutoIcon },
   { mode: "light", label: "Day", hint: () => "Always the daytime sky", Icon: SunIcon },
@@ -216,7 +232,6 @@ export function ThemeToggle() {
     setOpen(false);
   };
 
-  const Current = mode === "light" ? SunIcon : mode === "dark" ? MoonIcon : AutoIcon;
 
   return (
     <div ref={ref} className="relative">
@@ -227,9 +242,9 @@ export function ThemeToggle() {
         aria-haspopup="menu"
         aria-expanded={open}
         title="Theme"
-        className="grid size-9 place-items-center rounded-full text-muted transition hover:bg-surface-2 hover:text-fg"
+        className="grid size-9 place-items-center rounded-full text-fg/70 transition-colors hover:bg-black/[0.04] hover:text-fg dark:text-white/70 dark:hover:bg-white/[0.06] dark:hover:text-white"
       >
-        <Current />
+        <BarIcon night={sky === "evening" || sky === "night"} />
       </button>
       {open && (
         <div
