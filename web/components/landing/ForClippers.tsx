@@ -2,6 +2,7 @@ import Image from "next/image";
 import { LinkButton } from "@/components/ui/Button";
 import { LoopVideo } from "@/components/ui/LoopVideo";
 import { CheckCircle } from "@/components/ui/Icons";
+import { Reveal } from "@/components/ui/Reveal";
 
 const CREATORS = [
   { src: "/photos/creator-viral.webp", caption: "Your clip takes off", alt: "Woman reacting with surprise as phones show her clip" },
@@ -16,11 +17,47 @@ const POINTS = [
   "Paid in USDC per verified view, straight to your account.",
 ];
 
-/** Clipper section: a real photo with the actual claim-code screen in the phone, then a strip of creators. */
+/** Clipper section: a clipper scrolling Cliprail on her phone (video), the pitch, then a strip of creators. */
 export function ForClippers() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-20">
-      <div className="grid items-center gap-12 lg:grid-cols-[1fr_26rem]">
+      {/* phones and tablets: the heading sits in the empty sky beside her head, the pitch and button over the bottom
+          of the video, and the checklist right under it. Only one layout's video loads (LoopVideo waits until
+          it's on screen, and hidden elements never are). */}
+      <div className="mx-auto max-w-[26rem] lg:hidden">
+        <div className="relative aspect-[9/16] overflow-hidden rounded-[28px] shadow-[0_30px_80px_-30px_rgb(18_18_22/0.45)]">
+          <LoopVideo src="/video/clipper-scroll.mp4" poster="/video/clipper-scroll.jpg" className="absolute inset-0 size-full object-cover" />
+          {/* scrims so white text reads over the bright backdrop */}
+          <div className="absolute inset-x-0 top-0 h-[42%] bg-gradient-to-b from-black/60 via-black/25 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/85 via-black/55 to-transparent" />
+          <Reveal stagger className="absolute top-0 left-0 w-[60%] p-5 text-white">
+            <span className="inline-block rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold tracking-wider uppercase backdrop-blur">For clippers</span>
+            <h2 className="mt-3 text-[1.75rem] leading-[1.1] font-bold text-balance">Your phone is the whole studio.</h2>
+          </Reveal>
+          <Reveal stagger className="absolute inset-x-0 bottom-0 flex flex-col items-center px-6 pb-6 text-center text-white">
+            <p className="text-sm text-balance text-white/85">
+              Grab a campaign, cut the best moment, put your code in the description. The oracle does the counting and the escrow does
+              the paying.
+            </p>
+            <div className="mt-4">
+              <LinkButton href="/campaigns">Find a campaign →</LinkButton>
+            </div>
+          </Reveal>
+        </div>
+        <ul className="mt-6 flex flex-col gap-3">
+          {POINTS.map((p) => (
+            <li key={p} className="flex items-start gap-3 text-sm">
+              <span className="mt-0.5 text-money">
+                <CheckCircle />
+              </span>
+              {p}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* desktop: copy beside the video */}
+      <div className="hidden items-center gap-12 lg:grid lg:grid-cols-[1fr_26rem]">
         <div>
           <span className="rounded-full bg-accent-soft px-3 py-1 text-[11px] font-semibold tracking-wider text-accent-solid-hover uppercase dark:text-[#c9bfff]">For clippers</span>
           <h2 className="mt-4 max-w-lg text-4xl font-bold sm:text-5xl">Your phone is the whole studio.</h2>
