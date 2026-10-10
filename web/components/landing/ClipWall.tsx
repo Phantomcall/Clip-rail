@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { CheckCircle } from "@/components/ui/Icons";
+import { CheckCircle, PlayIcon } from "@/components/ui/Icons";
 import { compact } from "@/lib/format";
 
 /** Sample Shorts: thumbnails are stock photos cropped to 9:16; captions, views and payouts are illustrative. */
@@ -42,10 +42,10 @@ function ShortCard({ i }: { i: number }) {
         <p className="line-clamp-2 text-[13px] leading-snug font-semibold">{c.caption}</p>
         <div className="mt-1.5 flex items-center justify-between text-[11px]">
           <span className="text-white/75">{c.handle}</span>
-          <span className="tabular font-semibold">▶ {compact(c.views)}</span>
+          <span className="tabular inline-flex items-center gap-1 font-semibold"><PlayIcon /> {compact(c.views)}</span>
         </div>
         {c.paid && (
-          <span className="tabular mt-2 inline-flex items-center gap-1 rounded-full bg-money px-2 py-0.5 text-[10px] font-bold text-white">
+          <span className="tabular mt-2 inline-flex items-center gap-1 rounded-full bg-money px-2 py-0.5 text-[10px] font-bold text-white dark:text-[#04311a]">
             <CheckCircle className="size-3" /> {c.paid} paid
           </span>
         )}

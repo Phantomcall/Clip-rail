@@ -13,10 +13,17 @@ const inter = localFont({ src: "./fonts/Inter.woff2", variable: "--font-inter", 
 const display = localFont({ src: "./fonts/SpaceGrotesk.woff2", variable: "--font-display-face", weight: "300 700", display: "swap" });
 const mono = localFont({ src: "./fonts/JetBrainsMono.woff2", variable: "--font-mono-face", weight: "100 800", display: "swap" });
 
+const DESCRIPTION =
+  "Brands fund clipping campaigns in escrow on Monad. Clippers are paid in USDC per verified YouTube Shorts view.";
+
 export const metadata: Metadata = {
+  // absolute URLs for link previews (app/opengraph-image.png, app/twitter-image.png); passkeys are bound to this domain
+  metadataBase: new URL("https://cliprail.vercel.app"),
   title: "Cliprail: get paid for every verified view",
-  description:
-    "Brands fund clipping campaigns in escrow on Monad. Clippers are paid in USDC per verified YouTube Shorts view.",
+  description: DESCRIPTION,
+  applicationName: "Cliprail",
+  openGraph: { type: "website", siteName: "Cliprail", title: "Cliprail: get paid for every verified view", description: DESCRIPTION, url: "/" },
+  twitter: { card: "summary_large_image", title: "Cliprail: get paid for every verified view", description: DESCRIPTION },
 };
 
 export const viewport: Viewport = {

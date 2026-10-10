@@ -10,12 +10,13 @@ import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/cn";
 import { addressUrl } from "@/lib/format";
 import { ADDR, NETWORK } from "@/lib/network";
+import { CheckIcon } from "@/components/ui/Icons";
 
 function Step({ n, title, done, children }: { n: number; title: string; done: boolean; children: React.ReactNode }) {
   return (
     <Card className={cn("flex gap-4", done && "border-money/30")}>
       <span className={cn("grid size-8 shrink-0 place-items-center rounded-full text-sm font-bold", done ? "bg-money/20 text-money" : "bg-accent/15 text-accent-hover")}>
-        {done ? "✓" : n}
+        {done ? <CheckIcon /> : n}
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         <h2 className="font-semibold">{title}</h2>

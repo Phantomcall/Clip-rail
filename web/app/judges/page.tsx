@@ -3,8 +3,12 @@ import { LoopVideo } from "@/components/ui/LoopVideo";
 import { PageHeader } from "@/components/site/PageHeader";
 import { LinkButton } from "@/components/ui/Button";
 import { CheckCircle } from "@/components/ui/Icons";
+import { Arrow } from "@/components/ui/Arrow";
 
-export const metadata = { title: "Judges · Cliprail" };
+export const metadata = {
+  title: "Judges · Cliprail",
+  description: "When a brand disputes a clip, a judge makes the call, and every call builds a public track record.",
+};
 
 const STEPS = [
   { n: "01", title: "A brand flags a clip", body: "During the hold window, a brand can flag one clip it thinks broke the rules. The earnings still in hold freeze." },
@@ -31,7 +35,7 @@ export default function JudgesPage() {
         {/* hackathon judges land here from "/judges": send them to the 5-minute sandbox first */}
         <Link
           href="/try"
-          className="glass flex flex-wrap items-center justify-between gap-3 rounded-2xl px-5 py-4 transition hover:-translate-y-0.5"
+          className="glass flex flex-wrap items-center justify-between gap-3 group rounded-2xl px-5 py-4 transition-[transform,box-shadow,border-color] duration-300 ease-out-soft hover:-translate-y-1 hover:shadow-[var(--shadow-float)] active:translate-y-0 active:duration-100"
         >
           <span className="flex items-center gap-3">
             <span className="relative flex size-2.5">
@@ -42,7 +46,7 @@ export default function JudgesPage() {
               <b>Judging the Monad Metropolis hackathon?</b> <span className="text-muted">Try Cliprail end to end in under 5 minutes, no wallet or gas.</span>
             </span>
           </span>
-          <span className="text-sm font-semibold text-accent dark:text-[#c9bfff]">Open the sandbox →</span>
+          <span className="text-sm font-semibold text-accent dark:text-[#c9bfff]">Open the sandbox <Arrow /></span>
         </Link>
         {/* how a dispute works */}
         <section className="grid gap-4 md:grid-cols-3">

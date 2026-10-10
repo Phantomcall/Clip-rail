@@ -2,6 +2,7 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import Link from "next/link";
+import { MenuPanel } from "@/components/ui/MenuPanel";
 import { useEffect, useRef, useState } from "react";
 import { formatEther } from "viem";
 import { Button } from "@/components/ui/Button";
@@ -12,6 +13,7 @@ import { useAuth } from "@/lib/auth";
 import { useBalances } from "@/lib/balances";
 import { shortAddress, usd } from "@/lib/format";
 import { normalizeUsername, usernameError } from "@/lib/names";
+import { KeyIcon, CloseIcon } from "@/components/ui/Icons";
 
 function LockIcon() {
   return (
@@ -76,8 +78,7 @@ function AccountMenu() {
         <span className="font-mono sm:hidden">{shortAddress(address)}</span>
       </button>
 
-      {open && (
-        <div role="menu" className="absolute top-11 right-0 z-50 w-72 overflow-hidden rounded-2xl border border-line bg-surface text-sm shadow-[var(--shadow-float)]">
+      <MenuPanel open={open} className="absolute top-11 right-0 z-50 w-72 overflow-hidden rounded-2xl border border-line bg-surface text-sm shadow-[var(--shadow-float)]">
           <div className="border-b border-line p-4">
             <div className="flex items-center gap-3">
               <UserAvatar src={avatar} name={handle ?? address} size={44} />
@@ -167,8 +168,7 @@ function AccountMenu() {
           >
             Sign out
           </button>
-        </div>
-      )}
+      </MenuPanel>
     </div>
   );
 }
@@ -195,12 +195,12 @@ export function SignInButton() {
       }}
     >
       <Dialog.Trigger asChild>
-        <Button className="min-h-9 px-3">Sign in</Button>
+        <Button className="min-h-9 px-4">Sign in</Button>
       </Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" />
-        <Dialog.Content className="fixed inset-x-4 bottom-4 z-50 rounded-[var(--radius-card)] border border-line bg-surface p-6 shadow-[var(--shadow-float)] sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2 sm:w-full sm:max-w-sm sm:-translate-x-1/2 sm:-translate-y-1/2">
-          <span aria-hidden className="grid size-11 place-items-center rounded-2xl bg-accent-soft text-xl">🔑</span>
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm data-[state=closed]:animate-overlay-out data-[state=open]:animate-overlay-in" />
+        <Dialog.Content className="fixed inset-x-4 bottom-4 z-50 rounded-[var(--radius-card)] border border-line bg-surface p-6 shadow-[var(--shadow-float)] sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2 sm:w-full sm:max-w-sm sm:-translate-x-1/2 sm:-translate-y-1/2 data-[state=closed]:animate-dialog-out data-[state=open]:animate-dialog-in">
+          <span aria-hidden className="grid size-11 place-items-center rounded-2xl bg-accent-soft text-accent-solid-hover dark:bg-accent/20 dark:text-[#c9bfff]"><KeyIcon /></span>
           <Dialog.Title className="mt-3 text-lg font-semibold">Sign in to Cliprail</Dialog.Title>
           <Dialog.Description className="mt-1 text-sm text-muted">
             Use your face or fingerprint. No app, no seed phrase, no password. Your passkey is your account.
@@ -253,7 +253,7 @@ export function SignInButton() {
             </p>
           )}
           <p className="mt-4 text-xs text-muted">Works best on iPhone Safari, or Chrome with Google Password Manager.</p>
-          <Dialog.Close className="absolute top-4 right-4 rounded-md px-2 text-muted hover:text-fg" aria-label="Close">✕</Dialog.Close>
+          <Dialog.Close className="absolute top-3.5 right-3.5 grid size-8 place-items-center rounded-full text-muted transition-[color,transform,background-color] duration-200 ease-out-soft hover:rotate-90 hover:bg-surface-2 hover:text-fg" aria-label="Close"><CloseIcon /></Dialog.Close>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

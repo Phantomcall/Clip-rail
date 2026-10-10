@@ -5,7 +5,7 @@ export function Card({ className, interactive, ...rest }: React.HTMLAttributes<H
     <div
       className={cn(
         "glass rounded-[var(--radius-card)] p-4 sm:p-6",
-        interactive && "transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-float)]",
+        interactive && "transition-[transform,box-shadow,border-color] duration-300 ease-out-soft hover:-translate-y-1 hover:shadow-[var(--shadow-float)] active:translate-y-0 active:duration-100",
         className,
       )}
       {...rest}

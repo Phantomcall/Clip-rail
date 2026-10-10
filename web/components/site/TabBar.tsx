@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ActivePill } from "@/components/ui/ActivePill";
 
 type Tab = { href: string; label: string; match: (p: string) => boolean; icon: React.ReactNode };
 
@@ -73,8 +74,9 @@ export function TabBar() {
             key={t.href}
             href={t.href}
             aria-current={on ? "page" : undefined}
-            className={`flex flex-col items-center gap-0.5 rounded-2xl py-1.5 text-[9.5px] font-semibold transition ${on ? "bg-accent-soft text-accent dark:bg-accent/20" : "text-muted"}`}
+            className={`relative isolate flex flex-col items-center gap-0.5 rounded-2xl py-1.5 text-[9.5px] font-semibold transition-colors duration-200 ${on ? "text-accent-solid-hover dark:text-accent" : "text-muted"}`}
           >
+            {on && <ActivePill id="tab-active" className="rounded-2xl bg-accent-soft dark:bg-accent/20" />}
             <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
               {t.icon}
             </svg>

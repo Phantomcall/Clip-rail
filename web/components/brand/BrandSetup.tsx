@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { CheckCircle } from "@/components/ui/Icons";
 import { LoopVideo } from "@/components/ui/LoopVideo";
 import { cn } from "@/lib/cn";
+import { Arrow } from "@/components/ui/Arrow";
 
 /**
  * The brand console's top band: a setup checklist that says why each step pays off, beside a short video of what the
@@ -85,8 +86,8 @@ export function BrandSetup({ hasCampaign }: { hasCampaign: boolean }) {
                   <p className="text-xs text-muted">{s.why}</p>
                 </div>
                 {s.href && !d && (
-                  <Link href={s.href} className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold text-accent max-sm:ml-6 hover:bg-accent-soft dark:text-[#c9bfff]">
-                    {s.cta} →
+                  <Link href={s.href} className="group shrink-0 rounded-full px-3 py-1 text-xs font-semibold text-accent transition-colors duration-200 max-sm:ml-6 hover:bg-accent-soft dark:text-[#c9bfff]">
+                    {s.cta} <Arrow />
                   </Link>
                 )}
               </li>

@@ -14,6 +14,15 @@ import { getBrandStats, getCampaign, getClipsForCampaign, now } from "@/lib/data
 
 const YT_ID = /^[A-Za-z0-9_-]{11}$/;
 
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const c = await getCampaign((await params).id);
+  if (!c) return { title: "Campaign not found · Cliprail" };
+  const title = `${c.title} · Cliprail`;
+  const description = `${usd(c.cpm * 1000, { cents: false })} per 1M verified views, budget locked in escrow on Monad. Clip it and get paid per verified view.`;
+  // a page's own openGraph replaces the root's, so name the shared preview image again
+  return { title, description, openGraph: { title, description, images: ["/opengraph-image.png"] } };
+}
+
 export default async function CampaignPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const c = await getCampaign(id);

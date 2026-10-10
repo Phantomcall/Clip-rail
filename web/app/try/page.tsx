@@ -1,7 +1,14 @@
 import { JudgeSandbox } from "@/components/judges/JudgeSandbox";
 import { PageHeader } from "@/components/site/PageHeader";
 
-export const metadata = { title: "Try Cliprail · Cliprail" };
+const description =
+  "Try both sides of Cliprail in five minutes on Monad testnet: a passkey account, sandbox funds and a campaign that pays out within minutes.";
+
+export const metadata = {
+  title: "Judge sandbox · Cliprail",
+  description,
+  openGraph: { title: "Try Cliprail in 5 minutes", description, images: ["/opengraph-image.png"] },
+};
 
 export default function JudgesPage() {
   return (

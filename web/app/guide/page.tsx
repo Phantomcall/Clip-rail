@@ -4,8 +4,12 @@ import { PageHeader } from "@/components/site/PageHeader";
 import { LinkButton } from "@/components/ui/Button";
 import { CheckCircle } from "@/components/ui/Icons";
 import { cn } from "@/lib/cn";
+import { ActivePill } from "@/components/ui/ActivePill";
 
-export const metadata = { title: "How it works · Cliprail" };
+export const metadata = {
+  title: "How it works · Cliprail",
+  description: "Step-by-step guides for clippers, brands and judges, and the rules that protect each side.",
+};
 
 type Track = "clippers" | "brands" | "judges";
 type Step = { title: string; body: string };
@@ -100,10 +104,11 @@ export default async function GuidePage({ searchParams }: { searchParams: Promis
               scroll={false}
               aria-current={k === track ? "page" : undefined}
               className={cn(
-                "rounded-full px-3 py-2 text-xs font-semibold whitespace-nowrap transition sm:px-4 sm:text-sm",
-                k === track ? "bg-accent text-accent-fg shadow-[var(--shadow-soft)]" : "text-muted hover:text-fg",
+                "relative isolate rounded-full px-3 py-2 text-xs font-semibold whitespace-nowrap transition-colors duration-200 sm:px-4 sm:text-sm",
+                k === track ? "text-accent-fg" : "text-muted hover:text-fg",
               )}
             >
+              {k === track && <ActivePill id="guide-track" className="bg-accent-solid shadow-[var(--shadow-soft)]" />}
               For {TRACKS[k].label.toLowerCase()}
             </Link>
           ))}
@@ -127,7 +132,7 @@ export default async function GuidePage({ searchParams }: { searchParams: Promis
         <ol className="relative grid gap-3 sm:grid-cols-2">
           {t.steps.map((s, i) => (
             <li key={s.title} className="glass flex gap-4 rounded-[var(--radius-card)] p-5">
-              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent text-sm font-bold text-accent-fg">{i + 1}</span>
+              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent-solid text-sm font-bold text-accent-fg">{i + 1}</span>
               <div>
                 <h3 className="font-semibold">{s.title}</h3>
                 <p className="mt-1 text-sm text-muted">{s.body}</p>

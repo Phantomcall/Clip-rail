@@ -13,7 +13,7 @@ export function CampaignCard({ campaign: c, now }: { campaign: Campaign; now: nu
   return (
     <Link
       href={`/campaigns/${c.id}`}
-      className="group flex h-full flex-col gap-4 rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-float)]"
+      className="group flex h-full flex-col gap-4 rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-soft)] transition-[transform,box-shadow,border-color] duration-300 ease-out-soft hover:-translate-y-1 hover:shadow-[var(--shadow-float)] active:translate-y-0 active:duration-100 hover:border-accent/30"
     >
       <div className="flex items-center gap-3">
         <Avatar name={c.brandName} size={44} />
