@@ -83,10 +83,12 @@ export function MakeBank() {
           the sections above and below in every theme */}
       <div aria-hidden className="absolute inset-0 -z-10">
         {/* The band's own sky: it starts at the exact colour of the sky above (which fades out over it), deepens to
-            navy behind the steps, then lightens back through blues into the ambient sky below, never through grey.
-            Day and night are separate layers that cross-fade with the theme, like the rest of the sky. */}
-        <div className="cr-band-day absolute inset-0 transition-opacity duration-[1400ms] dark:opacity-0" />
-        <div className="cr-band-night absolute inset-0 opacity-0 transition-opacity duration-[1400ms] dark:opacity-100" />
+            navy behind the steps, then lands on the ambient sky below, never passing through grey. One layer per sky
+            phase (the hero sky has four), cross-fading with the theme like the rest of the sky. */}
+        <div className="cr-band-morning absolute inset-0 opacity-0 transition-opacity duration-[1400ms] sky-morning:opacity-100" />
+        <div className="cr-band-day absolute inset-0 opacity-0 transition-opacity duration-[1400ms] sky-afternoon:opacity-100" />
+        <div className="cr-band-evening absolute inset-0 opacity-0 transition-opacity duration-[1400ms] sky-evening:opacity-100" />
+        <div className="cr-band-night absolute inset-0 opacity-0 transition-opacity duration-[1400ms] sky-night:opacity-100" />
         {/* the video fades in below the campaign cards and dissolves before the band ends (cr-band-media mask) */}
         <div className="cr-band-media absolute inset-0">
           {/* tablet and desktop: a clipper checking her phone, a landscape cut mirrored so she sits on the right */}
