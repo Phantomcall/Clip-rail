@@ -5,14 +5,30 @@ import { Avatar } from "@/components/ui/Avatar";
 import { ShortsIcon, VerifiedIcon, CheckIcon } from "@/components/ui/Icons";
 import { Arrow } from "@/components/ui/Arrow";
 
-/** A real photo of the step, with the step's UI card floating over its lower half. */
-function Frame({ photo, alt, children }: { photo: string; alt: string; children: React.ReactNode }) {
+/**
+ * A real photo of the step with the step's UI card floating over its lower half. On phones the step's text sits
+ * inside the same card, in a panel under the photo that continues its dark fade (on wider screens it's below).
+ */
+function Frame({ photo, alt, children, caption }: { photo: string; alt: string; children: React.ReactNode; caption: React.ReactNode }) {
   return (
-    <div className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-white/10">
-      <Image src={photo} alt={alt} fill sizes="(min-width: 768px) 22rem, 90vw" className="object-cover object-[50%_25%]" />
-      <div className="absolute inset-0 bg-gradient-to-t from-night via-night/30 to-transparent" />
-      <div className="absolute inset-x-5 bottom-5 flex justify-center">{children}</div>
+    <div className="overflow-hidden rounded-3xl border border-white/10 bg-night md:bg-transparent">
+      <div className="relative aspect-[4/5]">
+        <Image src={photo} alt={alt} fill sizes="(min-width: 768px) 22rem, 90vw" className="object-cover object-[50%_25%]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-night via-night/30 to-transparent" />
+        <div className="absolute inset-x-5 bottom-5 flex justify-center">{children}</div>
+      </div>
+      <div className="px-5 pt-1 pb-6 md:hidden">{caption}</div>
     </div>
+  );
+}
+
+function StepText({ n, title, body }: { n: string; title: string; body: string }) {
+  return (
+    <>
+      <span className="rounded-md bg-white/10 px-2 py-1 font-mono text-[11px] text-white/60">{n}</span>
+      <h3 className="mt-3 text-xl font-semibold">{title}</h3>
+      <p className="mt-1.5 text-sm text-white/60">{body}</p>
+    </>
   );
 }
 
@@ -117,11 +133,11 @@ export function MakeBank() {
         <div className="mt-12 grid gap-10 md:grid-cols-3">
           {steps.map((s) => (
             <div key={s.n}>
-              <Frame photo={s.photo} alt={s.alt}>{s.ui}</Frame>
-              <div className="mt-5">
-                <span className="rounded-md bg-white/10 px-2 py-1 font-mono text-[11px] text-white/60">{s.n}</span>
-                <h3 className="mt-3 text-xl font-semibold">{s.title}</h3>
-                <p className="mt-1.5 text-sm text-white/60">{s.body}</p>
+              <Frame photo={s.photo} alt={s.alt} caption={<StepText n={s.n} title={s.title} body={s.body} />}>
+                {s.ui}
+              </Frame>
+              <div className="mt-5 hidden md:block">
+                <StepText n={s.n} title={s.title} body={s.body} />
               </div>
             </div>
           ))}
