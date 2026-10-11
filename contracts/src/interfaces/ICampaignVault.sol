@@ -207,10 +207,17 @@ interface ICampaignVault {
 
     // ─────────────────────────── Brand ───────────────────────────
 
+    /// @notice Creates a campaign and pulls `p.budget` of `p.token` (an allowed token) from the caller, who becomes
+    ///         the brand. Needs an allowance first; see createCampaignWithPermit for the one-transaction path.
+    /// @param p Budget, CPM, per-clip cap, velocity cap, like floor, hold, schedule, minimum tier and brief hash.
+    /// @return campaignId The new campaign's id (1-based).
     function createCampaign(CampaignParams calldata p) external returns (uint256 campaignId);
+    /// @notice Same as createCampaign, approving the vault with the token's EIP-2612 permit in the same transaction.
+    /// @return campaignId The new campaign's id (1-based).
     function createCampaignWithPermit(CampaignParams calldata p, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
         external
         returns (uint256 campaignId);
+    /// @notice Adds `amount` to an active campaign's budget before it ends. Anyone may top up; refunds go to the brand.
     function topUp(uint256 campaignId, uint128 amount) external;
     /// @notice Brand any time; anyone after endsAt. Refunds budget − reserved − paid to the brand.
     function closeCampaign(uint256 campaignId) external;
@@ -224,13 +231,24 @@ interface ICampaignVault {
 
     // ─────────────────────────── Clipper ───────────────────────────
 
+    /// @notice Registers the caller's YouTube Short (an 11-character video id) on a campaign. The clip starts
+    ///         Pending and earns only after the oracle sees the claim code in the description (OWNERSHIP_OK).
+    /// @return clipId The new clip's id (1-based).
     function registerClip(uint256 campaignId, string calldata videoId) external returns (uint256 clipId);
+    /// @notice Gasless registerClip: the clipper signs the EIP-712 RegisterClip (EOA or ERC-1271) and anyone, in
+    ///         practice the ops relayer, submits it and pays the gas.
+    /// @return clipId The new clip's id (1-based).
     function registerClipWithSig(RegisterClip calldata r, bytes calldata sig) external returns (uint256 clipId);
+    /// @notice Gasless change of where a clipper's payouts go, from a signed EIP-712 SetPayout. `payout = 0` resets
+    ///         payouts to the clipper's own address.
     function setPayoutAddressWithSig(SetPayout calldata s, bytes calldata sig) external;
 
     // ─────────────────────────── Anyone (keeper) ───────────────────────────
 
+    /// @notice Pays every matured tranche of the given clips to each clipper's payout address. Anyone may call it.
+    ///         A failed transfer emits ReleaseFailed and the rest of the batch is still paid.
     function release(uint256[] calldata clipIds) external;
+    /// @notice Accepts a flag the brand didn't resolve within resolveWindow; the clip resumes. Anyone may call it.
     function autoResolve(uint256 clipId) external;
     /// @notice Rejects a Pending clip whose pendingTimeout has passed without proven ownership.
     function expirePending(uint256 clipId) external;
@@ -239,32 +257,45 @@ interface ICampaignVault {
 
     // ─────────────────────────── Owner ───────────────────────────
 
+    /// @notice Owner only: adds or removes a token campaigns may be funded in. Existing campaigns are unaffected.
     function setTokenAllowed(address token, bool allowed) external;
     /// @notice Owner or guardian can pause; only the owner can unpause.
     function setPaused(bool paused) external;
     /// @notice While non-zero, reports are accepted only when tx.origin is this address (the oracle wallet that
     ///         broadcasts through the permissionless mock forwarder). Set to zero only with workflow identity set.
     function setReportTransmitter(address transmitter) external;
+    /// @notice Owner only: sets the guardian, the address that may pause (but not unpause) besides the owner.
     function setGuardian(address guardian) external;
 
     // ─────────────────────────── Views ───────────────────────────
 
+    /// @notice A campaign's parameters, brand, status and money (reserved = in hold, paid = released).
     function getCampaign(uint256 campaignId) external view returns (Campaign memory);
+    /// @notice A clip's campaign, clipper, status, last reported views and likes, flag deadline and earnings.
     function getClip(uint256 clipId) external view returns (Clip memory);
+    /// @notice Every tranche a clip has accrued, released or not, in order (amount, views and unlock time).
     function getTranches(uint256 clipId) external view returns (Tranche[] memory);
+    /// @notice A page of the clips the oracle reports on: Pending and Active clips of open campaigns with budget.
     function activeClips(uint256 offset, uint256 limit) external view returns (ActiveClip[] memory);
     /// @notice A raw, unfiltered page of one keeper list. CampaignVaultLens filters these into the keeper's
     ///         to-do lists (releasable, expired flags, expired pending, sweepable).
     function keeperList(KeeperList list, uint256 offset, uint256 limit) external view returns (uint256[] memory);
     /// @notice unlockAt of the clip's first unreleased tranche; type(uint64).max when none is left.
     function nextUnlockAt(uint256 clipId) external view returns (uint64);
+    /// @notice The last accepted report round; the next report must be newer and within MAX_ROUND_GAP.
     function lastRound() external view returns (uint64);
     /// @notice One counter shared by RegisterClip and SetPayout signatures.
     function nonces(address clipper) external view returns (uint256);
+    /// @notice Where `clipper`'s payouts go: the address set with setPayoutAddressWithSig, else the clipper.
     function payoutAddressOf(address clipper) external view returns (address);
+    /// @notice Whether campaigns may be created in `token`.
     function tokenAllowed(address token) external view returns (bool);
+    /// @notice Seconds a clip may stay Pending without proven ownership before expirePending can reject it.
     function pendingTimeout() external view returns (uint64);
+    /// @notice Seconds a brand has to resolve a flag before anyone can autoResolve it as accepted.
     function resolveWindow() external view returns (uint64);
+    /// @notice The oracle wallet reports must come from (tx.origin) while the mock forwarder is in use; 0 = off.
     function reportTransmitter() external view returns (address);
+    /// @notice The address that may pause besides the owner.
     function guardian() external view returns (address);
 }

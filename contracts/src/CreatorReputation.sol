@@ -15,7 +15,9 @@ interface IReputationLinked {
 ///      vault redeploy (I-5.2). Nobody can edit stats directly. An old vault keeps write access until it is removed,
 ///      so its outstanding releases can still record payouts.
 contract CreatorReputation is ICreatorReputation, Ownable {
+    /// @notice Paid views needed for tier 1.
     uint64 public constant TIER1_VIEWS = 5_000;
+    /// @notice Paid views needed for tier 2.
     uint64 public constant TIER2_VIEWS = 50_000;
     /// @notice Tier 1 tolerates one rejecting brand, so a single brand can't remove it (audit V1-3).
     uint32 public constant TIER1_MAX_REJECTIONS = 1;
@@ -25,6 +27,7 @@ contract CreatorReputation is ICreatorReputation, Ownable {
     mapping(address vault => bool) public override isVault;
 
     mapping(address clipper => Stats) internal _stats;
+    /// @notice True once `brand` has paid `clipper` (counted in stats.brands).
     mapping(address clipper => mapping(address brand => bool)) public paidBy;
     mapping(address vault => mapping(uint256 clipId => bool)) public override clipCounted;
     mapping(address clipper => mapping(address brand => bool)) public override rejectedBy;
@@ -36,6 +39,7 @@ contract CreatorReputation is ICreatorReputation, Ownable {
 
     constructor() Ownable(msg.sender) {}
 
+    /// @inheritdoc ICreatorReputation
     function addVault(address vault_) external override onlyOwner {
         if (isVault[vault_] || vault_.code.length == 0) revert InvalidVault();
         try IReputationLinked(vault_).reputation() returns (address linked) {
@@ -47,12 +51,14 @@ contract CreatorReputation is ICreatorReputation, Ownable {
         emit VaultAdded(vault_);
     }
 
+    /// @inheritdoc ICreatorReputation
     function removeVault(address vault_) external override onlyOwner {
         if (!isVault[vault_]) revert InvalidVault();
         isVault[vault_] = false;
         emit VaultRemoved(vault_);
     }
 
+    /// @inheritdoc ICreatorReputation
     function recordPaid(address clipper, address brand, uint256 clipId, uint64 paidViews, uint128 amount)
         external
         override
@@ -84,6 +90,7 @@ contract CreatorReputation is ICreatorReputation, Ownable {
         _emit(clipper, s);
     }
 
+    /// @inheritdoc ICreatorReputation
     function stats(address clipper) external view override returns (Stats memory) {
         return _stats[clipper];
     }

@@ -8,6 +8,7 @@ import {ICampaignVault} from "./ICampaignVault.sol";
 ///         Each function pages over one vault list, so a page can hold fewer than `limit` ids; keep paging
 ///         until `offset` passes the list's length.
 interface ICampaignVaultLens {
+    /// @notice The vault this lens reads.
     function vault() external view returns (ICampaignVault);
     /// @notice Clips with at least one matured, unreleased tranche that release() would pay (pages over the pay list).
     function releasableClips(uint256 offset, uint256 limit) external view returns (uint256[] memory);
