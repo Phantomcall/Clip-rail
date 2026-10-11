@@ -237,6 +237,19 @@ test("sandbox body: one valid address", async () => {
   assert.equal(sandboxBody.safeParse({}).success, false);
 });
 
+test("sandbox: a mint-only retry only while the record says the mint is still due", async () => {
+  const { sandboxMintDue, SANDBOX_PENDING, SANDBOX_DONE } = await import("./logic.ts");
+  const mon = 10n ** 17n;
+  assert.equal(sandboxMintDue(SANDBOX_PENDING, 0, mon, 0n), true); // MON arrived, mint failed
+  // Funded, registered a clip and sent the USDC out through the gasless relays: same chain state, no new mint.
+  assert.equal(sandboxMintDue(SANDBOX_DONE, 0, mon, 0n), false);
+  assert.equal(sandboxMintDue("1", 0, mon, 0n), false); // records from before the done marker
+  assert.equal(sandboxMintDue(null, 0, mon, 0n), false);
+  assert.equal(sandboxMintDue(SANDBOX_PENDING, 1, mon, 0n), false); // sent a transaction
+  assert.equal(sandboxMintDue(SANDBOX_PENDING, 0, 0n, 0n), false); // MON not here yet
+  assert.equal(sandboxMintDue(SANDBOX_PENDING, 0, mon, 1n), false); // already has USDC
+});
+
 test("Monad reserve balance: when a MON transfer needs an 'emptying' slot", async () => {
   const { needsEmptyingSlot, noInflight, MONAD_USER_RESERVE } = await import("./logic.ts");
   const e = 10n ** 18n;

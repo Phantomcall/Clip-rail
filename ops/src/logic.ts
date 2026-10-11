@@ -58,6 +58,20 @@ export const transferBody = z.object({
 /** POST /sandbox/fund: the judge's fresh account. */
 export const sandboxBody = z.object({ address });
 
+/** The sandbox's per-address KV record: claimed before the MON is sent, done once the mint is sent. */
+export const SANDBOX_PENDING = "pending";
+export const SANDBOX_DONE = "done";
+
+/**
+ * A funded account may get a mint-only retry while its mint is still due: claimed, MON arrived, no USDC, never sent a
+ * transaction. The record must say so too: a judge who registers a clip and sends their USDC out through the gasless
+ * relays also ends with nonce 0, MON and no USDC, and must not be able to mint again and again on the relayer's gas.
+ * Records from before the "done" marker ("1") count as done.
+ */
+export function sandboxMintDue(record: string | null, txCount: number, balance: bigint, usdcBalance: bigint): boolean {
+  return record === SANDBOX_PENDING && txCount === 0 && balance > 0n && usdcBalance === 0n;
+}
+
 /**
  * Monad's reserve balance: a transaction that sends MON as value reverts if the sender ends below 10 MON, unless it
  * is the sender's first transaction in the last 3 blocks. Above this, a transfer needs no special handling.

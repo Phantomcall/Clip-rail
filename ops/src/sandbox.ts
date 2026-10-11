@@ -6,13 +6,22 @@
  * The relayer's testnet MON is limited (faucets), so: fresh accounts only, once per address, 10 per IP and 40 in
  * total per UTC day (KV, so soft limits), and it never dips below a 1 MON reserve that relays and the keeper need.
  *
- * Free plan: at most ~43 subrequests in the worst case (limit 50). KV: 3 writes per funded account.
+ * Free plan: at most ~44 subrequests in the worst case (limit 50). KV: 4 writes per funded account.
  */
 import { addressesFor, mockUsdcAbi } from "@cliprail/abi";
 import { encodeFunctionData, parseEther, type Address, type Hex } from "viem";
 import { type Clients, nonceAndFees, sendWithRetry, shortError, signAndSend, simulationError } from "./chain";
 import { type Env, HttpError } from "./env";
-import { firstIssue, needsEmptyingSlot, noInflight, relayGas, sandboxBody } from "./logic";
+import {
+  firstIssue,
+  needsEmptyingSlot,
+  noInflight,
+  relayGas,
+  SANDBOX_DONE,
+  SANDBOX_PENDING,
+  sandboxBody,
+  sandboxMintDue,
+} from "./logic";
 
 export const SANDBOX_MON = parseEther("0.1");
 export const SANDBOX_USDC = 1_000n * 1_000_000n; // 1,000 MockUSDC (6 decimals)
@@ -39,6 +48,7 @@ export async function sandboxFund(env: Env, c: Clients, ip: string, body: unknow
 
   // KV: once per address (30 days), per-IP and total counters per UTC day. Reads only until we know we'll send.
   const addrKey = `sb:addr:${to.toLowerCase()}`;
+  const addrTtl = { expirationTtl: 30 * 86_400 };
   const ipKey = `sb:ip:${ip}:${day(nowMs)}`;
   const totalKey = `sb:total:${day(nowMs)}`;
   const [seen, ipUsed, totalUsed] = await Promise.all([env.RATE.get(addrKey), env.RATE.get(ipKey), env.RATE.get(totalKey)]);
@@ -52,7 +62,7 @@ export async function sandboxFund(env: Env, c: Clients, ip: string, body: unknow
 
   if (seen) {
     // Funded before. If the MON arrived but the mint didn't, finish the job instead of locking them out.
-    if (txCount === 0 && balance > 0n && usdcBalance === 0n) return mintOnly(c, mint, to);
+    if (sandboxMintDue(seen, txCount, balance, usdcBalance)) return mintOnly(env, c, mint, to, addrKey, addrTtl);
     throw new HttpError(409, "This account has already been funded.");
   }
   if (Number(ipUsed ?? 0) >= PER_IP_DAILY) throw new HttpError(429, "Daily sandbox limit reached for your network. Try again tomorrow.");
@@ -85,7 +95,7 @@ export async function sandboxFund(env: Env, c: Clients, ip: string, body: unknow
 
   // Claim the address before sending, so a double click can't fund it twice.
   try {
-    await env.RATE.put(addrKey, "1", { expirationTtl: 30 * 86_400 });
+    await env.RATE.put(addrKey, SANDBOX_PENDING, addrTtl);
   } catch (err) {
     console.error(`sandbox: KV write failed (${shortError(err)})`); // e.g. the free plan's daily write limit
     throw new HttpError(503, "The sandbox is unavailable right now. Try again later.");
@@ -100,7 +110,7 @@ export async function sandboxFund(env: Env, c: Clients, ip: string, body: unknow
     if (!(err instanceof MaybeSent)) await env.RATE.delete(addrKey).catch(() => {});
     throw err instanceof HttpError ? err : new HttpError(502, "Funding failed. Try again in a minute.");
   }
-  const mintHash = await mintOnly(c, { ...mint, gas: mintGas }, to);
+  const mintHash = await mintOnly(env, c, { ...mint, gas: mintGas }, to, addrKey, addrTtl);
 
   await Promise.all([
     env.RATE.put(ipKey, String(Number(ipUsed ?? 0) + 1), { expirationTtl: 2 * 86_400 }),
@@ -117,15 +127,33 @@ class MaybeSent extends HttpError {
   }
 }
 
-/** The mint sends no value, so the reserve rule doesn't apply and the normal retrying sender is fine. */
-async function mintOnly(c: Clients, mint: { to: Address; data: Hex; gas?: bigint }, to: Address): Promise<Hex> {
+/**
+ * The mint sends no value, so the reserve rule doesn't apply and the normal retrying sender is fine. The address record
+ * says done before the mint goes out, which closes the mint-only retry (see `sandboxMintDue`); no mint without it.
+ */
+async function mintOnly(
+  env: Env,
+  c: Clients,
+  mint: { to: Address; data: Hex; gas?: bigint },
+  to: Address,
+  addrKey: string,
+  addrTtl: { expirationTtl: number },
+): Promise<Hex> {
+  try {
+    await env.RATE.put(addrKey, SANDBOX_DONE, addrTtl);
+  } catch (err) {
+    // The record stays pending, so pressing again later still finishes with the mint.
+    console.error(`sandbox: KV write failed before the mint for ${to} (${shortError(err)})`);
+    throw new HttpError(503, "Your test MON arrived but the test USDC didn't. Press the button again later.");
+  }
   try {
     const gas = mint.gas ?? relayGas(await c.publicClient.estimateGas({ account: c.address, to: mint.to, data: mint.data }));
     if (gas > MINT_GAS_CAP) throw new Error(`mint gas ${gas} above cap`);
     return await sendWithRetry(c, { to: mint.to, data: mint.data, gas }, 2); // 2 attempts keeps us under 50 subrequests
   } catch (err) {
-    // The account holds MON now; pressing the button again retries just the mint (see `seen` above).
+    // The account holds MON now; reopen the mint so pressing the button again retries just the mint (see `seen` above).
     console.error(`sandbox: sent MON to ${to} but the mint failed (${shortError(err)})`);
+    await env.RATE.put(addrKey, SANDBOX_PENDING, addrTtl).catch(() => {});
     throw new HttpError(502, "Your test MON arrived but the test USDC didn't. Press the button again in a minute.");
   }
 }
