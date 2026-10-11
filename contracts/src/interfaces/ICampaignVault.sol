@@ -248,7 +248,8 @@ interface ICampaignVault {
     /// @notice Pays every matured tranche of the given clips to each clipper's payout address. Anyone may call it.
     ///         A failed transfer emits ReleaseFailed and the rest of the batch is still paid.
     function release(uint256[] calldata clipIds) external;
-    /// @notice Accepts a flag the brand didn't resolve within resolveWindow; the clip resumes. Anyone may call it.
+    /// @notice Accepts a flag the brand didn't resolve within resolveWindow: the clip gets back the status it had
+    ///         before the flag. Anyone may call it.
     function autoResolve(uint256 clipId) external;
     /// @notice Rejects a Pending clip whose pendingTimeout has passed without proven ownership.
     function expirePending(uint256 clipId) external;
@@ -294,7 +295,8 @@ interface ICampaignVault {
     function pendingTimeout() external view returns (uint64);
     /// @notice Seconds a brand has to resolve a flag before anyone can autoResolve it as accepted.
     function resolveWindow() external view returns (uint64);
-    /// @notice The oracle wallet reports must come from (tx.origin) while the mock forwarder is in use; 0 = off.
+    /// @notice The oracle wallet reports must come from (tx.origin) while the mock forwarder is in use. When 0,
+    ///         reports are accepted only once the expected workflow ID and author are set (fail closed).
     function reportTransmitter() external view returns (address);
     /// @notice The address that may pause besides the owner.
     function guardian() external view returns (address);
