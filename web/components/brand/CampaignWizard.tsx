@@ -16,6 +16,7 @@ import { saveBrief } from "@/lib/briefs";
 import { count, duration, usd, viewsBuyable } from "@/lib/format";
 import { ADDR, NETWORK, USDC } from "@/lib/network";
 import { parseUsd } from "@/lib/units";
+import { CheckIcon } from "@/components/ui/Icons";
 
 const STEPS = ["Source & brief", "Rates & caps", "Fraud rules", "Review & fund"];
 // testnet adds a 5-minute hold, so a judge sees a payout during the demo
@@ -160,7 +161,7 @@ export function CampaignWizard({ demo = false }: { demo?: boolean }) {
   if (tx.status === "success" && tx.txHash) {
     return (
       <Card className="flex flex-col items-center gap-4 py-12 text-center">
-        <span className="grid size-14 place-items-center rounded-full bg-money/15 text-2xl text-money">✓</span>
+        <span className="grid size-14 place-items-center rounded-full bg-money/15 text-money"><CheckIcon className="size-7" /></span>
         <h2 className="text-2xl font-bold">Your campaign is live</h2>
         <p className="max-w-md text-muted">{usd(calc.budget)} is locked in escrow. Clippers can start posting now.</p>
         <TxLink hash={tx.txHash} label="View funding transaction" />

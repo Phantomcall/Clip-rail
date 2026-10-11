@@ -1,5 +1,6 @@
 import { cn } from "@/lib/cn";
 import { compact } from "@/lib/format";
+import { PlayIcon } from "@/components/ui/Icons";
 
 /**
  * A vertical "Short" drawn with CSS: gradient scene, bold caption, view count.
@@ -33,7 +34,7 @@ export function ShortThumb({
         </span>
       </div>
       <div className="absolute inset-x-0 bottom-0 flex items-end justify-between bg-gradient-to-t from-black/60 to-transparent p-2.5 pt-8 text-[11px] font-semibold">
-        {views !== undefined && <span>▶ {compact(views)}</span>}
+        {views !== undefined && <span className="inline-flex items-center gap-1"><PlayIcon /> {compact(views)}</span>}
         {paid && <span className="rounded-full bg-money px-2 py-0.5 text-[10px]">{paid}</span>}
       </div>
     </div>

@@ -4,7 +4,10 @@ import { CampaignCard } from "@/components/site/CampaignCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { getCampaigns, now } from "@/lib/data";
 
-export const metadata = { title: "Campaigns · Cliprail" };
+export const metadata = {
+  title: "Campaigns · Cliprail",
+  description: "Funded clipping campaigns: every budget is locked in escrow before you clip. Pick one and get paid per verified view.",
+};
 
 export default async function CampaignsPage() {
   const campaigns = await getCampaigns();
@@ -30,7 +33,7 @@ export default async function CampaignsPage() {
       {closed.length > 0 && (
         <>
           <h2 className="mt-12 text-sm font-semibold uppercase tracking-wide text-muted">Closed</h2>
-          <div className="mt-4 grid gap-4 opacity-70 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {closed.map((c) => (
               <CampaignCard key={c.id} campaign={c} now={NOW} />
             ))}

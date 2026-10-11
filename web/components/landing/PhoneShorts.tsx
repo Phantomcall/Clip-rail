@@ -71,7 +71,7 @@ function ShortScreen({ s }: { s: Slide }) {
       </div>
 
       {/* right-hand action rail, like the Shorts player */}
-      <div className="absolute right-2.5 bottom-[11rem] flex flex-col items-center gap-3 text-[10px] font-semibold">
+      <div className="absolute right-2.5 bottom-[12rem] flex flex-col items-center gap-3 text-[10px] font-semibold">
         {RAIL.map((r, n) => (
           <div key={n} className="flex flex-col items-center gap-1">
             <span className="grid size-9 place-items-center rounded-full bg-black/35 backdrop-blur">
@@ -86,7 +86,7 @@ function ShortScreen({ s }: { s: Slide }) {
       </div>
 
       {/* channel + title */}
-      <div className="absolute inset-x-0 bottom-[8.6rem] px-3.5 pr-14 text-xs">
+      <div className="absolute inset-x-0 bottom-[9.6rem] px-3.5 pr-14 text-xs">
         <div className="flex items-center gap-2 font-semibold">
           <span className="grid size-6 place-items-center rounded-full bg-accent text-[10px] font-bold">{s.handle[1].toUpperCase()}</span>
           {s.handle}
@@ -180,7 +180,7 @@ export function PhoneShorts() {
           <div className="absolute top-1/2 right-0 flex -translate-y-1/2 flex-col">
             {SLIDES.map((s, n) => (
               // the bar stays thin; the button around it is a finger-sized target
-              <button key={s.handle} type="button" aria-label={`Show ${s.handle}'s Short`} onClick={() => setI(n)} className="grid w-6 place-items-center py-1">
+              <button key={s.handle} type="button" aria-label={`Show ${s.handle}'s Short`} onClick={() => setI(n)} className="grid w-6 place-items-center py-2">
                 <span className={`w-1 rounded-full bg-white transition-all ${n === i ? "h-5 opacity-100" : "h-2 opacity-40"}`} />
               </button>
             ))}

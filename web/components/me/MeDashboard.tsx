@@ -18,6 +18,7 @@ import { count, duration, usd } from "@/lib/format";
 import type { Address, Campaign, Clip } from "@/lib/types";
 import { EXPLAIN_TONE, explainClip } from "@/lib/explain";
 import { useLive } from "@/lib/live";
+import { Arrow } from "@/components/ui/Arrow";
 
 /** Why the vault did what it did with this clip, in plain English (rules-based, from the same numbers it used). */
 function Why({ clip, campaign }: { clip: Clip; campaign?: Campaign }) {
@@ -55,7 +56,7 @@ export function MeDashboard({ address }: { address: Address }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <TierBadge tier={profile.tier} />
-          <Link href={`/u/${address}`} className="text-sm text-muted hover:text-fg">Public profile →</Link>
+          <Link href={`/u/${address}`} className="group text-sm text-muted transition-colors duration-200 hover:text-fg">Public profile <Arrow /></Link>
         </div>
         <div className="flex gap-2">
           <PayoutAddressDialog />
@@ -92,7 +93,7 @@ export function MeDashboard({ address }: { address: Address }) {
                   <div className="tabular mt-1 flex flex-wrap gap-x-4 text-xs text-muted">
                     <span>{count(c.lastViews)} verified views</span>
                     {c.status === "Active" && <LiveViews videoId={c.videoId} code={claimCode(BigInt(c.campaignId), address)} verified={c.lastViews} />}
-                    <Link href={`/campaigns/${c.campaignId}`} className="hover:text-fg">campaign →</Link>
+                    <Link href={`/campaigns/${c.campaignId}`} className="group transition-colors duration-200 hover:text-fg">campaign <Arrow /></Link>
                   </div>
                   <Why clip={c} campaign={campaigns.get(c.campaignId)} />
                 </div>

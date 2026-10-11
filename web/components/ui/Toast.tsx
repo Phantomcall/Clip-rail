@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { createContext, useCallback, useContext, useState } from "react";
 import { cn } from "@/lib/cn";
 import { txUrl } from "@/lib/format";
+import { ExternalIcon } from "@/components/ui/Icons";
 
 type Tone = "success" | "error" | "info";
 interface Toast {
@@ -31,9 +32,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           {toasts.map((t) => (
             <motion.div
               key={t.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 12 }}
+              layout
+              initial={{ opacity: 0, y: 16, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.98, transition: { duration: 0.15, ease: [0.4, 0, 1, 1] } }}
+              transition={{ type: "spring", bounce: 0.2, duration: 0.45 }}
               role="status"
               className={cn(
                 "pointer-events-auto w-full max-w-sm rounded-[var(--radius-control)] border bg-surface px-4 py-3 text-sm shadow-xl",
@@ -45,7 +48,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               <div className="font-semibold">{t.title}</div>
               {t.txHash && (
                 <a href={txUrl(t.txHash)} target="_blank" rel="noreferrer" className="text-xs text-accent-hover hover:underline">
-                  View transaction ↗
+                  View transaction <ExternalIcon className="inline size-3" />
                 </a>
               )}
             </motion.div>

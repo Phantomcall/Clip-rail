@@ -118,7 +118,7 @@ export function ProductWindow() {
               <div className="eyebrow">My earnings</div>
               <div className="font-display text-xl font-bold">Good evening, Tobi</div>
             </div>
-            <span className="rounded-full bg-accent-soft px-3 py-1 text-xs font-semibold text-accent">Tier 1</span>
+            <span className="rounded-full bg-accent-soft px-3 py-1 text-xs font-semibold text-accent-solid-hover dark:text-[#c9bfff]">Tier 1</span>
           </div>
 
           <div className="mt-4 grid grid-cols-3 gap-2">

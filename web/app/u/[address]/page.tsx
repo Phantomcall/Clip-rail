@@ -10,6 +10,7 @@ import { compact, count, usd } from "@/lib/format";
 import { displayName } from "@/lib/names";
 import { EditProfileButton, ProfileAvatar, ProfileName } from "@/components/site/ProfileIdentity";
 import type { Tier } from "@/lib/types";
+import { Arrow } from "@/components/ui/Arrow";
 
 const NEXT_TIER: Record<Tier, { views: number; label: string } | null> = {
   0: { views: 5_000, label: "Tier 1" },
@@ -56,8 +57,8 @@ export default async function ProfilePage({ params }: { params: Promise<{ addres
             </div>
             <div className="flex flex-wrap gap-2">
               <EditProfileButton address={address} />
-              <Link href="/leaderboard" className="glass rounded-full px-4 py-2 text-sm font-semibold hover:text-accent">
-                See the leaderboard →
+              <Link href="/leaderboard" className="group glass rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200 hover:text-accent">
+                See the leaderboard <Arrow />
               </Link>
             </div>
           </div>

@@ -16,7 +16,7 @@ import { TxLink } from "@/components/ui/TxLink";
 import { usd } from "@/lib/format";
 import { NOW, receipts } from "@/mocks/data";
 
-export const metadata = { title: "Styleguide · Cliprail" };
+export const metadata = { title: "Styleguide · Cliprail", robots: { index: false, follow: false } };
 
 const swatches = ["bg", "surface", "surface-2", "line", "fg", "muted", "accent", "money", "holding", "danger", "info"];
 

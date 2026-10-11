@@ -16,7 +16,7 @@ export function AmbientSky() {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
       {/* day */}
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,#d6e7fa_0%,#e6f0fb_22%,#eef4fb_55%,#f3f6f9_85%,var(--color-bg)_100%)] transition-opacity duration-[1400ms] dark:opacity-0" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,#bcd3ef_0%,#d6e5f6_18%,#e8f0fa_45%,#f1f5f9_80%,var(--color-bg)_100%)] transition-opacity duration-[1400ms] dark:opacity-0" />
       <div className="absolute inset-0 transition-opacity duration-[1400ms] dark:opacity-0">
         {CLOUDS.map((c) => (
           <div key={c} className={`absolute rounded-full bg-white/70 blur-3xl ${c}`} />
@@ -24,9 +24,9 @@ export function AmbientSky() {
       </div>
       {/* evening and night */}
       <div className="absolute inset-0 bg-[linear-gradient(180deg,#0c1834_0%,#0b1430_35%,#0b0f22_75%,var(--color-bg)_100%)] opacity-0 transition-opacity duration-[1400ms] dark:opacity-100" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_10%,rgb(138_90_220/0.22),transparent_55%),radial-gradient(ellipse_at_85%_60%,rgb(214_110_150/0.12),transparent_55%)] opacity-0 transition-opacity duration-[1400ms] sky-evening:opacity-100" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_10%,rgb(138_90_220/0.22),transparent_55%),radial-gradient(ellipse_at_85%_60%,rgb(214_110_150/0.12),transparent_55%)] opacity-0 transition-opacity duration-[1400ms] [mask-image:linear-gradient(180deg,transparent,black_28rem)] sky-evening:opacity-100" />
       <div
-        className="absolute inset-0 opacity-0 transition-opacity duration-[1400ms] dark:opacity-70 [mask-image:linear-gradient(180deg,black,black_80%,transparent)]"
+        className="absolute inset-0 opacity-0 transition-opacity duration-[1400ms] dark:opacity-70 [mask-image:linear-gradient(180deg,transparent,black_16rem,black_80%,transparent)]"
         style={{ backgroundImage: STARS, backgroundSize: "480px 480px" }}
       />
     </div>

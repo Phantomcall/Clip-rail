@@ -24,13 +24,16 @@
   --color-accent: #6e54ff;
   --color-accent-hover: #5a3ff0;
   --color-accent-fg: #ffffff;
+  /* filled buttons and chips with white text: 4.5:1+ in both themes */
+  --color-accent-solid: #6e54ff;
+  --color-accent-solid-hover: #5a3ff0;
   --color-accent-soft: #eeeaff;
   --color-ink: #121216;
   --color-night: #0f0f13;
-  --color-money: #10a24b;
-  --color-holding: #c27a00;
+  --color-money: #0b863d;
+  --color-holding: #9a6100;
   --color-danger: #e5484d;
-  --color-info: #2f7ded;
+  --color-info: #1f63c9;
   --color-sky: #cfe6fb;
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
@@ -48,6 +51,34 @@
   --animate-drift: drift 90s linear infinite;
   --animate-twinkle: twinkle 3.5s ease-in-out infinite;
   --animate-shoot: shoot 9s ease-in infinite;
+
+  /* Interaction motion: one easing and three speeds everywhere (fast 120 ms, base 200 ms, slow 320 ms). */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-soft: cubic-bezier(0.4, 0, 1, 1);
+  --animate-pop-in: pop-in 200ms var(--ease-out-soft);
+  --animate-overlay-in: fade-in 240ms var(--ease-out-soft);
+  --animate-overlay-out: fade-out 160ms var(--ease-in-soft) forwards;
+  --animate-dialog-in: dialog-in 320ms var(--ease-out-soft);
+  --animate-dialog-out: dialog-out 160ms var(--ease-in-soft) forwards;
+  --animate-reveal: reveal 700ms var(--ease-out-soft) both;
+  @keyframes pop-in {
+    from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+  }
+  @keyframes fade-out {
+    to { opacity: 0; }
+  }
+  @keyframes dialog-in {
+    from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  }
+  @keyframes dialog-out {
+    to { opacity: 0; transform: translateY(6px) scale(0.98); }
+  }
+  @keyframes reveal {
+    from { opacity: 0; transform: translateY(18px); }
+  }
   @keyframes float {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-8px); }
@@ -86,6 +117,8 @@
   --color-muted: #9d9cb3;
   --color-accent: #8b74ff;
   --color-accent-hover: #a08cff;
+  --color-accent-solid: #7259f6;
+  --color-accent-solid-hover: #6449ee;
   --color-accent-soft: #231f45;
   --color-ink: #1f2033;
   --color-night: #05060c;
@@ -223,6 +256,54 @@
 }
 
 /* Pin light tokens inside "screenshot" cards that must look the same in both themes. */
+/* How it works band (MakeBank). Its base starts at the sky's colour where the sky above fades out (#a5c9ed by
+   day, #133762 at night), deepens behind the steps and lands on the ambient sky's first colour below (#bcd3ef,
+   #0c1834). The day ramps go through saturated blues, so the band never passes through grey. */
+.cr-band-day {
+  /* the light ends are kept short and soft, so neither join glows */
+  background: linear-gradient(180deg, #a5c9ed 0, #5d8ad3 4rem, #2c55a8 10rem, #15306f 18rem, #0b1840 28rem,
+    #0b1840 calc(100% - 22rem), #17336f calc(100% - 14rem), #2f5ba6 calc(100% - 8rem), #7ea5dc calc(100% - 3rem), #bcd3ef 100%);
+}
+.cr-band-night {
+  background: linear-gradient(180deg, #133762 0, #0f2a52 10rem, #0a1a3a 22rem, #080f26 34rem,
+    #080f26 calc(100% - 18rem), #0a1530 calc(100% - 8rem), #0c1834 100%);
+}
+/* Morning: the sky above is peach (#f5e6da). Through rose and lavender into indigo, so it never turns muddy brown;
+   the bottom is the day ramp (the ambient sky is the day one in the morning). */
+.cr-band-morning {
+  background: linear-gradient(180deg, #f5e6da 0, #dcbccb 4rem, #9d8ac6 10rem, #4a4fa3 18rem, #172a6c 26rem, #0b1840 32rem,
+    #0b1840 calc(100% - 22rem), #17336f calc(100% - 14rem), #2f5ba6 calc(100% - 8rem), #7ea5dc calc(100% - 3rem), #bcd3ef 100%);
+}
+/* Evening: the sky above is dusk plum (#291e31); down through deep indigo to the ambient sky's navy (#0c1834),
+   whose violet glow now fades in below instead of starting at its edge (AmbientSky). */
+.cr-band-evening {
+  background: linear-gradient(180deg, #291e31 0, #251c3d 8rem, #1a1a3c 18rem, #0f1532 30rem,
+    #0d1430 calc(100% - 18rem), #0c1632 calc(100% - 8rem), #0c1834 100%);
+}
+/* The photo appears only once the campaign cards are past, and dissolves before the band ends. Phones: a short
+   fade, so the portrait clip's face (just below the last card) is at full strength. */
+.cr-band-media {
+  mask-image: linear-gradient(180deg, transparent 0, #000 8.5rem, #000 calc(100% - 22rem), transparent calc(100% - 6rem));
+}
+@media (min-width: 48rem) {
+  .cr-band-media {
+    mask-image: linear-gradient(180deg, transparent 0, transparent 9rem, rgb(0 0 0 / 0.55) 16rem, #000 24rem,
+      #000 calc(100% - 22rem), transparent calc(100% - 6rem));
+  }
+}
+
+/* Reveal (components/ui/Reveal.tsx): sections below the fold fade up once as they scroll into view. */
+[data-reveal="wait"] { opacity: 0; transform: translateY(18px); }
+[data-reveal="in"] { animation: var(--animate-reveal); }
+/* stagger: the block stays put and its children rise in one by one */
+[data-reveal="wait"].cr-stagger { opacity: 1; transform: none; }
+[data-reveal="in"].cr-stagger { animation: none; }
+[data-reveal="wait"].cr-stagger > * { opacity: 0; transform: translateY(14px); }
+[data-reveal="in"].cr-stagger > * { animation: var(--animate-reveal); }
+[data-reveal="in"].cr-stagger > :nth-child(2) { animation-delay: 120ms; }
+[data-reveal="in"].cr-stagger > :nth-child(3) { animation-delay: 240ms; }
+[data-reveal="in"].cr-stagger > :nth-child(n + 4) { animation-delay: 360ms; }
+
 @utility force-light {
   --color-surface: #ffffff;
   --color-surface-2: #f1f0ea;
@@ -230,7 +311,7 @@
   --color-fg: #121216;
   --color-muted: #6b6a75;
   --color-ink: #121216;
-  --color-money: #10a24b;
+  --color-money: #0b863d;
   --color-accent: #6e54ff;
   color: #121216;
 }

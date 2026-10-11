@@ -1,7 +1,7 @@
 import { cn } from "@/lib/cn";
 
 const control =
-  "min-h-11 w-full rounded-[var(--radius-control)] border border-line bg-surface-2 px-3 text-sm outline-none transition focus:border-accent aria-[invalid=true]:border-danger";
+  "min-h-11 w-full rounded-[var(--radius-control)] border border-line bg-surface-2 px-3 text-sm outline-none transition-[border-color,box-shadow,background-color] duration-200 ease-out-soft hover:border-muted/40 focus:border-accent focus:bg-surface focus:shadow-[0_0_0_4px_color-mix(in_srgb,var(--color-accent)_16%,transparent)] aria-[invalid=true]:border-danger aria-[invalid=true]:focus:shadow-[0_0_0_4px_color-mix(in_srgb,var(--color-danger)_14%,transparent)]";
 
 export function Field({
   label,
@@ -46,7 +46,7 @@ export function AffixInput({
 }: React.InputHTMLAttributes<HTMLInputElement> & { prefix?: string; suffix?: string; invalid?: boolean }) {
   return (
     <div
-      className="flex min-h-11 items-center rounded-[var(--radius-control)] border border-line bg-surface-2 px-3 text-sm focus-within:border-accent aria-[invalid=true]:border-danger"
+      className="flex min-h-11 items-center rounded-[var(--radius-control)] border border-line bg-surface-2 px-3 text-sm transition-[border-color,box-shadow,background-color] duration-200 ease-out-soft hover:border-muted/40 focus-within:border-accent focus-within:bg-surface focus-within:shadow-[0_0_0_4px_color-mix(in_srgb,var(--color-accent)_16%,transparent)] aria-[invalid=true]:border-danger"
       aria-invalid={invalid || undefined}
     >
       {prefix && <span className="mr-1 text-muted">{prefix}</span>}

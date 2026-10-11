@@ -15,12 +15,13 @@ import { cn } from "@/lib/cn";
 import { count, usd } from "@/lib/format";
 import type { Campaign } from "@/lib/types";
 import { fetchPreview, type Preview } from "@/lib/youtube";
+import { ClockIcon, CheckIcon, AlertIcon } from "@/components/ui/Icons";
 
 function Check({ ok, children }: { ok: boolean; children: React.ReactNode }) {
   return (
     <li className={cn("flex items-start gap-2 text-sm", ok ? "text-fg" : "text-danger")}>
       <span aria-hidden className={cn("mt-0.5 grid size-4 shrink-0 place-items-center rounded-full text-[10px] font-bold", ok ? "bg-money/20 text-money" : "bg-danger/20 text-danger")}>
-        {ok ? "✓" : "!"}
+        {ok ? <CheckIcon className="size-3" /> : <AlertIcon className="size-3" />}
       </span>
       {children}
     </li>
@@ -71,7 +72,7 @@ export function RegisterClip({ campaign }: { campaign: Campaign }) {
   if (tx.status === "success" && tx.txHash) {
     return (
       <Card className="flex flex-col items-center gap-4 py-10 text-center">
-        <span className="grid size-14 place-items-center rounded-full bg-info/15 text-2xl text-info">⏳</span>
+        <span className="grid size-14 place-items-center rounded-full bg-info/15 text-info"><ClockIcon className="size-7" /></span>
         <h2 className="text-2xl font-bold">Clip registered: pending verification</h2>
         <p className="max-w-md text-muted">
           The oracle checks your Short every few minutes. Once it sees your claim code, the clip goes Active and verified views start

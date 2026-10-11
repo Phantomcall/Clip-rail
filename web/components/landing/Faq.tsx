@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { LoopVideo } from "@/components/ui/LoopVideo";
+import { FaqItem } from "@/components/landing/FaqItem";
+import { Arrow } from "@/components/ui/Arrow";
 
 type QA = { q: string; a: string };
 
@@ -30,23 +32,6 @@ const GROUPS: { title: string; items: QA[] }[] = [
   },
 ];
 
-function Item({ q, a }: QA) {
-  return (
-    <details className="group border-b border-line py-4 last:border-0">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium">
-        {q}
-        <span
-          aria-hidden
-          className="grid size-7 shrink-0 place-items-center rounded-full bg-accent-soft text-accent transition group-open:rotate-45 dark:bg-accent/20 dark:text-[#c9bfff]"
-        >
-          +
-        </span>
-      </summary>
-      <p className="mt-2 pr-10 text-sm text-muted">{a}</p>
-    </details>
-  );
-}
-
 export function Faq() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-20">
@@ -63,9 +48,9 @@ export function Faq() {
           </div>
           <Link
             href="/guide"
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-accent-soft px-4 py-2 text-sm font-semibold text-accent hover:bg-accent hover:text-white dark:bg-accent/20 dark:text-[#c9bfff]"
+            className="group mt-6 inline-flex items-center gap-2 rounded-full bg-accent-soft px-4 py-2 text-sm font-semibold text-accent-solid-hover transition-colors duration-200 ease-out-soft hover:bg-accent-solid hover:text-white dark:bg-accent/20 dark:text-[#c9bfff] dark:hover:bg-accent-solid dark:hover:text-white"
           >
-            Read the full guide <span>→</span>
+            Read the full guide <Arrow />
           </Link>
         </div>
 
@@ -75,7 +60,7 @@ export function Faq() {
               <h3 className="eyebrow">{g.title}</h3>
               <div className="mt-1">
                 {g.items.map((it) => (
-                  <Item key={it.q} {...it} />
+                  <FaqItem key={it.q} {...it} />
                 ))}
               </div>
             </div>

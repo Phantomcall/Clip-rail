@@ -80,8 +80,8 @@ export function ProfileEditor({ open, onOpenChange }: { open: boolean; onOpenCha
       }}
     >
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" />
-        <Dialog.Content className="glass fixed inset-x-4 bottom-4 z-50 rounded-[var(--radius-card)] p-6 sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2 sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2">
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm data-[state=closed]:animate-overlay-out data-[state=open]:animate-overlay-in" />
+        <Dialog.Content className="glass fixed inset-x-4 bottom-4 z-50 rounded-[var(--radius-card)] p-6 sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2 sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 data-[state=closed]:animate-dialog-out data-[state=open]:animate-dialog-in">
           <Dialog.Title className="text-lg font-semibold">Edit profile</Dialog.Title>
           <Dialog.Description className="mt-1 text-sm text-muted">This is how brands and other clippers see you.</Dialog.Description>
 
