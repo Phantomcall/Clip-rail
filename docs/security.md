@@ -53,7 +53,7 @@ These attacks are bounded but not prevented:
   hold.
 - **Sybil clippers:** each clip is capped; pending registrations are capped at 3 per clipper per campaign; and the
   relayer only registers public Shorts that carry the clipper's claim code, with per-IP, global and per-address
-  limits. A sybil still needs a real YouTube Short per clip. The E2 trust score (Nansen) is the planned extra signal.
+  limits. A sybil still needs a real YouTube Short per clip. There is no wallet-linking score: E2 was cut (decision log).
 - **Self-funded tier raising** (V1-4): a clipper funds their own campaign. It still needs real views; `stats.brands`
   shows it.
 - **Tier 2 mixes units:** `rejections` counts brands but is divided by clips plus rejections. That's acceptable for
@@ -66,6 +66,7 @@ These attacks are bounded but not prevented:
 | V1-11 | `SignatureChecker` (OZ 5.1) validates any address with code only through ERC-1271. That includes EOAs with an EIP-7702 delegation, which is live on Monad. If the delegate lacks ERC-1271, the user can't use gasless registration or set a payout address. It fails closed and no funds are at risk. | Fix in the next contract build (not deployed): try ECDSA first, then ERC-1271. The ops Worker's signature pre-check must change the same way. |
 | Review #14-1 | `Resolved(accept)` doesn't say whether the clip went back to Active or Ended | Indexer reads `getClip`; the event gets the status in the next contract build |
 | V1-9 | 114 bytes of EIP-170 headroom | Proposed for the next contract build: move `activeClips` to the lens |
+| Oracle-1 (2026-10-11) | The vault ends a clip after 3 *consecutive* UNAVAILABLE entries and clears the count only when an available entry for it is applied. The oracle sends an Active clip only when its views rose (PR #28), so three separate unavailable answers with no 50-view gain in between could end a clip that was briefly unavailable. The oracle can't see the strike count. | Open, low likelihood (YouTube must report a public Short missing three times with no view gain between). Next contract build: expose the strike count so the oracle can send a clearing entry. |
 
 ## Static analysis (I-4.3)
 Both analysers run on `contracts/src` (mocks and the vendored Chainlink receiver excluded). CI runs Slither on every
@@ -105,6 +106,7 @@ places; the other lows are explained here for the first time.
 | 2026-10-07 (I-1.6) | Monad USDC (testnet `0x534b…43A3`, mainnet `0x7547…b603`) supports both `permit` (EIP-2612) and `transferWithAuthorization` (EIP-3009); re-checked on both chains on 2026-10-09. Gasless campaign creation with a permit (E4) is possible, and the ops Worker's gasless send-out (`/relay/transfer`) uses EIP-3009 on testnet. |
 | 2026-10-09 (I-5.2) | No redeploy needed. Nothing that puts funds at risk has turned up since v1; the known issues above go into the next contract build. |
 | 2026-10-09 | Testnet only. Mainnet is dropped: with Monad charging the full gas limit, the oracle and keeper would cost hundreds of MON over the judging period, and there is no budget for it. |
+| 2026-10-11 (I-8.1) | E2 sybil score cut. Nansen covers Monad mainnet only, so on testnet every fresh judge or clipper wallet would score "unknown"; it was unbuilt, needed a Nansen key, and would have landed after the freeze. The limits above still apply, and a brand can flag a suspicious clip during the hold. Nothing on chain depended on it. |
 
 ## What we'd audit next
 1. **An independent third-party review before any deployment that holds real funds.** Both audits so far were
