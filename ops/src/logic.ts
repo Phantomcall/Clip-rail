@@ -295,3 +295,38 @@ export function revertMessage(errorName: string | undefined, reason: string | un
   if (reason) return `The transaction would fail: ${reason}`;
   return errorName ? `The transaction would fail (${errorName}).` : "The transaction would fail.";
 }
+
+// ─────────────────────────── Oracle dispatch (see oracle.ts) ───────────────────────────
+
+/** owner/repo and a workflow file name: nothing that could reshape the API path. */
+const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+const WORKFLOW_FILE = /^[A-Za-z0-9_.-]+\.ya?ml$/;
+
+/**
+ * The GitHub request that starts one oracle run (`workflow_dispatch` on the default branch), or null when the
+ * trigger is off: no token, or a repo or workflow setting that isn't well formed.
+ */
+export function oracleDispatch(env: {
+  ORACLE_DISPATCH_TOKEN?: string;
+  ORACLE_REPO?: string;
+  ORACLE_WORKFLOW?: string;
+}): { url: string; init: RequestInit } | null {
+  const token = env.ORACLE_DISPATCH_TOKEN?.trim();
+  const repo = env.ORACLE_REPO ?? "";
+  const workflow = env.ORACLE_WORKFLOW ?? "";
+  if (!token || !REPO.test(repo) || !WORKFLOW_FILE.test(workflow)) return null;
+  return {
+    url: `https://api.github.com/repos/${repo}/actions/workflows/${workflow}/dispatches`,
+    init: {
+      method: "POST",
+      headers: {
+        accept: "application/vnd.github+json",
+        authorization: `Bearer ${token}`,
+        "content-type": "application/json",
+        "user-agent": "cliprail-ops-worker", // GitHub rejects requests without one
+        "x-github-api-version": "2022-11-28",
+      },
+      body: JSON.stringify({ ref: "main" }),
+    },
+  };
+}

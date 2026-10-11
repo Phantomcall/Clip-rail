@@ -7,11 +7,13 @@
  *   POST /relay/transfer         gasless USDC send-out (EIP-3009 signature)
  *   POST /sandbox/fund           testnet only: 0.1 MON + 1,000 MockUSDC for a judge's fresh account
  *   cron, every 5 minutes        keeper: release, autoResolve, expirePending, sweep
+ *   cron, 1 minute later         oracle trigger: starts the CRE oracle workflow while clips are watched
  */
 import { BaseError, formatEther, type Hex } from "viem";
 import { clients, shortError } from "./chain";
 import { deployment, type Env, HttpError } from "./env";
 import { runKeeper } from "./keeper";
+import { oracleTick, triggerOracle } from "./oracle";
 import { CLAIM_CODE, originAllowed, toPreview } from "./logic";
 import { fetchVideo } from "./preview";
 import { relayPayoutAddress, relayRegister, relayTransfer, type RelayContext } from "./relay";
@@ -113,6 +115,8 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
     }
     const txHash = await relay({ env, dep, c: clients(env), ctx, nowMs: Date.now() }, body);
     console.log(`${url.pathname} sent ${txHash}`);
+    // A new clip is Pending until the oracle sees its claim code; the keeper rejects it after pendingTimeout.
+    if (url.pathname === "/relay/register") ctx.waitUntil(triggerOracle(env, "register"));
     return json({ txHash }, 200, cors);
   }
 
@@ -150,7 +154,11 @@ export default {
     }
   },
 
-  async scheduled(_event, env, ctx): Promise<void> {
+  async scheduled(event, env, ctx): Promise<void> {
+    if (event.cron === "1-59/5 * * * *") {
+      ctx.waitUntil(oracleTick(env));
+      return;
+    }
     ctx.waitUntil(runKeeper(env).catch((err) => console.error("keeper failed", err instanceof Error ? err.stack : err)));
   },
 } satisfies ExportedHandler<Env>;

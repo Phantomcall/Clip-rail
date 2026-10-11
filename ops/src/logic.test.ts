@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { test } from "node:test";
 import { claimCode } from "@cliprail/shared/claim";
 import {
@@ -248,4 +248,32 @@ test("Monad reserve balance: when a MON transfer needs an 'emptying' slot", asyn
   assert.equal(noInflight(13, 13, 13), true);
   assert.equal(noInflight(13, 12, 13), false); // a relayer tx was mined in the last 3 blocks
   assert.equal(noInflight(13, 13, 14), false); // one is pending
+});
+
+test("oracle dispatch: off without a token or with a malformed repo/workflow; otherwise one POST to that workflow", async () => {
+  const { oracleDispatch } = await import("./logic.ts");
+  const on = { ORACLE_DISPATCH_TOKEN: "tok", ORACLE_REPO: "Phantomcall/Clip-rail", ORACLE_WORKFLOW: "oracle-runner.yml" };
+  assert.equal(oracleDispatch({ ...on, ORACLE_DISPATCH_TOKEN: undefined }), null);
+  assert.equal(oracleDispatch({ ...on, ORACLE_DISPATCH_TOKEN: "  " }), null);
+  assert.equal(oracleDispatch({ ...on, ORACLE_REPO: "Phantomcall/Clip-rail/../x" }), null);
+  assert.equal(oracleDispatch({ ...on, ORACLE_WORKFLOW: "../../pulls" }), null);
+  const req = oracleDispatch(on)!;
+  assert.equal(req.url, "https://api.github.com/repos/Phantomcall/Clip-rail/actions/workflows/oracle-runner.yml/dispatches");
+  assert.equal(req.init.method, "POST");
+  assert.equal((req.init.headers as Record<string, string>).authorization, "Bearer tok");
+  assert.ok((req.init.headers as Record<string, string>)["user-agent"]);
+  assert.deepEqual(JSON.parse(req.init.body as string), { ref: "main" });
+});
+
+test("the oracle cron in index.ts is one of wrangler.toml's testnet crons, and the workflow it starts exists", () => {
+  const toml = readFileSync(new URL("../wrangler.toml", import.meta.url), "utf8");
+  const index = readFileSync(new URL("./index.ts", import.meta.url), "utf8");
+  const cron = /event\.cron === "([^"]+)"/.exec(index)?.[1];
+  assert.ok(cron, "index.ts routes a cron to the oracle trigger");
+  const testnetCrons = /\[triggers\]\s*crons = \[([^\]]*)\]/.exec(toml)?.[1] ?? "";
+  assert.ok(testnetCrons.includes(`"${cron}"`), `wrangler.toml [triggers] must list "${cron}"`);
+  const workflow = /ORACLE_WORKFLOW = "([^"]+)"/.exec(toml)?.[1];
+  assert.ok(workflow && existsSync(new URL(`../../.github/workflows/${workflow}`, import.meta.url)));
+  // workflow_dispatch must stay enabled in the workflow, or every dispatch fails with 422.
+  assert.match(readFileSync(new URL(`../../.github/workflows/${workflow}`, import.meta.url), "utf8"), /^\s*workflow_dispatch:/m);
 });
