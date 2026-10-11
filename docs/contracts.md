@@ -28,7 +28,8 @@ Cliprail runs on testnet only (decision log in `security.md`).
 | CampaignVaultLens | [`0x6f8d90BD1D58c592876391Db01db780b69A64938`](https://testnet.monadvision.com/address/0x6f8d90BD1D58c592876391Db01db780b69A64938) | 68749784 | [`0x926d1a2a…3a78`](https://testnet.monadvision.com/tx/0x926d1a2a441eda82bc25a019d1a18b0f8eceba1472e93a250c84fe0b76ee3a78) |
 | MockUSDC | [`0x92cE6862a977Fe61D966C3903e8E5f5d7d84a7ec`](https://testnet.monadvision.com/address/0x92cE6862a977Fe61D966C3903e8E5f5d7d84a7ec) | 68749789 | [`0x46358d2e…84daa`](https://testnet.monadvision.com/tx/0x46358d2e42c5797a9486ba817bc3cda16ae37504aca0e4cae36306ca21284daa) |
 
-- **Verified** on MonadVision's Sourcify (runtime match, 2026-10-06). The deployed source is tag `abi-v1`. NatSpec
+- **Verified** on both explorers: MonadVision's Sourcify (runtime match, 2026-10-06) and Monadscan (exact match,
+  2026-10-12, e.g. [vault](https://testnet.monadscan.com/address/0x6D7A51c58EB07Ab7bb1B0468A9be02fE9001BcAf#code)). The deployed source is tag `abi-v1`. NatSpec
   added since then doesn't change the bytecode: `bytecode_hash = "none"` keeps the metadata hash out of it, and the
   build is byte-identical to `abi-v1` (checked when the NatSpec went in).
 - **Build:** solc 0.8.28, optimizer 200 runs, `via_ir` (`contracts/foundry.toml`). Deploy script:
