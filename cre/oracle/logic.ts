@@ -79,8 +79,13 @@ function toCount(s: string | undefined): bigint {
  * Turns the vault's clip list plus YouTube's answers into report entries (D-2.4).
  * - UNAVAILABLE when the video is missing, private/unlisted, or not processed.
  * - OWNERSHIP_OK when the description contains the clipper's claim code.
- * - Active clips with no change since the last report are skipped. Pending clips are always sent, so the
- *   vault can activate them or reject them after its 48 h window.
+ * - Only entries the vault would act on are sent, because every entry costs the oracle wallet gas on every run:
+ *   - an Active clip only when its rounded views went up. The vault ignores an entry whose views didn't rise (and
+ *     only stores likes alongside a view gain), so likes-only changes or a view count YouTube corrected downward
+ *     would otherwise be resent on every run without changing anything;
+ *   - a Pending clip only once its description has the claim code, which is what activates it. Without the code
+ *     the vault does nothing until pendingTimeout, and the keeper's expirePending rejects it then.
+ *   Unavailable clips are always sent: three in a row end the clip, which bounds the cost.
  */
 export function buildUpdates(clips: readonly ActiveClip[], items: readonly YtItem[]): ClipUpdate[] {
   const byId = new Map(items.map((it) => [it.id, it]));
@@ -95,8 +100,7 @@ export function buildUpdates(clips: readonly ActiveClip[], items: readonly YtIte
     const views = floorTo(toCount(it.statistics?.viewCount), VIEW_STEP);
     const likes = floorTo(toCount(it.statistics?.likeCount), LIKE_STEP);
     const owned = descriptionHasCode(it.snippet?.description ?? "", claimCode(clip.campaignId, clip.clipper));
-    const pending = clip.status === ClipStatus.Pending;
-    if (!pending && views === clip.lastViews && likes === clip.lastLikes) continue;
+    if (clip.status === ClipStatus.Pending ? !owned : views <= clip.lastViews) continue;
     out.push({
       clipId: clip.clipId,
       views,
