@@ -26,8 +26,11 @@ contract CampaignVault is ICampaignVault, ReceiverTemplate, EIP712, ReentrancyGu
 
     // ─────────────────────────── Constants ───────────────────────────
 
+    /// @notice ClipUpdate.flags bit: the claim code is in the video description (the oracle proved ownership).
     uint8 public constant FLAG_OWNERSHIP_OK = 1;
+    /// @notice ClipUpdate.flags bit: the video is private, deleted or otherwise unavailable this round.
     uint8 public constant FLAG_UNAVAILABLE = 2;
+    /// @notice Longest hold a campaign may set before accrued earnings can be released.
     uint32 public constant MAX_HOLD_SECS = 7 days;
     /// @notice The oracle sends lastRound + 1; a bounded gap stops one bad report from bricking every later one.
     uint64 public constant MAX_ROUND_GAP = 1000;
@@ -38,13 +41,16 @@ contract CampaignVault is ICampaignVault, ReceiverTemplate, EIP712, ReentrancyGu
     /// @notice Tranches paid per clip per release call, to bound gas; the rest are paid on the next call.
     uint256 public constant MAX_TRANCHES_PER_RELEASE = 200;
 
+    /// @notice EIP-712 type hash of RegisterClip (registerClipWithSig).
     bytes32 public constant REGISTER_CLIP_TYPEHASH =
         keccak256("RegisterClip(uint256 campaignId,string videoId,address clipper,uint256 nonce,uint256 deadline)");
+    /// @notice EIP-712 type hash of SetPayout (setPayoutAddressWithSig).
     bytes32 public constant SET_PAYOUT_TYPEHASH =
         keccak256("SetPayout(address clipper,address payout,uint256 nonce,uint256 deadline)");
 
     // ─────────────────────────── Config ───────────────────────────
 
+    /// @notice The reputation contract this vault writes payouts and rejections to and reads tiers from.
     ICreatorReputation public immutable reputation;
     uint64 public immutable override pendingTimeout;
     uint64 public immutable override resolveWindow;
@@ -54,7 +60,9 @@ contract CampaignVault is ICampaignVault, ReceiverTemplate, EIP712, ReentrancyGu
 
     // ─────────────────────────── State ───────────────────────────
 
+    /// @notice Campaigns created so far; ids run from 1 to campaignCount.
     uint256 public campaignCount;
+    /// @notice Clips registered so far; ids run from 1 to clipCount.
     uint256 public clipCount;
     uint64 public override lastRound;
 
@@ -84,7 +92,8 @@ contract CampaignVault is ICampaignVault, ReceiverTemplate, EIP712, ReentrancyGu
     uint256[] internal _flagList;
     mapping(uint256 clipId => uint256) internal _flagIndex;
 
-    mapping(uint256 clipId => bool) public everFlagged; // one flag per clip (audit R-3)
+    /// @notice True once a clip has been flagged; each clip can be flagged only once (audit R-3).
+    mapping(uint256 clipId => bool) public everFlagged;
     mapping(uint256 clipId => ClipStatus) internal _statusBeforeFlag;
     mapping(uint256 campaignId => address) internal _refundTo; // set on close (audit R-2)
 
@@ -285,6 +294,7 @@ contract CampaignVault is ICampaignVault, ReceiverTemplate, EIP712, ReentrancyGu
 
     // ─────────────────────────── Owner / guardian ───────────────────────────
 
+    /// @inheritdoc ICampaignVault
     function setTokenAllowed(address token, bool allowed) external override onlyOwner {
         tokenAllowed[token] = allowed;
         emit TokenAllowed(token, allowed);
@@ -302,11 +312,13 @@ contract CampaignVault is ICampaignVault, ReceiverTemplate, EIP712, ReentrancyGu
         }
     }
 
+    /// @inheritdoc ICampaignVault
     function setReportTransmitter(address transmitter) external override onlyOwner {
         reportTransmitter = transmitter;
         emit ReportTransmitterSet(transmitter);
     }
 
+    /// @inheritdoc ICampaignVault
     function setGuardian(address guardian_) external override onlyOwner {
         guardian = guardian_;
         emit GuardianSet(guardian_);
@@ -314,14 +326,17 @@ contract CampaignVault is ICampaignVault, ReceiverTemplate, EIP712, ReentrancyGu
 
     // ─────────────────────────── Views ───────────────────────────
 
+    /// @inheritdoc ICampaignVault
     function getCampaign(uint256 campaignId) external view override returns (Campaign memory) {
         return _campaigns[campaignId];
     }
 
+    /// @inheritdoc ICampaignVault
     function getClip(uint256 clipId) external view override returns (Clip memory) {
         return _clips[clipId];
     }
 
+    /// @inheritdoc ICampaignVault
     function getTranches(uint256 clipId) external view override returns (Tranche[] memory) {
         return _tranches[clipId];
     }
@@ -355,10 +370,12 @@ contract CampaignVault is ICampaignVault, ReceiverTemplate, EIP712, ReentrancyGu
         }
     }
 
+    /// @notice Length of the oracle's watch list: page activeClips until `offset >= watchListLength()`.
     function watchListLength() external view returns (uint256) {
         return _watchList.length;
     }
 
+    /// @inheritdoc ICampaignVault
     function keeperList(KeeperList list, uint256 offset, uint256 limit)
         external
         view
@@ -375,16 +392,19 @@ contract CampaignVault is ICampaignVault, ReceiverTemplate, EIP712, ReentrancyGu
         }
     }
 
+    /// @inheritdoc ICampaignVault
     function nextUnlockAt(uint256 clipId) external view override returns (uint64) {
         Tranche[] storage ts = _tranches[clipId];
         uint256 head = _trancheHead[clipId];
         return head < ts.length ? ts[head].unlockAt : type(uint64).max;
     }
 
+    /// @notice Where a closed campaign's refunds went (and later reject returns go); 0 while the campaign is open.
     function refundAddressOf(uint256 campaignId) external view returns (address) {
         return _refundTo[campaignId];
     }
 
+    /// @inheritdoc ICampaignVault
     function payoutAddressOf(address clipper) external view override returns (address) {
         address p = _payoutAddress[clipper];
         return p == address(0) ? clipper : p;

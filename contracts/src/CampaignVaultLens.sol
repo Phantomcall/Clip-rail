@@ -14,6 +14,7 @@ contract CampaignVaultLens is ICampaignVaultLens {
         vault = vault_;
     }
 
+    /// @inheritdoc ICampaignVaultLens
     function releasableClips(uint256 offset, uint256 limit) external view override returns (uint256[] memory ids) {
         ids = vault.keeperList(ICampaignVault.KeeperList.Pay, offset, limit);
         uint256 n = 0;
@@ -26,6 +27,7 @@ contract CampaignVaultLens is ICampaignVaultLens {
         _trim(ids, n);
     }
 
+    /// @inheritdoc ICampaignVaultLens
     function expiredFlags(uint256 offset, uint256 limit) external view override returns (uint256[] memory ids) {
         ids = vault.keeperList(ICampaignVault.KeeperList.Flag, offset, limit);
         uint256 n = 0;
@@ -35,6 +37,7 @@ contract CampaignVaultLens is ICampaignVaultLens {
         _trim(ids, n);
     }
 
+    /// @inheritdoc ICampaignVaultLens
     function expiredPending(uint256 offset, uint256 limit) external view override returns (uint256[] memory ids) {
         ids = vault.keeperList(ICampaignVault.KeeperList.Watch, offset, limit);
         uint64 timeout = vault.pendingTimeout();
@@ -48,6 +51,7 @@ contract CampaignVaultLens is ICampaignVaultLens {
         _trim(ids, n);
     }
 
+    /// @inheritdoc ICampaignVaultLens
     function sweepableClips(uint256 offset, uint256 limit) external view override returns (uint256[] memory ids) {
         ids = vault.keeperList(ICampaignVault.KeeperList.Watch, offset, limit);
         uint256 n = 0;

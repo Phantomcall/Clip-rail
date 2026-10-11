@@ -30,11 +30,13 @@ interface ICreatorReputation {
     /// @notice Called by a vault on a brand reject. Counted once per (clipper, brand).
     function recordRejection(address clipper, address brand) external;
 
+    /// @notice Whether `vault` may write stats.
     function isVault(address vault) external view returns (bool);
     /// @notice True once `clipId` of `vault` has been counted in clipsPaid.
     function clipCounted(address vault, uint256 clipId) external view returns (bool);
     /// @notice True once `brand` has rejected one of `clipper`'s clips (counted in stats.rejections).
     function rejectedBy(address clipper, address brand) external view returns (bool);
+    /// @notice A clipper's paid views, earnings, distinct clips paid, rejecting brands, paying brands and first-seen time.
     function stats(address clipper) external view returns (Stats memory);
     /// @notice 0 = new · 1 = ≥5k paid views and at most 1 rejecting brand · 2 = ≥50k paid views and rejection rate < 5%
     function tier(address clipper) external view returns (uint8);
