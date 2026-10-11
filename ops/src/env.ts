@@ -14,6 +14,14 @@ export interface Env {
   /** Secrets (wrangler secret put). */
   RELAYER_PK: string;
   YT_API_KEY_PREVIEW: string;
+  /**
+   * Optional secret: a GitHub token allowed to start workflows (fine-grained, this repo only, "Actions: read and
+   * write"). Unset = the Worker never triggers the oracle (oracle.ts).
+   */
+  ORACLE_DISPATCH_TOKEN?: string;
+  /** The repo and workflow file the oracle runs in, e.g. "Phantomcall/Clip-rail" and "oracle-runner.yml". */
+  ORACLE_REPO?: string;
+  ORACLE_WORKFLOW?: string;
   /** Daily per-address counters and keeper state. */
   RATE: KVNamespace;
   /** Per-IP limits: relays 5/min, previews and health 30/min. */

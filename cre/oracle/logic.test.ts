@@ -40,16 +40,26 @@ test("pending clip with the claim code: ownership ok, counts rounded down, ISO d
   assert.equal(u.publishedAt, BigInt(Date.UTC(2026, 9, 4, 12) / 1000));
 });
 
-test("pending clip without the code is still reported, with no ownership flag; hidden likes count as 0", () => {
-  const [u] = buildUpdates([clip(2n, "bbbbbbbbbbb", ClipStatus.Pending)], fixture());
-  assert.equal(u.flags, 0);
+test("pending clip without the code is not sent: the vault can't activate it and the keeper expires it", () => {
+  assert.deepEqual(buildUpdates([clip(2n, "bbbbbbbbbbb", ClipStatus.Pending)], fixture()), []);
+});
+
+test("hidden likes count as 0", () => {
+  const [u] = buildUpdates([clip(2n, "bbbbbbbbbbb", ClipStatus.Active, 900n)], fixture());
   assert.equal(u.views, 950n);
   assert.equal(u.likes, 0n);
 });
 
-test("active clip with no change since the last report is skipped", () => {
-  assert.deepEqual(buildUpdates([clip(3n, "ccccccccccc", ClipStatus.Active, 5000n, 250n)], fixture()), []);
-  assert.equal(buildUpdates([clip(3n, "ccccccccccc", ClipStatus.Active, 4000n, 200n)], fixture()).length, 1);
+test("active clip is sent only when its rounded views went up (the only entry the vault acts on)", () => {
+  const send = (lastViews: bigint, lastLikes: bigint) =>
+    buildUpdates([clip(3n, "ccccccccccc", ClipStatus.Active, lastViews, lastLikes)], fixture()).length;
+  assert.equal(send(5000n, 250n), 0); // no change
+  assert.equal(send(4000n, 200n), 1); // views up
+  // Likes-only change: the vault ignores it (it stores likes only with a view gain), so resending it would cost
+  // gas on every run until views grow by another 50.
+  assert.equal(send(5000n, 0n), 0);
+  // YouTube corrected the count down: the vault never lowers lastViews, so this would also repeat forever.
+  assert.equal(send(9000n, 250n), 0);
 });
 
 test("private or missing videos are UNAVAILABLE", () => {
@@ -65,7 +75,9 @@ test("private or missing videos are UNAVAILABLE", () => {
 
 test("a code for another campaign or clipper does not count", () => {
   const other = { ...clip(6n, "aaaaaaaaaaa", ClipStatus.Pending), campaignId: 8n };
-  assert.equal(buildUpdates([other], fixture())[0].flags, 0);
+  assert.deepEqual(buildUpdates([other], fixture()), []); // pending without its own code: not sent
+  const [u] = buildUpdates([{ ...other, status: ClipStatus.Active }], fixture());
+  assert.equal(u.flags, 0);
 });
 
 test("report encodes as (uint64, (uint256,uint64,uint64,uint64,uint8)[])", () => {

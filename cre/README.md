@@ -73,8 +73,9 @@ In simulation there is one node, so consensus always agrees; the design matters 
 - `activeClips(offset, limit)` skips flagged clips and closed or empty campaigns, so a page can be short. The
   workflow reads `watchListLength()` and pages 100 entries at a time (at most 11 pages: CRE allows 15 EVM
   reads per run, three of which are `lastRound`, `watchListLength` and the post-write `lastRound` check).
-- Active clips with no change since the last report are skipped. Pending clips are always sent, so the vault
-  can activate them or reject them after 48 h.
+- Only entries the vault acts on are sent, since each costs the oracle wallet gas: an Active clip when its
+  rounded views went up, a Pending clip once the claim code is in its description, and unavailable clips (three
+  in a row end the clip). The keeper's `expirePending` rejects Pending clips that never show the code.
 - Gas limit = `gasBase + gasPerEntry × n` = 200k + 265k × n (Isaac's v1 measurement on a Monad fork with the
   real forwarder: a report activating 3 clips costs ~850k), capped at 9.5M. At most 35 entries fit; if more
   clips changed, status changes go first, then the biggest view gains, and the rest wait one round.
