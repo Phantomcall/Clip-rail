@@ -57,6 +57,9 @@ importers:
       '@cliprail/abi':
         specifier: workspace:*
         version: link:../packages/abi
+      '@cliprail/cre-oracle':
+        specifier: workspace:*
+        version: link:../cre/oracle
       '@cliprail/shared':
         specifier: workspace:*
         version: link:../packages/shared

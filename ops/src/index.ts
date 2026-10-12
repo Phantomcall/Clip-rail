@@ -1,20 +1,21 @@
 /**
  * Cliprail ops Worker (PRD §5.5, playbook I-3.x).
- *   GET  /health                 network, addresses, relayer balance
+ *   GET  /health                 network, addresses, relayer balance, oracle mode and wallet
  *   GET  /yt/preview?id=&code=   live, unverified preview of a Short (cached 60 s)
  *   POST /relay/register         gasless clip registration (RegisterClip signature)
  *   POST /relay/payout-address   gasless payout-address change (SetPayout signature)
  *   POST /relay/transfer         gasless USDC send-out (EIP-3009 signature)
  *   POST /sandbox/fund           testnet only: 0.1 MON + 1,000 MockUSDC for a judge's fresh account
  *   cron, every 5 minutes        keeper: release, autoResolve, expirePending, sweep
- *   cron, 1 minute later         oracle trigger: starts the CRE oracle workflow while clips are watched
+ *   cron, 1 minute later         oracle (ORACLE_MODE): runs the Worker oracle, or starts the CRE workflow on GitHub
  */
-import { BaseError, formatEther, type Hex } from "viem";
+import { campaignVaultAbi } from "@cliprail/abi";
+import { BaseError, formatEther, getAddress, isAddress, type Hex } from "viem";
 import { clients, shortError } from "./chain";
 import { deployment, type Env, HttpError } from "./env";
 import { runKeeper } from "./keeper";
-import { oracleTick, triggerOracle } from "./oracle";
-import { CLAIM_CODE, originAllowed, toPreview } from "./logic";
+import { oracleAfterRegister, oracleCron, readOracleState } from "./oracle";
+import { CLAIM_CODE, oracleMode, originAllowed, toPreview } from "./logic";
 import { fetchVideo } from "./preview";
 import { relayPayoutAddress, relayRegister, relayTransfer, type RelayContext } from "./relay";
 import { sandboxFund } from "./sandbox";
@@ -60,10 +61,15 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
     const dep = deployment(env);
     const c = clients(env);
     try {
-      const [rpcChainId, block, balance] = await Promise.all([
+      const mode = oracleMode(env);
+      const oracle = env.ORACLE_ADDRESS && isAddress(env.ORACLE_ADDRESS, { strict: false }) ? getAddress(env.ORACLE_ADDRESS) : null;
+      const [rpcChainId, block, balance, oracleBalance, lastRound, oracleState] = await Promise.all([
         c.publicClient.getChainId(),
         c.publicClient.getBlockNumber(),
         c.publicClient.getBalance({ address: c.address }),
+        oracle ? c.publicClient.getBalance({ address: oracle }) : null,
+        dep ? c.publicClient.readContract({ address: dep.vault, abi: campaignVaultAbi, functionName: "lastRound" }) : null,
+        mode === "worker" ? readOracleState(env) : null,
       ]);
       // A wrong RPC_URL would sign for one chain and send to another: report it as unhealthy.
       const ok = dep !== null && rpcChainId === c.chain.id;
@@ -77,6 +83,12 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
           lens: dep?.lens ?? null,
           relayer: c.address,
           relayerBalance: formatEther(balance),
+          oracleMode: mode,
+          oracle,
+          oracleBalance: oracleBalance === null ? null : formatEther(oracleBalance),
+          lastRound: lastRound?.toString() ?? null,
+          // Worker mode: chain time of the last clean Worker oracle check (null until one ran with clips Pending).
+          oracleCheckedAt: oracleState?.checkedAt ? new Date(oracleState.checkedAt * 1000).toISOString() : null,
         },
         ok ? 200 : 503,
         cors,
@@ -116,7 +128,7 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
     const txHash = await relay({ env, dep, c: clients(env), ctx, nowMs: Date.now() }, body);
     console.log(`${url.pathname} sent ${txHash}`);
     // A new clip is Pending until the oracle sees its claim code; the keeper rejects it after pendingTimeout.
-    if (url.pathname === "/relay/register") ctx.waitUntil(triggerOracle(env, "register"));
+    if (url.pathname === "/relay/register") ctx.waitUntil(oracleAfterRegister(env));
     return json({ txHash }, 200, cors);
   }
 
@@ -156,7 +168,7 @@ export default {
 
   async scheduled(event, env, ctx): Promise<void> {
     if (event.cron === "1-59/5 * * * *") {
-      ctx.waitUntil(oracleTick(env));
+      ctx.waitUntil(oracleCron(env));
       return;
     }
     ctx.waitUntil(runKeeper(env).catch((err) => console.error("keeper failed", err instanceof Error ? err.stack : err)));

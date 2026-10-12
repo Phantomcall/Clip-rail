@@ -15,8 +15,24 @@ export interface Env {
   RELAYER_PK: string;
   YT_API_KEY_PREVIEW: string;
   /**
+   * Who runs the view oracle (oracle.ts). One switch, so two runners never send the same round with the same key:
+   *  - "off" (default, or anything unrecognised): the Worker does nothing for the oracle;
+   *  - "worker": the Worker builds and sends reports itself with ORACLE_PK (fallback while CRE deploy access is
+   *    pending);
+   *  - "github": the Worker starts the CRE oracle workflow in GitHub Actions (needs ORACLE_DISPATCH_TOKEN).
+   */
+  ORACLE_MODE?: string;
+  /** The oracle wallet's public address (the vault's reportTransmitter), checked against ORACLE_PK. */
+  ORACLE_ADDRESS?: string;
+  /** Secret, worker mode only: the oracle wallet's key. */
+  ORACLE_PK?: string;
+  /** Secret, worker mode only: the oracle's own YouTube key, so preview traffic can't spend its quota. */
+  YT_API_KEY_ORACLE?: string;
+  /** Worker mode: skip a run if another runner moved lastRound less than this many seconds ago (default 240). */
+  ORACLE_SKIP_SECONDS?: string;
+  /**
    * Optional secret: a GitHub token allowed to start workflows (fine-grained, this repo only, "Actions: read and
-   * write"). Unset = the Worker never triggers the oracle (oracle.ts).
+   * write"). Used in github mode only (oracle.ts).
    */
   ORACLE_DISPATCH_TOKEN?: string;
   /** The repo and workflow file the oracle runs in, e.g. "Phantomcall/Clip-rail" and "oracle-runner.yml". */

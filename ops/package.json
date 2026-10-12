@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@cliprail/abi": "workspace:*",
+    "@cliprail/cre-oracle": "workspace:*",
     "@cliprail/shared": "workspace:*",
     "@noble/curves": "1.9.1",
     "viem": "^2",
