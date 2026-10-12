@@ -97,21 +97,34 @@ mainnet MON than we have (decision log in `docs/security.md`).
 
 The CRE workflow pages the vault's active clips, fetches YouTube metadata in batches of 50, and produces a canonical
 report of rounded view and like counts. Nodes must agree on that entire report before it is written onchain.
-On testnet the workflow runs in Chainlink's CRE simulator and broadcasts through Chainlink's mock forwarder from the
-vault's pinned oracle wallet; the KeystoneForwarder path with DON signatures is wired for when CRE deploy access is
-approved (`docs/security.md`). Rounding
-absorbs small timing differences between YouTube API calls; a disagreement writes nothing and is retried next round.
+Rounding absorbs small timing differences between YouTube API calls; a disagreement writes nothing and is retried
+next round.
+
+**Who sends the reports.** The report logic lives in one place, `cre/oracle/logic.ts`, and two runners use it:
+
+- **CRE workflow** (`cre/oracle/main.ts`): runs in Chainlink's CRE simulator and broadcasts through Chainlink's mock
+  forwarder from the vault's pinned oracle wallet. Testnet rounds 1–4 were sent this way. The KeystoneForwarder path
+  with DON signatures is wired for when CRE deploy access is approved (`docs/security.md`).
+- **Worker fallback while CRE deploy access is pending** (`ops/src/oracle.ts`, `ORACLE_MODE = "worker"`): a scheduled
+  runner can't log the CRE CLI in without an API key, and CRE only issues API keys after deploy access is approved.
+  So the ops Worker imports the same `logic.ts`, builds the same report every 5 minutes and right after each clip
+  registration, and sends it through the same mock forwarder from the same oracle wallet. It backs off for 4 minutes
+  after any round another runner sent. On a testnet fork it produced the same round as the CRE workflow (same entries,
+  same 730k gas limit). Once access is approved, `ORACLE_MODE` switches to `"github"` and the Worker starts the CRE
+  workflow instead.
 
 - Claim-code ownership, public visibility, publish time and unavailable videos are checked before a report is built.
-- Views are rounded down to 50 and likes to 5. Active clips with unchanged counts are skipped; pending clips are always
-  reported so they can activate or expire.
+- Views are rounded down to 50 and likes to 5. Only entries the vault acts on are sent: an Active clip when its rounded
+  views rise, a Pending clip once its claim code is found, and unavailable videos. The keeper expires Pending clips
+  that never show the code.
 - The workflow caps reports at 35 entries under the measured v1 gas plan. Status changes are prioritised before the
   largest view gains.
 - A successful forwarder transaction alone is not treated as proof: the workflow verifies that `lastRound()` advanced,
   because the testnet mock forwarder can swallow a vault revert.
 
 Run `pnpm --filter @cliprail/cre-oracle test` for pure workflow logic tests. A broadcast additionally needs the CRE
-credentials, an oracle key and a funded network wallet; those values are never stored in this repository.
+credentials (or, for the Worker fallback, the `ORACLE_PK` Worker secret), an oracle key and a funded network wallet;
+those values are never stored in this repository.
 
 ## Accounts and gasless design
 

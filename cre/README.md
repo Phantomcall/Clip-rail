@@ -40,12 +40,20 @@ cre workflow simulate oracle --target testnet --broadcast --non-interactive --tr
 `tx.origin == reportTransmitter` (testnet: `0xe96307086A533Eb4A1eD71AB48b382bD53f129B9`). `CRE_ETH_PRIVATE_KEY`
 must be that wallet's key and the wallet needs testnet MON; reports from any other key revert.
 
-### Scheduled runner
+### Who runs it
 
-`oracle-runner.yml` runs every 5 minutes for each network whose repo variable is on
-(`ORACLE_TESTNET_ENABLED` / `ORACLE_MAINNET_ENABLED` = `true`). It needs these GitHub secrets:
-`CRE_API_KEY` (headless CLI auth), `CRE_ETH_PRIVATE_KEY`, `YT_API_KEY_ORACLE`, and optionally
-`MONAD_TESTNET_RPC` / `MONAD_MAINNET_RPC`. Runs for one network never overlap.
+The ops Worker's `ORACLE_MODE` picks exactly one always-on runner; `scripts/oracle-loop.sh` can run alongside it.
+
+| Runner | When | How |
+|---|---|---|
+| **Worker fallback** (`ORACLE_MODE = "worker"`, current) | While CRE deploy access is pending | `ops/src/oracle.ts` imports this folder's `oracle/logic.ts` and sends the same report through the mock forwarder from the oracle wallet, every 5 min and right after each registration. Worker secrets: `ORACLE_PK`, `YT_API_KEY_ORACLE`. It skips a run if another runner moved `lastRound` in the last 4 min. |
+| **GitHub runner** (`ORACLE_MODE = "github"`) | After CRE deploy access is approved | The Worker dispatches `oracle-runner.yml`, which runs this workflow in the CRE simulator. Needs the GitHub secrets `CRE_API_KEY`, `CRE_ETH_PRIVATE_KEY`, `YT_API_KEY_ORACLE` (optionally `MONAD_TESTNET_RPC` / `MONAD_MAINNET_RPC`) and the repo variable `ORACLE_TESTNET_ENABLED = true`. Runs for one network never overlap. |
+| **Laptop loop** (`scripts/oracle-loop.sh testnet`) | Any time, for live CRE runs | The real CRE workflow every 60 s from a machine where `cre login` was run; the Worker backs off around it. |
+
+Why the fallback exists: `cre workflow simulate` refuses to run without a CRE login, a headless runner can only log
+in with `CRE_API_KEY`, and CRE only issues API keys after deploy access is approved. Rehearsed on a testnet fork
+(`ops/README.md` → "Rehearse first on a fork"): the Worker sent round 4 with the same 2 entries and the same 730k gas
+limit as the CRE workflow's real round 4, the new clip went Active, and the next run reported "no changes".
 
 ## Consensus decision (D-2.3)
 
