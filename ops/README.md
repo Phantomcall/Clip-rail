@@ -11,7 +11,8 @@ The relayer wallet is also the keeper. It only ever pays gas; it never holds or 
 | `POST /relay/payout-address` | `{clipper, payout, nonce, deadline, sig}` → `setPayoutAddressWithSig`. Same checks, minus the video, and only for known clippers (below). |
 | `POST /relay/transfer` | `{from, to, value, validAfter, validBefore, nonce, sig}` → USDC `transferWithAuthorization` (EIP-3009). Only the network's USDC, only for known clippers. |
 | `POST /sandbox/fund` | Testnet only. `{address}` → 0.1 MON, then 1,000 MockUSDC, so a judge can create a campaign (~0.031 MON of gas each); returns `{txHash}` (the mint). Fresh accounts only (no transactions, under 0.05 MON); once per address; 10 per IP and 40 in total per UTC day; never below a 1 MON relayer reserve (503). The MON is sent at most once: if its receipt is slow the judge is told it's on its way, and pressing again later only mints. Monad's reserve balance means a MON transfer from a wallet under 10 MON must be its first transaction in 3 blocks, so the sandbox waits for such a moment. |
-| cron every 5 min | Keeper: `release` (batches of 25), `autoResolve` expired flags, `expirePending`, `sweep` closed campaigns; pings Envio. |
+| cron every 5 min | Keeper: `release` (batches of 25), `autoResolve` expired flags, `expirePending` (in worker mode only for clips the oracle has checked, below), `sweep` closed campaigns; pings Envio. |
+| cron 1 min later, and after each `/relay/register` | The view oracle, by `ORACLE_MODE` (below). |
 
 Errors are `{error}` with a sentence the UI can show: 400 for anything the user can fix (bad signature, used nonce,
 video not public, or the vault's own revert such as `TierTooLow`), 429 for rate limits, 502 for RPC or YouTube trouble.
@@ -51,6 +52,62 @@ video not public, or the vault's own revert such as `TierTooLow`), 429 for rate 
   anything by itself; the checks above do.
 - Addresses come from `packages/abi/addresses.json`. Redeploy the Worker after that file changes.
 
+## Oracle mode
+
+`ORACLE_MODE` in `wrangler.toml` picks who sends view reports. It's one setting so two runners can never both be on:
+they share the oracle wallet, and both would send the same round (the second one wastes its gas).
+
+| Mode | What runs | Needs |
+|---|---|---|
+| `worker` | The Worker is the oracle: the fallback while Chainlink CRE deploy access is pending (the CRE CLI can't log in headless without it). It runs the CRE workflow's own decision logic, `cre/oracle/logic.ts` (imported, not copied), and sends the report through the testnet mock forwarder from the oracle wallet. The testnet vault accepts that: its forwarder is the mock and it only checks `tx.origin == reportTransmitter`. | `ORACLE_ADDRESS` var; `ORACLE_PK` and `YT_API_KEY_ORACLE` secrets |
+| `github` | The Worker starts `oracle-runner.yml` (the CRE simulator in GitHub Actions) with `workflow_dispatch`. | `ORACLE_DISPATCH_TOKEN` secret, and `ORACLE_TESTNET_ENABLED=true` in the repo's variables |
+| `off` (or anything else) | Nothing. | |
+
+Worker mode, each run:
+
+- Reads `lastRound`, `reportTransmitter` and the vault's watch list at one block, then YouTube in batches of 50.
+- Refuses to send if `reportTransmitter` isn't `ORACLE_ADDRESS`. The forwarder would swallow the refusal and the gas would still be spent.
+- **Nothing changed:** sends nothing. Otherwise it sends one report of up to 35 entries with gas 200k + 265k per
+  entry, the same plan as `cre/oracle/config.testnet.json` (a test checks they match). Monad charges the limit:
+  about 0.047 MON for one entry.
+- **Confirms the report landed** from the receipt's `ReportProcessed` event and `lastRound`. It logs `applied`, a lost
+  race (another runner sent that round first) or `NOT applied` (an error, often out of gas).
+- **Each send gets a fresh execution id.** The forwarder refuses one it has already seen. The workflow name in the
+  report header is `cr-worker`, so Worker reports can be told apart on chain.
+- **Skips while another runner is active.** If `lastRound` moved and the Worker didn't move it, another runner is
+  live: for example David's CRE simulator loop, which uses the same key. The Worker then skips for
+  `ORACLE_SKIP_SECONDS` (default 240).
+- **Debounces registrations.** A register-triggered run is skipped if the Worker oracle ran in the last 2 minutes.
+- **Keeper guard.** In worker mode the keeper only expires a Pending clip if a clean Worker oracle run read the
+  chain after the clip was registered. An oracle outage leaves clips Pending; it never turns them into rejections.
+- **State** is one KV value (`oracle-state:testnet`), written only when the round changes or a clip is Pending.
+- **`/health`** shows `oracleMode`, the oracle wallet and its balance, `lastRound` and `oracleCheckedAt`.
+
+Turning on worker mode (the person who holds the oracle key types it; it never goes in chat or a file):
+
+```bash
+cd ops
+npx wrangler secret put ORACLE_PK            # the oracle wallet key (ORACLE_ADDRESS in wrangler.toml)
+npx wrangler secret put YT_API_KEY_ORACLE    # the oracle's own YouTube key, not the preview one
+pnpm run deploy                              # with ORACLE_MODE = "worker"
+curl https://cliprail-ops-testnet.<account>.workers.dev/health   # oracleMode "worker"
+npx wrangler tail                            # "worker oracle (cron) …" every 5 minutes
+```
+
+Rehearse first on a fork. Point the forked vault at a throwaway key, so the real key stays out of it:
+
+```bash
+anvil --fork-url https://testnet-rpc.monad.xyz --port 8551 --auto-impersonate --network monad
+PK=$(cast keccak "worker-oracle-rehearsal"); ADDR=$(cast wallet address --private-key $PK)
+cast rpc anvil_setBalance $ADDR 0x56BC75E2D63100000 --rpc-url http://127.0.0.1:8551
+cast send 0x6D7A51c58EB07Ab7bb1B0468A9be02fE9001BcAf "setReportTransmitter(address)" $ADDR \
+  --from 0xC7e501C18846080439131E31Ad5D4b56f7bcA0F0 --unlocked --rpc-url http://127.0.0.1:8551 --gas-limit 100000
+# env file (outside the repo): RELAYER_PK=<anvil key>, ORACLE_PK=$PK, ORACLE_ADDRESS=$ADDR,
+#   RPC_URL=http://127.0.0.1:8551, YT_API_KEY_ORACLE=<a YouTube key>
+npx wrangler dev --port 8788 --test-scheduled --env-file <that file>
+curl "localhost:8788/__scheduled?cron=1-59/5+*+*+*+*"   # then read lastRound on the fork
+```
+
 ## Setup
 
 Wrangler runs on Node. If Node can't reach Cloudflare (`ETIMEDOUT` on a network without working IPv6), set
@@ -71,7 +128,7 @@ curl https://cliprail-ops-testnet.<account>.workers.dev/health
 Mainnet: not used. Cliprail runs on testnet only; the `env.mainnet` block in `wrangler.toml` is kept for
 reference and must not be deployed (it has no KV, secrets or relayer address).
 
-Logs: `npx wrangler tail` (each keeper run logs one summary line).
+Logs: `npx wrangler tail` (each keeper run and each Worker oracle run logs one summary line).
 
 ## Local run against a fork
 

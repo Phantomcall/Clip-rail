@@ -3,7 +3,8 @@
  *  - release(ids), packed by gas from each clip's matured tranches, skipping clips whose payout keeps failing
  *    (back-off, audit V1-7);
  *  - autoResolve(id) for flags past their resolve window;
- *  - expirePending(id) for Pending clips past pendingTimeout;
+ *  - expirePending(id) for Pending clips past pendingTimeout. In ORACLE_MODE=worker, only clips a clean Worker
+ *    oracle run has checked since they were registered: an oracle outage must not turn valid clips into rejections;
  *  - sweep(ids) for watched clips whose campaign is closed or over.
  * Safe to run twice: every call is simulated first, and a call whose work is already done fails simulation (or, for
  * release, pays nothing). It also pings Envio to keep the hosted indexer warm.
@@ -16,7 +17,8 @@ import { campaignVaultAbi, campaignVaultLensAbi } from "@cliprail/abi";
 import { encodeFunctionData, formatEther, parseEther, parseEventLogs, type Hex } from "viem";
 import { clients, type Clients, type Fees, nonceAndFees, shortError, signAndSend } from "./chain";
 import { deployment, type Deployment, type Env } from "./env";
-import { type Backoff, chunk, maturedTranches, nextBackoff, planReleases, relayGas } from "./logic";
+import { type Backoff, chunk, maturedTranches, nextBackoff, oracleCheckedSince, oracleMode, planReleases, relayGas } from "./logic";
+import { readOracleState } from "./oracle";
 
 /** keeperList page size; the lens filters each page, so pages can come back short. */
 const PAGE = 200;
@@ -105,7 +107,7 @@ export async function runKeeper(env: Env): Promise<string> {
     }).catch(() => {});
   }
 
-  const [releasable, flags, pending, sweepable, block] = await Promise.all([
+  const [releasable, flags, expiredPending, sweepable, block] = await Promise.all([
     todo(c, dep, KeeperList.Pay, "releasableClips"),
     todo(c, dep, KeeperList.Flag, "expiredFlags"),
     todo(c, dep, KeeperList.Watch, "expiredPending"),
@@ -115,6 +117,19 @@ export async function runKeeper(env: Env): Promise<string> {
   // Chain time, not the Worker's clock: the lens and the vault both use block.timestamp.
   const chainNow = block.timestamp;
   const now = Number(chainNow);
+
+  // Worker oracle mode: hold Pending clips the Worker oracle hasn't looked at since they were registered.
+  let held = 0;
+  let pending = expiredPending;
+  if (oracleMode(env) === "worker" && pending.length > 0) {
+    const checkedAt = (await readOracleState(env))?.checkedAt ?? 0;
+    const registered = await c.publicClient.multicall({
+      allowFailure: false,
+      contracts: pending.map((id) => ({ address: dep.vault, abi: campaignVaultAbi, functionName: "getClip", args: [id] }) as const),
+    });
+    pending = pending.filter((_, i) => oracleCheckedSince(checkedAt, (registered[i] as { registeredAt: bigint }).registeredAt));
+    held = expiredPending.length - pending.length;
+  }
 
   const backoffs = await readBackoffs(env, now);
   const toRelease = releasable.filter((id) => (backoffs[id.toString()]?.until ?? 0) <= now);
@@ -204,7 +219,7 @@ export async function runKeeper(env: Env): Promise<string> {
 
   const summary =
     `keeper ${env.NETWORK}: releasable ${releasable.length} (backing off ${waiting}, failed now ${failed}), ` +
-    `flags ${flags.length}, pending ${pending.length}, sweepable ${sweepable.length}; ` +
+    `flags ${flags.length}, pending ${pending.length}${held ? ` (held ${held}: oracle hasn't checked them yet)` : ""}, sweepable ${sweepable.length}; ` +
     `sent ${sent.length}${sent.length ? `: ${sent.map((s) => `${s.kind}[${s.ids.length}] ${s.hash}`).join(", ")}` : ""}; ` +
     `relayer ${formatEther(balance)} MON`;
   console.log(summary);

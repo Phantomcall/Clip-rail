@@ -1,6 +1,6 @@
 # Cliprail ops Worker. Top level = testnet; `wrangler deploy --env mainnet` for mainnet (I-4.2).
 # Secrets (never in this file): wrangler secret put RELAYER_PK / YT_API_KEY_PREVIEW [--env mainnet]
-# Optional: wrangler secret put ORACLE_DISPATCH_TOKEN (starts the oracle workflow; see src/oracle.ts)
+# Oracle secrets, by ORACLE_MODE (src/oracle.ts): worker → ORACLE_PK + YT_API_KEY_ORACLE; github → ORACLE_DISPATCH_TOKEN
 name = "cliprail-ops-testnet"
 main = "src/index.ts"
 compatibility_date = "2026-10-01"
@@ -14,11 +14,18 @@ WEB_ORIGINS = "https://cliprail.vercel.app,https://cliprail-*-chibey-maxs-projec
 ENVIO_URL = ""
 # Public address of the RELAYER_PK secret (checked before signing). Not a secret.
 RELAYER_ADDRESS = "0xa8869100A6a1A4d134aF2A15600B49394beA04AF"
-# Where the CRE oracle runs; the Worker starts it with the ORACLE_DISPATCH_TOKEN secret (src/oracle.ts).
+# Who runs the view oracle: "worker" (this Worker sends reports with ORACLE_PK; fallback while CRE deploy access is
+# pending), "github" (this Worker starts the CRE workflow in GitHub Actions), or "off". Exactly one runner at a time.
+ORACLE_MODE = "worker"
+# Public address of the ORACLE_PK secret = the vault's reportTransmitter (checked before every send). Not a secret.
+ORACLE_ADDRESS = "0xe96307086A533Eb4A1eD71AB48b382bD53f129B9"
+# Worker mode: skip a run if another runner (David's CRE simulator loop) moved lastRound this recently.
+ORACLE_SKIP_SECONDS = "240"
+# github mode: where the CRE oracle runs; the Worker starts it with the ORACLE_DISPATCH_TOKEN secret.
 ORACLE_REPO = "Phantomcall/Clip-rail"
 ORACLE_WORKFLOW = "oracle-runner.yml"
 
-# Keeper every 5 minutes; oracle trigger one minute later, in its own invocation (own subrequest budget).
+# Keeper every 5 minutes; oracle one minute later, in its own invocation (own subrequest budget).
 [triggers]
 crons = ["*/5 * * * *", "1-59/5 * * * *"]
 

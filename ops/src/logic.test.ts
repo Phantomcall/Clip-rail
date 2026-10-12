@@ -290,3 +290,98 @@ test("the oracle cron in index.ts is one of wrangler.toml's testnet crons, and t
   // workflow_dispatch must stay enabled in the workflow, or every dispatch fails with 422.
   assert.match(readFileSync(new URL(`../../.github/workflows/${workflow}`, import.meta.url), "utf8"), /^\s*workflow_dispatch:/m);
 });
+
+// ─────────────────────────── Worker oracle ───────────────────────────
+
+test("oracle mode: only exact 'worker' or 'github' turn anything on; skip seconds default to 240", async () => {
+  const { oracleMode, oracleSkipSeconds } = await import("./logic.ts");
+  assert.equal(oracleMode({}), "off");
+  assert.equal(oracleMode({ ORACLE_MODE: "worker" }), "worker");
+  assert.equal(oracleMode({ ORACLE_MODE: " github " }), "github");
+  for (const m of ["Worker", "workers", "on", "true", "worker,github", ""]) assert.equal(oracleMode({ ORACLE_MODE: m }), "off", m);
+  assert.equal(oracleSkipSeconds({}), 240);
+  assert.equal(oracleSkipSeconds({ ORACLE_SKIP_SECONDS: "0" }), 0);
+  assert.equal(oracleSkipSeconds({ ORACLE_SKIP_SECONDS: "600" }), 600);
+  for (const s of ["-1", "4m", "1e3", "3601", "99999"]) assert.equal(oracleSkipSeconds({ ORACLE_SKIP_SECONDS: s }), 240, s);
+});
+
+test("oracle gas plan and paging match the CRE workflow's testnet config", async () => {
+  const { ORACLE_GAS, ORACLE_MAX_CLIPS, ORACLE_PAGE } = await import("./logic.ts");
+  const cfg = JSON.parse(readFileSync(new URL("../../cre/oracle/config.testnet.json", import.meta.url), "utf8"));
+  assert.equal(ORACLE_GAS.gasBase, BigInt(cfg.gasBase));
+  assert.equal(ORACLE_GAS.gasPerEntry, BigInt(cfg.gasPerEntry));
+  assert.equal(ORACLE_GAS.gasCap, BigInt(cfg.gasCap));
+  assert.equal(ORACLE_PAGE, cfg.pageSize);
+  assert.equal(ORACLE_MAX_CLIPS, cfg.maxClips);
+});
+
+test("oracle run plan: skips while another runner is reporting, debounces register runs, runs otherwise", async () => {
+  const { planOracleRun, ORACLE_REGISTER_DEBOUNCE } = await import("./logic.ts");
+  const st = (o: object) => ({ round: "10", own: true, seenAt: 0, checkedAt: 0, ranAt: 0, ...o });
+  // No state yet: run.
+  assert.equal(planOracleRun(null, 10n, 1_000, 240, "cron").run, true);
+  // Our own round, unchanged: run.
+  assert.deepEqual(planOracleRun(st({}), 10n, 1_000, 240, "cron"), { run: true, why: "", store: null });
+  // Someone else moved it since we looked: skip and remember when.
+  const moved = planOracleRun(st({}), 12n, 1_000, 240, "cron");
+  assert.equal(moved.run, false);
+  assert.deepEqual(moved.store, st({ round: "12", own: false, seenAt: 1_000 }));
+  // Still inside the window: skip without a write; after it: run.
+  assert.deepEqual(planOracleRun(st({ round: "12", own: false, seenAt: 1_000 }), 12n, 1_239, 240, "cron").run, false);
+  assert.equal(planOracleRun(st({ round: "12", own: false, seenAt: 1_000 }), 12n, 1_239, 240, "cron").store, null);
+  assert.equal(planOracleRun(st({ round: "12", own: false, seenAt: 1_000 }), 12n, 1_240, 240, "cron").run, true);
+  // Skip window 0: never skip, but still record the other runner's round.
+  const zero = planOracleRun(st({}), 12n, 1_000, 0, "cron");
+  assert.equal(zero.run, true);
+  assert.equal(zero.store?.round, "12");
+  // Register runs are debounced; cron runs are not.
+  const recent = st({ ranAt: 1_000 });
+  assert.equal(planOracleRun(recent, 10n, 1_000 + ORACLE_REGISTER_DEBOUNCE - 1, 240, "register").run, false);
+  assert.equal(planOracleRun(recent, 10n, 1_000 + ORACLE_REGISTER_DEBOUNCE, 240, "register").run, true);
+  assert.equal(planOracleRun(recent, 10n, 1_001, 240, "cron").run, true);
+  // A stale KV read (lastRound behind what we stored) is not "another runner".
+  assert.equal(planOracleRun(st({}), 9n, 1_000, 240, "cron").run, true);
+});
+
+test("oracle state: malformed KV values read as no state; missing numbers as 0", async () => {
+  const { parseOracleState } = await import("./logic.ts");
+  for (const bad of [null, {}, "x", { round: 5 }, { round: "-1" }, { round: "1e3" }]) assert.equal(parseOracleState(bad), null);
+  assert.deepEqual(parseOracleState({ round: "7", own: "yes", seenAt: "3", checkedAt: 9 }), { round: "7", own: false, seenAt: 0, checkedAt: 9, ranAt: 0 });
+});
+
+test("forwarder raw report: 109-byte header laid out like the fork test, then the vault report", async () => {
+  const { forwarderRawReport } = await import("./logic.ts");
+  const { encodeReport } = await import("@cliprail/cre-oracle/logic.ts");
+  const exec = `0x${"ab".repeat(32)}` as const;
+  const body = encodeReport(5n, [{ clipId: 1n, views: 100n, likes: 10n, publishedAt: 1_700_000_000n, flags: 1 }]);
+  const raw = forwarderRawReport(exec, 0x01020304, body);
+  const bytes = (raw.length - 2) / 2;
+  assert.equal(bytes, 109 + (body.length - 2) / 2);
+  const at = (off: number, len: number) => raw.slice(2 + off * 2, 2 + (off + len) * 2);
+  assert.equal(at(0, 1), "01");
+  assert.equal(at(1, 32), "ab".repeat(32));
+  assert.equal(at(33, 4), "01020304");
+  assert.equal(at(37, 8), "0".repeat(16)); // donId, configVersion
+  assert.equal(at(45, 32), "0".repeat(64)); // workflowCid
+  assert.equal(Buffer.from(at(77, 10), "hex").toString("latin1").replace(/\0+$/, ""), "cr-worker");
+  assert.equal(at(87, 20), "0".repeat(40)); // workflowOwner
+  assert.equal(at(107, 2), "0001");
+  assert.equal(`0x${raw.slice(2 + 109 * 2)}`, body);
+  assert.throws(() => forwarderRawReport("0x1234", 0, body));
+});
+
+test("report outcome: applied only if the vault accepted; a refused report whose round already landed is a lost race", async () => {
+  const { reportOutcome } = await import("./logic.ts");
+  assert.equal(reportOutcome(5n, 5n, true), "applied");
+  assert.equal(reportOutcome(5n, 6n, true), "applied"); // ours landed, then another round already followed
+  assert.equal(reportOutcome(5n, 5n, false), "lost-race");
+  assert.equal(reportOutcome(5n, 4n, false), "failed"); // e.g. out of gas inside the forwarder
+  assert.equal(reportOutcome(5n, 4n, true), "failed"); // event said yes but lastRound didn't move: don't trust it
+});
+
+test("keeper guard: a Pending clip expires only after a clean oracle check that came after its registration", async () => {
+  const { oracleCheckedSince } = await import("./logic.ts");
+  assert.equal(oracleCheckedSince(0, 100n), false); // never checked
+  assert.equal(oracleCheckedSince(100, 100n), false); // same second: not proven to include it
+  assert.equal(oracleCheckedSince(101, 100n), true);
+});

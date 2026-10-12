@@ -1,6 +1,6 @@
 /**
- * viem clients for the relayer wallet (it is also the keeper). The relayer only ever pays gas: it never holds or
- * approves user funds, and every call is simulated before it is sent.
+ * viem clients for the relayer wallet (it is also the keeper) and the oracle wallet. The relayer only ever pays gas:
+ * it never holds or approves user funds, and every call is simulated before it is sent.
  */
 import { secp256k1 } from "@noble/curves/secp256k1";
 import {
@@ -27,28 +27,40 @@ export function chainFor(env: Env) {
 // instead of ~2). viem uses this same noble instance (pinned to its version in package.json).
 secp256k1.ProjectivePoint.BASE._setWindowSize(4);
 
-// The key is only loaded when something is signed, once per isolate. Reads use RELAYER_ADDRESS.
-let cachedSigner: { pk: string; account: PrivateKeyAccount } | null = null;
-function signerFor(env: Env): PrivateKeyAccount {
-  if (cachedSigner?.pk !== env.RELAYER_PK) {
-    const pk = env.RELAYER_PK;
-    const account = privateKeyToAccount((pk.startsWith("0x") ? pk : `0x${pk}`) as Hex);
-    if (!isAddressEqual(account.address, env.RELAYER_ADDRESS as Address)) {
+// Keys are only loaded when something is signed, once per isolate. Reads use the public address vars.
+const cachedSigners = new Map<string, PrivateKeyAccount>();
+function signerFor(pk: string, expected: string, name: string): PrivateKeyAccount {
+  let account = cachedSigners.get(pk);
+  if (!account) {
+    account = privateKeyToAccount((pk.startsWith("0x") ? pk : `0x${pk}`) as Hex);
+    if (!isAddressEqual(account.address, expected as Address)) {
       // A key for a different wallet would spend from (and nonce-race against) the wrong account.
-      throw new Error(`RELAYER_PK is for ${account.address}, not RELAYER_ADDRESS ${env.RELAYER_ADDRESS}`);
+      throw new Error(`${name}_PK is for ${account.address}, not ${name}_ADDRESS ${expected}`);
     }
-    cachedSigner = { pk, account };
+    cachedSigners.set(pk, account);
   }
-  return cachedSigner.account;
+  return account;
 }
 
-export function clients(env: Env) {
+function clientsFor(env: Env, address: Address, signer: () => PrivateKeyAccount) {
   const chain = chainFor(env);
   // JSON-RPC batching: reads awaited together go out as one HTTP request (free plan: 50 subrequests per run).
   const transport = http(env.RPC_URL, { batch: true, retryCount: 1 });
-  const address = getAddress(env.RELAYER_ADDRESS);
   const publicClient = createPublicClient({ chain, transport });
-  return { chain, address, publicClient, signer: () => signerFor(env) };
+  return { chain, address, publicClient, signer };
+}
+
+/** The relayer wallet: relays and the keeper. */
+export function clients(env: Env) {
+  return clientsFor(env, getAddress(env.RELAYER_ADDRESS), () => signerFor(env.RELAYER_PK, env.RELAYER_ADDRESS, "RELAYER"));
+}
+
+/** The oracle wallet (the vault's reportTransmitter), used only by the Worker oracle (oracle.ts). */
+export function oracleClients(env: Env, address: Address) {
+  return clientsFor(env, address, () => {
+    if (!env.ORACLE_PK) throw new Error("ORACLE_PK is not set");
+    return signerFor(env.ORACLE_PK, address, "ORACLE");
+  });
 }
 
 export type Clients = ReturnType<typeof clients>;
