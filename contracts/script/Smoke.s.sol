@@ -33,12 +33,24 @@ interface IMockForwarder {
 ///   6. release(clipId):           releases if the keeper hasn't, and checks the clipper was paid.
 ///   7. close(campaignId):         the brand closes and the refund is checked to the unit.
 ///
+/// **Flags (PRD F6), live:** create with a hold long enough to flag by hand, e.g. `create(uint32)` 1800 (30 min).
+/// Register two Shorts (same claim code), wait for both to accrue, then while their earnings are still in hold:
+///   flag(clipA), resolve(clipA, true):  a reject; checks the frozen earnings went back to the budget and the
+///                                       brand's rejection reached CreatorReputation.
+///   flag(clipB), then nothing:          after resolveWindow the keeper accepts it; autoResolved(clipB) checks
+///                                       (and sends autoResolve itself if the keeper hasn't).
+/// close(campaignId) while clip B still has earnings in hold, then release(clipB) after the hold: reserved
+/// earnings still pay out after a close (PRD F7).
+///
 ///   S="forge script script/Smoke.s.sol --rpc-url https://testnet-rpc.monad.xyz --network monad --account cliprail-deployer --broadcast"
-///   $S --sig "create()"
+///   $S --sig "create()"                      (or --sig "create(uint32)" 1800 for the flag steps)
 ///   $S --sig "register(uint256,string)" <campaignId> <videoId>
 ///   forge script script/Smoke.s.sol --rpc-url https://testnet-rpc.monad.xyz --sig "status(uint256)" <clipId>
 ///   $S --sig "release(uint256)" <clipId>
 ///   $S --sig "close(uint256)" <campaignId>
+///   $S --sig "flag(uint256)" <clipId>
+///   $S --sig "resolve(uint256,bool)" <clipId> true
+///   $S --sig "autoResolved(uint256)" <clipId>
 contract Smoke is Script {
     CampaignVault vault;
     CampaignVaultLens lens;
@@ -248,9 +260,18 @@ contract Smoke is Script {
     /// Step 1: the broadcasting wallet creates a small campaign as the brand. minLikeBps is 0, so a fresh Short with
     /// few likes still accrues.
     function create() external {
+        _create(LIVE_HOLD);
+    }
+
+    /// Step 1 with a chosen hold, e.g. 1800 (30 minutes) to leave time to flag (see the flag steps above).
+    function create(uint32 holdSecs) external {
+        _create(holdSecs);
+    }
+
+    function _create(uint32 holdSecs) internal {
         _load();
         address clipper = vm.addr(_clipperPk());
-        ICampaignVault.CampaignParams memory p = _params(LIVE_HOLD, 0);
+        ICampaignVault.CampaignParams memory p = _params(holdSecs, 0);
         vm.startBroadcast();
         (, address brand,) = vm.readCallers();
         usdc.mint(brand, BUDGET);
@@ -339,5 +360,88 @@ contract Smoke is Script {
         require(vault.getCampaign(campaignId).status == ICampaignVault.CampaignStatus.Closed, "SMOKE FAIL: not Closed");
         console.log("refund     ", refund);
         console.log("SMOKE PASS (live)");
+    }
+
+    // ─────────────────────────── Live mode: flags (PRD F6) ───────────────────────────
+
+    /// The brand flags a clip whose earnings are still in hold: matured tranches are paid first, the rest freeze.
+    function flag(uint256 clipId) external {
+        _load();
+        ICampaignVault.Clip memory clip = vault.getClip(clipId);
+        uint64 newestUnlock = _newestUnlock(clipId);
+        require(
+            newestUnlock > block.timestamp, "SMOKE FAIL: nothing in hold to flag (accrue first, with a longer hold)"
+        );
+        vm.startBroadcast();
+        vault.flag(clipId, keccak256("cliprail smoke: flag test"));
+        vm.stopBroadcast();
+        ICampaignVault.Clip memory after_ = vault.getClip(clipId);
+        _check(after_.status == ICampaignVault.ClipStatus.Flagged, "clip is Flagged");
+        _check(after_.flagDeadline == uint64(block.timestamp) + vault.resolveWindow(), "deadline = now + resolveWindow");
+        _check(after_.released >= clip.released, "matured earnings paid, never clawed back");
+        console.log("frozen (accrued - released)", after_.accrued - after_.released);
+        console.log("resolve before (unix)      ", after_.flagDeadline);
+    }
+
+    /// The brand decides its flag. Reject: the frozen earnings go back to the budget and the rejection reaches
+    /// CreatorReputation (once per brand). Accept: the clip gets its earlier status back.
+    function resolve(uint256 clipId, bool reject) external {
+        _load();
+        ICampaignVault.Clip memory clip = vault.getClip(clipId);
+        require(clip.status == ICampaignVault.ClipStatus.Flagged, "SMOKE FAIL: clip is not Flagged");
+        ICampaignVault.Campaign memory c = vault.getCampaign(clip.campaignId);
+        uint256 frozen = clip.accrued - clip.released;
+        bool firstByBrand = !reputation.rejectedBy(clip.clipper, c.brand);
+        uint32 rejectionsBefore = reputation.stats(clip.clipper).rejections;
+        vm.startBroadcast();
+        vault.resolve(clipId, reject);
+        vm.stopBroadcast();
+        ICampaignVault.Clip memory after_ = vault.getClip(clipId);
+        if (!reject) {
+            _check(after_.status != ICampaignVault.ClipStatus.Flagged, "accepted: clip back to its earlier status");
+            return;
+        }
+        ICampaignVault.Campaign memory cAfter = vault.getCampaign(clip.campaignId);
+        _check(after_.status == ICampaignVault.ClipStatus.Rejected, "rejected: clip is Rejected");
+        _check(cAfter.reserved == c.reserved - frozen, "frozen earnings released from the campaign's reservation");
+        _check(
+            cAfter.params.budget - cAfter.reserved - cAfter.paid == c.params.budget - c.reserved - c.paid + frozen
+                || c.status == ICampaignVault.CampaignStatus.Closed,
+            "frozen earnings are free budget again"
+        );
+        _check(reputation.rejectedBy(clip.clipper, c.brand), "CreatorReputation records the brand's rejection");
+        _check(
+            reputation.stats(clip.clipper).rejections == rejectionsBefore + (firstByBrand ? 1 : 0),
+            "rejections counted once per brand"
+        );
+        console.log("returned to budget", frozen);
+    }
+
+    /// After resolveWindow, an unresolved flag is accepted by anyone; the keeper normally does it. Sends autoResolve
+    /// only if the keeper hasn't.
+    function autoResolved(uint256 clipId) external {
+        _load();
+        ICampaignVault.Clip memory clip = vault.getClip(clipId);
+        if (clip.status == ICampaignVault.ClipStatus.Flagged) {
+            if (block.timestamp < clip.flagDeadline) {
+                console.log("flag still open; run again in (s)", clip.flagDeadline - block.timestamp);
+                return;
+            }
+            console.log("the keeper hasn't accepted it yet; sending autoResolve");
+            vm.startBroadcast();
+            vault.autoResolve(clipId);
+            vm.stopBroadcast();
+            clip = vault.getClip(clipId);
+        } else {
+            console.log("already accepted (the keeper did it)");
+        }
+        _check(clip.status != ICampaignVault.ClipStatus.Flagged, "unresolved flag accepted after its deadline");
+        _check(clip.status != ICampaignVault.ClipStatus.Rejected, "auto-resolve never rejects");
+        console.log("SMOKE PASS (flags, live)");
+    }
+
+    function _newestUnlock(uint256 clipId) internal view returns (uint64) {
+        ICampaignVault.Tranche[] memory ts = vault.getTranches(clipId);
+        return ts.length == 0 ? 0 : ts[ts.length - 1].unlockAt;
     }
 }

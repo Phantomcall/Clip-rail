@@ -6,7 +6,7 @@ confirm (marked ✎).
 
 **Network:** Monad testnet, chain id 10143. Explorer: https://testnet.monadvision.com
 
-## Contracts (all verified on MonadVision)
+## Contracts (all verified on MonadVision and Monadscan)
 
 | Contract | Address | What it does |
 |---|---|---|
