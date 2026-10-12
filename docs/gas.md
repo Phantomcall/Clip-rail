@@ -76,6 +76,40 @@ burn.
 
 The keeper costs nothing when there's nothing to do: it only sends when the lens lists work.
 
+## Budget for judging, Oct 14–27 (I-9.2)
+
+Prices are at 102 gwei. Monad charges the full limit, so these are exact for a given count.
+
+**Oracle wallet** (one report per run, only when something changed):
+- MON ≈ 0.0204 × reports + 0.027 × entries.
+- entries ≈ clips × (1 + views ÷ 50): one entry to activate a clip, then one per 50-view step.
+
+**Relayer wallet:**
+- 0.033 per registration.
+- ~0.11 per sandbox account: 0.1 MON sent plus the mint.
+- ~0.013–0.02 per payout-address change or send-out.
+- Releases ≈ 0.0123 × release transactions + 0.0252 × clips paid in them. Roughly one clip-payment per oracle entry
+  that earned, batched up to 25 per transaction.
+
+| Scenario | Oracle | Relayer |
+|---|---|---|
+| Light: 10 judges, 1 clip each, ~200 views per clip | ~2 MON (≈50 entries, ≈40 reports) | ~3 MON |
+| Heavy: 30 judges, 2 clips each, ~500 views per clip | ~26 MON (≈660 entries, ≈400 reports) | ~25 MON |
+
+Measured so far: the oracle's first 4 reports cost ~0.27 MON (≈0.068 each, mostly 1–2 entries). The relayer has
+sent 35 transactions since 2026-10-08.
+
+**What this means:**
+- **Oracle** (20.23 MON on 2026-10-12): covers anything short of the heavy case. Top up when `/health` shows
+  `oracleBalance` under 5; the Worker logs a warning under 2.
+- **Relayer** (8.95 MON on 2026-10-12): top up to **15 or more** before Oct 14. It must also stay above **10 MON**:
+  below that, Monad's reserve-balance rule makes the sandbox's MON transfer wait for a moment when it is the
+  wallet's first transaction in 3 blocks (`docs/wallets.md`). Top up when `/health` shows `relayerBalance` under 10.5.
+- **Batching saves gas.** The Worker oracle reports at most every 5 minutes, so it batches clips into one report. A
+  60-second loop sends more, smaller reports, and each one pays the 200k base. During judging, prefer the Worker as
+  the only oracle runner.
+- **Check `/health` once a day.** It shows both balances. The uptime monitors watch the same endpoint.
+
 ## Reproduce
 ```bash
 anvil --fork-url https://testnet-rpc.monad.xyz --port 8551 --auto-impersonate --network monad

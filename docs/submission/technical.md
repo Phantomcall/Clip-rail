@@ -36,7 +36,8 @@ The vault also accepts Circle's testnet USDC (`0x534b2f3A21130d7a60830c2Df862319
    clipper's claim code (`CR-` + 16 hex, derived from campaign id and clipper address), and rounds counts down (views
    to 50, likes to 5) so a DON's nodes reach identical consensus.
 3. It encodes `(round = lastRound + 1, ClipUpdate[])` and writes it through Chainlink's forwarder to the vault's
-   `onReport`. Only changed clips are sent; Pending clips always are.
+   `onReport`. Only entries the vault acts on are sent: a Pending clip once its description has the claim code, an
+   Active clip when its rounded views rose, and unavailable videos. A run with nothing to send sends nothing.
 4. The vault applies every rule on chain: ownership and publish date activate a clip; views only go up; a per-report
    velocity cap, a like-ratio floor, a per-clip cap and the campaign budget limit what accrues; each accrual is a
    tranche released after the hold.
@@ -47,6 +48,14 @@ The vault also accepts Circle's testnet USDC (`0x534b2f3A21130d7a60830c2Df862319
    owner instead.
 6. After each broadcast the workflow re-reads `lastRound` and fails the run if the report didn't land (the mock
    forwarder hides vault reverts).
+7. Who runs it during judging: CRE deploy access is still pending, and without it the CRE CLI can't log in on a
+   headless runner. So the always-on ops Worker runs the oracle every 5 minutes and right after each registration
+   (`ORACLE_MODE=worker`). It imports the workflow's decision logic (`cre/oracle/logic.ts`: claim-code check,
+   rounding, which entries to send, report encoding, gas plan) unchanged, and sends the report through the same mock
+   forwarder from the same oracle wallet. Each Worker report carries the workflow name `cr-worker` in its header.
+   The CRE simulator (`cre workflow simulate --broadcast`) remains the reference runner and can run alongside: the
+   Worker backs off for 4 minutes after any round it didn't send. Once CRE deploy access is approved, the GitHub
+   Actions runner takes over (`ORACLE_MODE=github`).
 
 ## Off-chain services
 
